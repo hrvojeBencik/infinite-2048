@@ -10,8 +10,19 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../achievements/presentation/bloc/achievements_bloc.dart';
 import '../../../subscription/presentation/bloc/subscription_bloc.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<AchievementsBloc>().add(const LoadAchievements());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -151,37 +162,59 @@ class _DailyChallengeCard extends StatelessWidget {
           return const SizedBox.shrink();
         }
         final challenge = state.dailyChallenge!;
+        final isCompleted = challenge.isCompleted;
+
         return GlassCard(
-          onTap: () => context.push('/challenge/daily'),
-          borderColor: AppColors.secondary.withAlpha(40),
+          onTap: isCompleted
+              ? null
+              : () {
+                  context.push('/challenge/daily').then((_) {
+                    if (context.mounted) {
+                      context.read<AchievementsBloc>().add(const LoadAchievements());
+                    }
+                  });
+                },
+          borderColor: isCompleted
+              ? AppColors.success.withAlpha(40)
+              : AppColors.secondary.withAlpha(40),
           child: Row(
             children: [
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  gradient: AppColors.premiumGradient,
+                  gradient: isCompleted
+                      ? LinearGradient(colors: [
+                          AppColors.success,
+                          AppColors.success.withAlpha(180),
+                        ])
+                      : AppColors.premiumGradient,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.today_rounded,
-                    color: AppColors.background, size: 24),
+                child: Icon(
+                  isCompleted ? Icons.check_rounded : Icons.today_rounded,
+                  color: AppColors.background,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Daily Challenge',
+                    Text(
+                      isCompleted ? 'Challenge Complete!' : 'Daily Challenge',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: isCompleted ? AppColors.success : AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      challenge.description,
+                      isCompleted
+                          ? 'Come back tomorrow for a new challenge'
+                          : challenge.description,
                       style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
@@ -190,8 +223,10 @@ class _DailyChallengeCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded,
-                  color: AppColors.textTertiary),
+              if (!isCompleted)
+                const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary)
+              else
+                const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 28),
             ],
           ),
         );

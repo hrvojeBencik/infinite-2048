@@ -223,22 +223,25 @@ class GameEngine {
 
   static _MergeResult _mergeTiles(Tile a, Tile b) {
     int newValue;
-    bool isBomb = false;
+    bool isBomb = a.specialType == SpecialTileType.bomb ||
+        b.specialType == SpecialTileType.bomb;
+    bool isMultiplier = a.specialType == SpecialTileType.multiplier ||
+        b.specialType == SpecialTileType.multiplier;
 
-    if (a.specialType == SpecialTileType.wildcard) {
+    if (isBomb) {
+      final baseValue = a.specialType == SpecialTileType.bomb ? b.value : a.value;
+      newValue = (baseValue == 0 ? a.value + b.value : baseValue) * 2;
+    } else if (a.specialType == SpecialTileType.wildcard) {
       newValue = b.value * 2;
     } else if (b.specialType == SpecialTileType.wildcard) {
       newValue = a.value * 2;
-    } else if (a.specialType == SpecialTileType.multiplier ||
-        b.specialType == SpecialTileType.multiplier) {
+    } else if (isMultiplier) {
       newValue = a.value * 4;
-    } else if (a.specialType == SpecialTileType.bomb &&
-        b.specialType == SpecialTileType.bomb) {
-      newValue = a.value * 2;
-      isBomb = true;
     } else {
       newValue = a.value * 2;
     }
+
+    final scoreGained = isMultiplier ? newValue * 2 : newValue;
 
     final mergedTile = Tile(
       id: a.id,
@@ -246,12 +249,12 @@ class GameEngine {
       row: a.row,
       col: a.col,
       wasMerged: true,
-      specialType: isBomb ? SpecialTileType.bomb : SpecialTileType.none,
+      specialType: SpecialTileType.none,
     );
 
     return _MergeResult(
       tile: mergedTile,
-      scoreGained: newValue,
+      scoreGained: scoreGained,
       isBombExplosion: isBomb,
     );
   }

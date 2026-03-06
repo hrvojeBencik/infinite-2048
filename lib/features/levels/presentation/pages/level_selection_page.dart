@@ -111,7 +111,15 @@ class _LevelTile extends StatelessWidget {
     final colors = TileThemes.zoneGradient(zoneId);
 
     return GestureDetector(
-      onTap: isUnlocked ? () => context.push('/game/${level.id}') : null,
+      onTap: isUnlocked
+          ? () {
+              context.push('/game/${level.id}').then((_) {
+                if (context.mounted) {
+                  context.read<LevelsBloc>().add(LoadLevelsForZone(zoneId));
+                }
+              });
+            }
+          : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(

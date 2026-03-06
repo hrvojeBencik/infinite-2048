@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import '../core/services/ad_service.dart';
+import '../core/services/mechanic_intro_service.dart';
 import '../features/game/data/datasources/game_local_datasource.dart';
 import '../features/game/data/repositories/game_repository_impl.dart';
 import '../features/game/domain/repositories/game_repository.dart';
@@ -24,6 +25,7 @@ final sl = GetIt.instance;
 Future<void> initDependencies({required bool firebaseAvailable}) async {
   // Services
   sl.registerLazySingleton<AdService>(() => AdService());
+  sl.registerLazySingleton<MechanicIntroService>(() => MechanicIntroService());
 
   // Data sources
   sl.registerLazySingleton<GameLocalDataSource>(() => GameLocalDataSource());

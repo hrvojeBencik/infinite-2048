@@ -8,4 +8,6 @@ abstract class AchievementsRepository {
   Future<Challenge?> getDailyChallenge();
   Future<List<Challenge>> getWeeklyChallenges();
   Future<void> completeDailyChallenge(String challengeId, int score);
+  Future<bool> isDailyChallengeCompleted();
+  Future<int> getCompletedLevelsInZone(String zoneId);
 }

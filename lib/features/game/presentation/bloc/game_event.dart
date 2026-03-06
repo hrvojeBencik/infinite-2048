@@ -79,3 +79,11 @@ class RestartLevel extends GameEvent {
 class PauseGame extends GameEvent {
   const PauseGame();
 }
+
+class ResumeFromPause extends GameEvent {
+  const ResumeFromPause();
+}
+
+class SaveAndExit extends GameEvent {
+  const SaveAndExit();
+}

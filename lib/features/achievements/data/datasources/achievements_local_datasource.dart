@@ -6,6 +6,7 @@ import '../../domain/entities/challenge.dart';
 
 class AchievementsLocalDataSource {
   Box get _box => Hive.box(AppConstants.hiveAchievementsBox);
+  Box get _progressBox => Hive.box(AppConstants.hiveLevelProgressBox);
 
   List<Achievement> getAchievements() {
     final achievements = _defaultAchievements();
@@ -49,19 +50,75 @@ class AchievementsLocalDataSource {
     final seed = now.year * 10000 + now.month * 100 + now.day;
     final boardSize = 4 + (seed % 2);
     final target = [256, 512, 1024, 2048][seed % 4];
+    final hasMovelimit = seed % 3 == 0;
+    final moveLimit = hasMovelimit ? 80 : null;
+
+    final completed = isDailyChallengeCompletedSync();
+    final bestScore = _getDailyChallengeBestScore();
 
     return Challenge(
       id: 'daily_${now.year}_${now.month}_${now.day}',
       type: ChallengeType.daily,
       title: 'Daily Challenge',
-      description: 'Reach $target on a ${boardSize}x$boardSize board',
+      description: 'Reach $target on a ${boardSize}x$boardSize board'
+          '${hasMovelimit ? ' in $moveLimit moves' : ''}',
       boardSize: boardSize,
       targetTileValue: target,
-      moveLimit: seed % 3 == 0 ? 80 : null,
+      moveLimit: moveLimit,
       noUndos: seed % 5 == 0,
       availableFrom: DateTime(now.year, now.month, now.day),
       availableUntil: DateTime(now.year, now.month, now.day, 23, 59, 59),
+      isCompleted: completed,
+      bestScore: bestScore,
     );
+  }
+
+  Future<void> completeDailyChallenge(String challengeId, int score) async {
+    final now = DateTime.now();
+    final dateKey = _dailyChallengeKey(now);
+    final existing = _box.get(dateKey);
+    Map<String, dynamic> data = {};
+    if (existing != null) {
+      data = jsonDecode(existing as String) as Map<String, dynamic>;
+    }
+    final prevScore = data['bestScore'] as int? ?? 0;
+    data['completed'] = true;
+    data['challengeId'] = challengeId;
+    data['bestScore'] = score > prevScore ? score : prevScore;
+    data['completedAt'] = now.toIso8601String();
+    await _box.put(dateKey, jsonEncode(data));
+  }
+
+  bool isDailyChallengeCompletedSync() {
+    final dateKey = _dailyChallengeKey(DateTime.now());
+    final data = _box.get(dateKey);
+    if (data == null) return false;
+    final map = jsonDecode(data as String) as Map<String, dynamic>;
+    return map['completed'] as bool? ?? false;
+  }
+
+  int? _getDailyChallengeBestScore() {
+    final dateKey = _dailyChallengeKey(DateTime.now());
+    final data = _box.get(dateKey);
+    if (data == null) return null;
+    final map = jsonDecode(data as String) as Map<String, dynamic>;
+    return map['bestScore'] as int?;
+  }
+
+  String _dailyChallengeKey(DateTime date) =>
+      'daily_completed_${date.year}_${date.month}_${date.day}';
+
+  int getCompletedLevelsInZone(String zoneId) {
+    int count = 0;
+    for (final key in _progressBox.keys) {
+      final keyStr = key as String;
+      if (!keyStr.startsWith('${zoneId}_')) continue;
+      final data = _progressBox.get(key);
+      if (data == null) continue;
+      final map = jsonDecode(data as String) as Map<String, dynamic>;
+      if (map['isCompleted'] == true) count++;
+    }
+    return count;
   }
 
   List<Achievement> _defaultAchievements() => [

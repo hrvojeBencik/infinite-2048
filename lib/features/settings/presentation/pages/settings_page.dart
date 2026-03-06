@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -138,6 +139,19 @@ class _SettingsPageState extends State<SettingsPage> {
                           ],
                         ),
                       ),
+                      if (kDebugMode) ...[
+                        const SizedBox(height: 24),
+                        _sectionTitle('DEVELOPER'),
+                        GlassCard(
+                          borderColor: AppColors.warning.withAlpha(40),
+                          child: _SettingsTile(
+                            icon: Icons.bug_report_rounded,
+                            title: 'Dev Options',
+                            subtitle: 'Debug tools & sandbox',
+                            onTap: () => context.push('/dev'),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 32),
                     ],
                   ),

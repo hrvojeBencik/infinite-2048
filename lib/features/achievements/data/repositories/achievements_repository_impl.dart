@@ -31,12 +31,21 @@ class AchievementsRepositoryImpl implements AchievementsRepository {
 
   @override
   Future<List<Challenge>> getWeeklyChallenges() async {
-    // Simplified: return a list based on current week
     return [];
   }
 
   @override
   Future<void> completeDailyChallenge(String challengeId, int score) async {
-    // Mark challenge as completed locally
+    await localDataSource.completeDailyChallenge(challengeId, score);
+  }
+
+  @override
+  Future<bool> isDailyChallengeCompleted() async {
+    return localDataSource.isDailyChallengeCompletedSync();
+  }
+
+  @override
+  Future<int> getCompletedLevelsInZone(String zoneId) async {
+    return localDataSource.getCompletedLevelsInZone(zoneId);
   }
 }
