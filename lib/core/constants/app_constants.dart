@@ -1,7 +1,7 @@
 class AppConstants {
   AppConstants._();
 
-  static const String appName = 'Infinite 2048';
+  static const String appName = '2048: Merge Quest';
   static const String appVersion = '0.1.0';
 
   static const String hiveGameStateBox = 'game_state';

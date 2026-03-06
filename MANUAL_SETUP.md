@@ -218,7 +218,7 @@ The app will:
 
 - [ ] Run `flutterfire configure` and verify `firebase_options.dart` has real values
 - [ ] Enable Google and Apple auth providers in Firebase Console
-- [ ] Set up Firestore with security rules
+- [ ] Set up Firestore with security rules (see Leaderboard section below)
 - [ ] Replace all AdMob test IDs with production IDs
 - [ ] Configure RevenueCat with real API keys and products
 - [ ] Configure Apple Sign-In capability in Xcode
@@ -228,3 +228,51 @@ The app will:
 - [ ] Add privacy policy and terms of service URLs in Settings page
 - [ ] Replace app icon and splash screen assets
 - [ ] Test on physical devices (both iOS and Android)
+
+---
+
+## 9. Leaderboard Setup (Firestore)
+
+The leaderboard uses Cloud Firestore. You need to:
+
+### 9.1 Enable Firestore
+
+1. Go to [Firebase Console](https://console.firebase.google.com) > Your Project > Firestore Database
+2. Click **Create database** (if not already created)
+3. Choose a region close to your users
+
+### 9.2 Deploy Security Rules
+
+In the Firebase Console > Firestore > Rules, paste the following:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /leaderboard/{docId} {
+      // Anyone can read leaderboard entries
+      allow read: if true;
+
+      // Only authenticated users can write their own entries
+      allow create, update: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && docId.matches(request.auth.uid + '_.*');
+
+      allow delete: if false;
+    }
+  }
+}
+```
+
+### 9.3 Create Composite Index
+
+For the leaderboard queries to work, create this composite index:
+
+1. Go to Firebase Console > Firestore > Indexes
+2. Click **Add Index** (or it may be auto-created on first query)
+3. Collection: `leaderboard`
+   - Field 1: `mode` (Ascending)
+   - Field 2: `score` (Descending)
+   - Query scope: Collection
+
+Alternatively, run the app and check the debug console -- Firebase will print a direct link to create the required index when it's missing.

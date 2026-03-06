@@ -7,6 +7,8 @@ import 'app/app.dart';
 import 'app/di.dart';
 import 'core/constants/app_constants.dart';
 import 'core/services/ad_service.dart';
+import 'core/services/analytics_service.dart';
+import 'core/services/remote_config_service.dart';
 import 'features/progression/data/datasources/progression_local_datasource.dart';
 import 'firebase_options.dart';
 
@@ -55,6 +57,22 @@ void main() async {
     await sl<AdService>().initialize();
   } catch (_) {
     debugPrint('Ad service initialization failed.');
+  }
+
+  // Initialize Firebase services (only if Firebase is available)
+  if (firebaseAvailable) {
+    try {
+      await sl<AnalyticsService>().initialize();
+      sl<AnalyticsService>().logAppOpened();
+    } catch (_) {
+      debugPrint('Analytics initialization failed.');
+    }
+
+    try {
+      await sl<RemoteConfigService>().initialize();
+    } catch (_) {
+      debugPrint('Remote Config initialization failed.');
+    }
   }
 
   // Record login for streak tracking

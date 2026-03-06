@@ -48,10 +48,7 @@ class AchievementsLocalDataSource {
   Challenge getDailyChallenge() {
     final now = DateTime.now();
     final seed = now.year * 10000 + now.month * 100 + now.day;
-    final boardSize = 4 + (seed % 2);
-    final target = [256, 512, 1024, 2048][seed % 4];
-    final hasMovelimit = seed % 3 == 0;
-    final moveLimit = hasMovelimit ? 80 : null;
+    final template = _dailyTemplates[seed % _dailyTemplates.length];
 
     final completed = isDailyChallengeCompletedSync();
     final bestScore = _getDailyChallengeBestScore();
@@ -60,18 +57,85 @@ class AchievementsLocalDataSource {
       id: 'daily_${now.year}_${now.month}_${now.day}',
       type: ChallengeType.daily,
       title: 'Daily Challenge',
-      description: 'Reach $target on a ${boardSize}x$boardSize board'
-          '${hasMovelimit ? ' in $moveLimit moves' : ''}',
-      boardSize: boardSize,
-      targetTileValue: target,
-      moveLimit: moveLimit,
-      noUndos: seed % 5 == 0,
+      description: template.description,
+      boardSize: template.boardSize,
+      targetTileValue: template.target,
+      moveLimit: template.moveLimit,
+      timeLimitSeconds: template.timeLimitSeconds,
+      noUndos: template.noUndos,
       availableFrom: DateTime(now.year, now.month, now.day),
       availableUntil: DateTime(now.year, now.month, now.day, 23, 59, 59),
       isCompleted: completed,
       bestScore: bestScore,
     );
   }
+
+  static const _dailyTemplates = <_DailyTemplate>[
+    // --- Easy 4x4 ---
+    _DailyTemplate(4, 128, null, null, false, 'Reach 128 on a 4x4 board'),
+    _DailyTemplate(4, 256, null, null, false, 'Reach 256 on a 4x4 board'),
+    _DailyTemplate(4, 256, 60, null, false, 'Reach 256 in 60 moves'),
+    _DailyTemplate(4, 512, null, null, false, 'Reach 512 on a 4x4 board'),
+    _DailyTemplate(4, 256, null, null, true, 'Reach 256 with no undos'),
+    _DailyTemplate(4, 128, 30, null, false, 'Speed run: 128 in 30 moves'),
+    _DailyTemplate(4, 512, 80, null, false, 'Reach 512 in 80 moves'),
+    _DailyTemplate(4, 256, null, 180, false, 'Reach 256 in 3 minutes'),
+    _DailyTemplate(4, 512, null, null, true, 'Reach 512 with no undos'),
+    _DailyTemplate(4, 1024, null, null, false, 'Reach 1024 on a 4x4 board'),
+
+    // --- Medium 4x4 ---
+    _DailyTemplate(4, 1024, 100, null, false, 'Reach 1024 in 100 moves'),
+    _DailyTemplate(4, 1024, null, 300, false, 'Reach 1024 in 5 minutes'),
+    _DailyTemplate(4, 1024, null, null, true, 'Reach 1024 with no undos'),
+    _DailyTemplate(4, 2048, null, null, false, 'Reach 2048 on a 4x4 board'),
+    _DailyTemplate(4, 2048, 200, null, false, 'Reach 2048 in 200 moves'),
+    _DailyTemplate(4, 512, 50, null, true, 'Reach 512 in 50 moves, no undos'),
+    _DailyTemplate(4, 128, 20, null, false, 'Tiny sprint: 128 in 20 moves'),
+    _DailyTemplate(4, 256, 40, null, true, 'Reach 256 in 40 moves, no undos'),
+    _DailyTemplate(4, 2048, null, 600, false, 'Reach 2048 in 10 minutes'),
+    _DailyTemplate(4, 2048, null, null, true, 'Reach 2048 with no undos'),
+
+    // --- Easy 5x5 ---
+    _DailyTemplate(5, 256, null, null, false, 'Reach 256 on a 5x5 board'),
+    _DailyTemplate(5, 512, null, null, false, 'Reach 512 on a 5x5 board'),
+    _DailyTemplate(5, 512, 60, null, false, 'Reach 512 in 60 moves (5x5)'),
+    _DailyTemplate(5, 1024, null, null, false, 'Reach 1024 on a 5x5 board'),
+    _DailyTemplate(5, 1024, 80, null, false, 'Reach 1024 in 80 moves (5x5)'),
+    _DailyTemplate(5, 256, null, 120, false, 'Reach 256 in 2 minutes (5x5)'),
+    _DailyTemplate(5, 512, null, null, true, 'Reach 512 with no undos (5x5)'),
+    _DailyTemplate(5, 2048, null, null, false, 'Reach 2048 on a 5x5 board'),
+    _DailyTemplate(5, 2048, 120, null, false, 'Reach 2048 in 120 moves (5x5)'),
+    _DailyTemplate(5, 1024, null, null, true, 'Reach 1024, no undos (5x5)'),
+
+    // --- Hard 5x5 ---
+    _DailyTemplate(5, 2048, null, null, true, 'Reach 2048 with no undos (5x5)'),
+    _DailyTemplate(5, 4096, null, null, false, 'Reach 4096 on a 5x5 board'),
+    _DailyTemplate(5, 4096, 200, null, false, 'Reach 4096 in 200 moves (5x5)'),
+    _DailyTemplate(5, 2048, null, 480, false, 'Reach 2048 in 8 minutes (5x5)'),
+    _DailyTemplate(5, 4096, null, null, true, 'Reach 4096 with no undos (5x5)'),
+
+    // --- 3x3 sprints ---
+    _DailyTemplate(3, 64, null, null, false, 'Reach 64 on a tiny 3x3 board'),
+    _DailyTemplate(3, 128, null, null, false, 'Reach 128 on a 3x3 board'),
+    _DailyTemplate(3, 64, 25, null, false, 'Reach 64 in 25 moves (3x3)'),
+    _DailyTemplate(3, 128, null, 120, false, 'Reach 128 in 2 minutes (3x3)'),
+    _DailyTemplate(3, 128, null, null, true, 'Reach 128, no undos (3x3)'),
+    _DailyTemplate(3, 256, null, null, false, 'Reach 256 on a 3x3 board'),
+    _DailyTemplate(3, 64, 15, null, true, 'Micro challenge: 64 in 15 moves'),
+
+    // --- 6x6 endurance ---
+    _DailyTemplate(6, 512, null, null, false, 'Reach 512 on a big 6x6 board'),
+    _DailyTemplate(6, 1024, null, null, false, 'Reach 1024 on a 6x6 board'),
+    _DailyTemplate(6, 2048, null, null, false, 'Reach 2048 on a 6x6 board'),
+    _DailyTemplate(6, 1024, 100, null, false, 'Reach 1024 in 100 moves (6x6)'),
+    _DailyTemplate(6, 2048, null, 600, false, 'Reach 2048 in 10 min (6x6)'),
+    _DailyTemplate(6, 4096, null, null, false, 'Reach 4096 on a 6x6 board'),
+
+    // --- Timed blitz ---
+    _DailyTemplate(4, 128, null, 60, false, 'Blitz: reach 128 in 1 minute'),
+    _DailyTemplate(4, 256, null, 90, true, 'Blitz: 256 in 90s, no undos'),
+  ];
+
 
   Future<void> completeDailyChallenge(String challengeId, int score) async {
     final now = DateTime.now();
@@ -189,7 +253,11 @@ class AchievementsLocalDataSource {
     return count;
   }
 
+  // Keep in sync with router: the challenge route reads boardSize/target/etc
+  // from the Challenge entity, so adding new fields here just works.
+
   List<Achievement> _defaultAchievements() => [
+        // --- PROGRESSION (10) ---
         const Achievement(
           id: 'first_steps',
           title: 'First Steps',
@@ -197,6 +265,14 @@ class AchievementsLocalDataSource {
           category: AchievementCategory.progression,
           iconName: 'directions_walk',
           targetValue: 1,
+        ),
+        const Achievement(
+          id: 'getting_warmed_up',
+          title: 'Getting Warmed Up',
+          description: 'Complete 5 levels',
+          category: AchievementCategory.progression,
+          iconName: 'whatshot',
+          targetValue: 5,
         ),
         const Achievement(
           id: 'zone_conqueror',
@@ -215,6 +291,14 @@ class AchievementsLocalDataSource {
           targetValue: 25,
         ),
         const Achievement(
+          id: 'zone_hopper',
+          title: 'Zone Hopper',
+          description: 'Play a level in 3 different zones',
+          category: AchievementCategory.progression,
+          iconName: 'explore',
+          targetValue: 3,
+        ),
+        const Achievement(
           id: 'infinite_seeker',
           title: 'Infinite Seeker',
           description: 'Complete all 50 story levels',
@@ -223,12 +307,54 @@ class AchievementsLocalDataSource {
           targetValue: 50,
         ),
         const Achievement(
+          id: 'daily_warrior',
+          title: 'Daily Warrior',
+          description: 'Complete 10 daily challenges',
+          category: AchievementCategory.progression,
+          iconName: 'today',
+          targetValue: 10,
+        ),
+        const Achievement(
+          id: 'weekly_champion',
+          title: 'Weekly Champion',
+          description: 'Complete 5 weekly challenges',
+          category: AchievementCategory.progression,
+          iconName: 'date_range',
+          targetValue: 5,
+        ),
+        const Achievement(
+          id: 'endless_explorer',
+          title: 'Endless Explorer',
+          description: 'Play 10 endless mode games',
+          category: AchievementCategory.progression,
+          iconName: 'all_inclusive',
+          targetValue: 10,
+        ),
+        const Achievement(
+          id: 'level_10',
+          title: 'Rising Star',
+          description: 'Reach player level 10',
+          category: AchievementCategory.progression,
+          iconName: 'trending_up',
+          targetValue: 10,
+        ),
+
+        // --- SKILL (10) ---
+        const Achievement(
           id: 'perfectionist',
           title: 'Perfectionist',
           description: 'Earn 3 stars on 10 levels',
           category: AchievementCategory.skill,
           iconName: 'star',
           targetValue: 10,
+        ),
+        const Achievement(
+          id: 'flawless',
+          title: 'Flawless',
+          description: 'Earn 3 stars on 25 levels',
+          category: AchievementCategory.skill,
+          iconName: 'stars',
+          targetValue: 25,
         ),
         const Achievement(
           id: 'no_crutch',
@@ -239,6 +365,14 @@ class AchievementsLocalDataSource {
           targetValue: 5,
         ),
         const Achievement(
+          id: 'speed_demon',
+          title: 'Speed Demon',
+          description: 'Complete a level in under 30 moves',
+          category: AchievementCategory.skill,
+          iconName: 'speed',
+          targetValue: 1,
+        ),
+        const Achievement(
           id: 'tile_titan',
           title: 'Tile Titan',
           description: 'Create an 8192 tile',
@@ -246,6 +380,48 @@ class AchievementsLocalDataSource {
           iconName: 'emoji_events',
           targetValue: 1,
         ),
+        const Achievement(
+          id: 'merge_master',
+          title: 'Merge Master',
+          description: 'Achieve a 5x combo streak',
+          category: AchievementCategory.skill,
+          iconName: 'bolt',
+          targetValue: 1,
+        ),
+        const Achievement(
+          id: 'score_legend',
+          title: 'Score Legend',
+          description: 'Score over 50,000 in a single level',
+          category: AchievementCategory.skill,
+          iconName: 'leaderboard',
+          targetValue: 1,
+        ),
+        const Achievement(
+          id: 'endless_survivor',
+          title: 'Endless Survivor',
+          description: 'Score over 10,000 in endless mode',
+          category: AchievementCategory.skill,
+          iconName: 'shield',
+          targetValue: 1,
+        ),
+        const Achievement(
+          id: 'endless_legend',
+          title: 'Endless Legend',
+          description: 'Score over 50,000 in endless mode',
+          category: AchievementCategory.skill,
+          iconName: 'workspace_premium',
+          targetValue: 1,
+        ),
+        const Achievement(
+          id: 'no_mercy',
+          title: 'No Mercy',
+          description: 'Complete a level with 0 undos remaining',
+          category: AchievementCategory.skill,
+          iconName: 'gavel',
+          targetValue: 1,
+        ),
+
+        // --- COLLECTION (5) ---
         const Achievement(
           id: 'demolition_expert',
           title: 'Demolition Expert',
@@ -263,12 +439,54 @@ class AchievementsLocalDataSource {
           targetValue: 100,
         ),
         const Achievement(
+          id: 'wildcard_wizard',
+          title: 'Wildcard Wizard',
+          description: 'Merge 30 wildcard tiles',
+          category: AchievementCategory.collection,
+          iconName: 'auto_awesome',
+          targetValue: 30,
+        ),
+        const Achievement(
+          id: 'multiplier_mania',
+          title: 'Multiplier Mania',
+          description: 'Use 25 multiplier tiles',
+          category: AchievementCategory.collection,
+          iconName: 'close',
+          targetValue: 25,
+        ),
+        const Achievement(
+          id: 'total_merges_1k',
+          title: 'Merger Extraordinaire',
+          description: 'Perform 1,000 total merges',
+          category: AchievementCategory.collection,
+          iconName: 'merge_type',
+          targetValue: 1000,
+        ),
+
+        // --- STREAK (5) ---
+        const Achievement(
           id: 'daily_dedication',
           title: 'Daily Dedication',
           description: 'Play 7 days in a row',
           category: AchievementCategory.streak,
           iconName: 'calendar_today',
           targetValue: 7,
+        ),
+        const Achievement(
+          id: 'fortnight_fury',
+          title: 'Fortnight Fury',
+          description: 'Play 14 days in a row',
+          category: AchievementCategory.streak,
+          iconName: 'event_repeat',
+          targetValue: 14,
+        ),
+        const Achievement(
+          id: 'monthly_master',
+          title: 'Monthly Master',
+          description: 'Play 30 days in a row',
+          category: AchievementCategory.streak,
+          iconName: 'military_tech',
+          targetValue: 30,
         ),
         const Achievement(
           id: 'marathon',
@@ -278,5 +496,31 @@ class AchievementsLocalDataSource {
           iconName: 'directions_run',
           targetValue: 10,
         ),
+        const Achievement(
+          id: 'thousand_moves',
+          title: 'Thousand Moves',
+          description: 'Make 1,000 total moves across all games',
+          category: AchievementCategory.streak,
+          iconName: 'swap_horiz',
+          targetValue: 1000,
+        ),
       ];
+}
+
+class _DailyTemplate {
+  final int boardSize;
+  final int target;
+  final int? moveLimit;
+  final int? timeLimitSeconds;
+  final bool noUndos;
+  final String description;
+
+  const _DailyTemplate(
+    this.boardSize,
+    this.target,
+    this.moveLimit,
+    this.timeLimitSeconds,
+    this.noUndos,
+    this.description,
+  );
 }

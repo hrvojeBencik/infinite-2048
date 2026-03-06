@@ -272,22 +272,29 @@ class GameEngine {
     if (explodedIds.isEmpty) return tiles;
 
     final toRemove = <String>{};
+    // Cardinal directions only (up, down, left, right) -- no diagonals
+    const cardinalDirs = [(0, 1), (0, -1), (1, 0), (-1, 0)];
+
     for (final bombId in explodedIds) {
       final bomb = tiles.where((t) => t.id == bombId).firstOrNull;
       if (bomb == null) continue;
-      for (int dr = -1; dr <= 1; dr++) {
-        for (int dc = -1; dc <= 1; dc++) {
-          if (dr == 0 && dc == 0) continue;
-          final nr = bomb.row + dr;
-          final nc = bomb.col + dc;
-          if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
-          final target = tiles.where((t) => t.row == nr && t.col == nc).firstOrNull;
-          if (target != null && target.specialType != SpecialTileType.blocker) {
-            toRemove.add(target.id);
-          }
-        }
+
+      for (final dir in cardinalDirs) {
+        final nr = bomb.row + dir.$1;
+        final nc = bomb.col + dir.$2;
+        if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
+        final target =
+            tiles.where((t) => t.row == nr && t.col == nc).firstOrNull;
+        if (target == null) continue;
+        if (target.specialType == SpecialTileType.blocker) continue;
+        // Protect high-value tiles (64+) so bombs clear clutter without
+        // wiping the player's progress toward the target tile.
+        if (target.value >= 64) continue;
+        toRemove.add(target.id);
       }
-      toRemove.add(bombId);
+      // The merged bomb tile itself STAYS on the board (it already merged
+      // into a normal tile with a higher value -- removing it was the main
+      // reason bombs felt overpowered).
     }
 
     return tiles.where((t) => !toRemove.contains(t.id)).toList();

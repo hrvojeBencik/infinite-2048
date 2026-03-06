@@ -3,8 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/di.dart';
 import '../../../../core/services/ad_service.dart';
+import '../../../../core/services/analytics_service.dart';
 import '../../../../core/services/mechanic_intro_service.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../leaderboard/data/datasources/leaderboard_remote_datasource.dart';
+import '../../../leaderboard/domain/entities/leaderboard_entry.dart';
+import '../../../../core/services/rate_app_service.dart';
 import '../../../../core/services/sound_service.dart';
+import '../../../statistics/data/datasources/statistics_local_datasource.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../achievements/presentation/bloc/achievements_bloc.dart';
 import '../../../onboarding/data/datasources/onboarding_local_datasource.dart';
@@ -120,6 +126,16 @@ class _GamePageState extends State<GamePage> {
       HapticService.instance.bomb();
     } else if (state.lastMergeCount > 0) {
       HapticService.instance.merge();
+    }
+
+    if (state.lastMergeCount > 0 || state.hadBombExplosion) {
+      try {
+        sl<StatisticsLocalDataSource>().recordMove(
+          mergeCount: state.lastMergeCount,
+          hadBombExplosion: state.hadBombExplosion,
+          comboCount: state.comboCount,
+        );
+      } catch (_) {}
     }
   }
 
@@ -414,6 +430,80 @@ class _GamePageState extends State<GamePage> {
         isDailyChallenge: widget.isDailyChallenge,
       ));
     } catch (_) {}
+
+    try {
+      sl<StatisticsLocalDataSource>().recordLevelCompleted(
+        score: state.session.board.score,
+        stars: state.stars,
+        highestTile: state.session.board.highestTile,
+        merges: state.session.board.score ~/ 4,
+        moves: state.session.board.moveCount,
+        undosUsed: 3 - state.session.undosRemaining,
+        bombExplosions: 0,
+        bestCombo: 0,
+      );
+    } catch (_) {}
+
+    _checkRateAppPrompt(state.stars);
+
+    try {
+      sl<AnalyticsService>().logLevelCompleted(
+        levelId: state.level.id,
+        score: state.session.board.score,
+        stars: state.stars,
+        moves: state.session.board.moveCount,
+        highestTile: state.session.board.highestTile,
+      );
+    } catch (_) {}
+
+    _submitLeaderboardScore(
+      context,
+      score: state.session.board.score,
+      highestTile: state.session.board.highestTile,
+    );
+  }
+
+  void _checkRateAppPrompt(int stars) {
+    final rateService = sl<RateAppService>();
+    rateService.recordLevelCompleted(stars: stars);
+
+    if (rateService.shouldPromptForReview()) {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) rateService.requestReview();
+      });
+    }
+  }
+
+  void _submitLeaderboardScore(
+    BuildContext context, {
+    required int score,
+    required int highestTile,
+  }) {
+    if (!sl.isRegistered<LeaderboardRemoteDataSource>()) return;
+
+    try {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is! AuthAuthenticated) return;
+
+      final user = authState.user;
+      LeaderboardMode mode;
+      if (widget.level.id == 'daily_challenge') {
+        mode = LeaderboardMode.daily;
+      } else if (widget.level.id == 'weekly_challenge') {
+        mode = LeaderboardMode.weekly;
+      } else {
+        mode = LeaderboardMode.story;
+      }
+
+      sl<LeaderboardRemoteDataSource>().submitScore(
+        uid: user.uid,
+        displayName: user.displayName ?? 'Player',
+        photoUrl: user.photoUrl,
+        score: score,
+        highestTile: highestTile,
+        mode: mode,
+      );
+    } catch (_) {}
   }
 
   void _showLevelComplete(BuildContext context, GameWon state) {
@@ -441,6 +531,15 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _showGameOver(BuildContext context, GameLost state) {
+    try {
+      sl<AnalyticsService>().logLevelFailed(
+        levelId: state.level.id,
+        score: state.session.board.score,
+        moves: state.session.board.moveCount,
+        highestTile: state.session.board.highestTile,
+      );
+    } catch (_) {}
+
     showDialog(
       context: context,
       barrierDismissible: false,

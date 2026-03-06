@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'di.dart';
+import '../core/services/analytics_service.dart';
 import '../features/dev/presentation/pages/dev_options_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
 import '../features/levels/presentation/pages/zone_selection_page.dart';
@@ -18,6 +19,12 @@ import '../features/auth/presentation/pages/profile_page.dart';
 import '../features/subscription/presentation/pages/paywall_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/progression/presentation/pages/theme_selection_page.dart';
+import '../features/statistics/presentation/pages/statistics_page.dart';
+import '../features/endless/presentation/bloc/endless_bloc.dart';
+import '../features/endless/presentation/pages/endless_game_page.dart';
+import '../features/leaderboard/presentation/bloc/leaderboard_bloc.dart';
+import '../features/leaderboard/presentation/pages/leaderboard_page.dart';
+import '../features/leaderboard/domain/entities/leaderboard_entry.dart';
 import '../features/levels/data/datasources/levels_local_datasource.dart';
 import '../features/levels/domain/entities/level.dart';
 
@@ -26,6 +33,11 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
+  observers: [
+    if (sl.isRegistered<AnalyticsService>() &&
+        sl<AnalyticsService>().observer != null)
+      sl<AnalyticsService>().observer!,
+  ],
   routes: [
     GoRoute(
       path: '/',
@@ -137,6 +149,34 @@ final GoRouter appRouter = GoRouter(
       path: '/themes',
       builder: (context, state) => const ThemeSelectionPage(),
     ),
+    GoRoute(
+      path: '/endless',
+      builder: (context, state) {
+        return BlocProvider(
+          create: (_) => sl<EndlessBloc>()..add(const StartEndless()),
+          child: const EndlessGamePage(),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/statistics',
+      builder: (context, state) => const StatisticsPage(),
+    ),
+    if (sl.isRegistered<LeaderboardBloc>())
+      GoRoute(
+        path: '/leaderboard',
+        builder: (context, state) {
+          final uid = state.extra as String?;
+          return BlocProvider(
+            create: (_) => sl<LeaderboardBloc>()
+              ..add(LoadLeaderboard(
+                mode: LeaderboardMode.endless,
+                currentUid: uid,
+              )),
+            child: const LeaderboardPage(),
+          );
+        },
+      ),
     GoRoute(
       path: '/achievements',
       builder: (context, state) {

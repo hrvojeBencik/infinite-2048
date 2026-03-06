@@ -1,6 +1,9 @@
 import 'package:get_it/get_it.dart';
 import '../core/services/ad_service.dart';
+import '../core/services/analytics_service.dart';
 import '../core/services/mechanic_intro_service.dart';
+import '../core/services/rate_app_service.dart';
+import '../core/services/remote_config_service.dart';
 import '../core/services/sound_service.dart';
 import '../features/game/data/datasources/game_local_datasource.dart';
 import '../features/game/data/repositories/game_repository_impl.dart';
@@ -22,14 +25,22 @@ import '../features/subscription/domain/repositories/subscription_repository.dar
 import '../features/subscription/presentation/bloc/subscription_bloc.dart';
 import '../features/onboarding/data/datasources/onboarding_local_datasource.dart';
 import '../features/progression/data/datasources/progression_local_datasource.dart';
+import '../features/statistics/data/datasources/statistics_local_datasource.dart';
+import '../features/endless/data/datasources/endless_local_datasource.dart';
+import '../features/endless/presentation/bloc/endless_bloc.dart';
+import '../features/leaderboard/data/datasources/leaderboard_remote_datasource.dart';
+import '../features/leaderboard/presentation/bloc/leaderboard_bloc.dart';
 
 final sl = GetIt.instance;
 
 Future<void> initDependencies({required bool firebaseAvailable}) async {
   // Services
   sl.registerLazySingleton<AdService>(() => AdService());
+  sl.registerLazySingleton<AnalyticsService>(() => AnalyticsService());
   sl.registerLazySingleton<MechanicIntroService>(() => MechanicIntroService());
   sl.registerLazySingleton<SoundService>(() => SoundService());
+  sl.registerLazySingleton<RateAppService>(() => RateAppService());
+  sl.registerLazySingleton<RemoteConfigService>(() => RemoteConfigService());
 
   // Data sources
   sl.registerLazySingleton<GameLocalDataSource>(() => GameLocalDataSource());
@@ -40,6 +51,15 @@ Future<void> initDependencies({required bool firebaseAvailable}) async {
       () => OnboardingLocalDataSource());
   sl.registerLazySingleton<ProgressionLocalDataSource>(
       () => ProgressionLocalDataSource());
+  sl.registerLazySingleton<StatisticsLocalDataSource>(
+      () => StatisticsLocalDataSource());
+  sl.registerLazySingleton<EndlessLocalDataSource>(
+      () => EndlessLocalDataSource());
+
+  if (firebaseAvailable) {
+    sl.registerLazySingleton<LeaderboardRemoteDataSource>(
+        () => LeaderboardRemoteDataSource());
+  }
 
   // Repositories
   sl.registerLazySingleton<GameRepository>(
@@ -73,4 +93,13 @@ Future<void> initDependencies({required bool firebaseAvailable}) async {
   sl.registerFactory<AuthBloc>(
     () => AuthBloc(repository: firebaseAvailable ? sl<AuthRepository>() : null),
   );
+  sl.registerFactory<EndlessBloc>(
+    () => EndlessBloc(dataSource: sl<EndlessLocalDataSource>()),
+  );
+
+  if (firebaseAvailable) {
+    sl.registerFactory<LeaderboardBloc>(
+      () => LeaderboardBloc(dataSource: sl<LeaderboardRemoteDataSource>()),
+    );
+  }
 }

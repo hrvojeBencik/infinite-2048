@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../../../app/di.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/services/sound_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_card.dart';
@@ -15,13 +18,11 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _soundEnabled = true;
   bool _hapticsEnabled = true;
 
   @override
   void initState() {
     super.initState();
-    _soundEnabled = sl<SoundService>().isSoundEnabled;
     _hapticsEnabled = HapticService.instance.isEnabled;
   }
 
@@ -66,19 +67,19 @@ class _SettingsPageState extends State<SettingsPage> {
                       GlassCard(
                         child: Column(
                           children: [
-                            _SettingsTile(
-                              icon: Icons.volume_up_rounded,
-                              title: 'Sound Effects',
-                              trailing: Switch.adaptive(
-                                value: _soundEnabled,
-                                onChanged: (v) {
-                                  setState(() => _soundEnabled = v);
-                                  sl<SoundService>().setSoundEnabled(v);
-                                },
-                                activeTrackColor: AppColors.primary,
-                              ),
-                            ),
-                            const Divider(color: AppColors.divider, height: 1),
+                            // _SettingsTile(
+                            //   icon: Icons.volume_up_rounded,
+                            //   title: 'Sound Effects',
+                            //   trailing: Switch.adaptive(
+                            //     value: _soundEnabled,
+                            //     onChanged: (v) {
+                            //       setState(() => _soundEnabled = v);
+                            //       sl<SoundService>().setSoundEnabled(v);
+                            //     },
+                            //     activeTrackColor: AppColors.primary,
+                            //   ),
+                            // ),
+                            // const Divider(color: AppColors.divider, height: 1),
                             _SettingsTile(
                               icon: Icons.vibration_rounded,
                               title: 'Haptic Feedback',
@@ -127,13 +128,17 @@ class _SettingsPageState extends State<SettingsPage> {
                             _SettingsTile(
                               icon: Icons.description_outlined,
                               title: 'Privacy Policy',
-                              onTap: () {},
+                              onTap: () => _openUrl(
+                                sl<RemoteConfigService>().privacyPolicyUrl,
+                              ),
                             ),
                             const Divider(color: AppColors.divider, height: 1),
                             _SettingsTile(
                               icon: Icons.gavel_outlined,
                               title: 'Terms of Service',
-                              onTap: () {},
+                              onTap: () => _openUrl(
+                                sl<RemoteConfigService>().termsOfServiceUrl,
+                              ),
                             ),
                           ],
                         ),
@@ -161,6 +166,13 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Widget _sectionTitle(String title) {
@@ -210,14 +222,21 @@ class _SettingsTile extends StatelessWidget {
         ),
       ),
       subtitle: subtitle != null
-          ? Text(subtitle!,
+          ? Text(
+              subtitle!,
               style: const TextStyle(
-                  fontSize: 12, color: AppColors.textTertiary))
+                fontSize: 12,
+                color: AppColors.textTertiary,
+              ),
+            )
           : null,
-      trailing: trailing ??
+      trailing:
+          trailing ??
           (onTap != null
-              ? const Icon(Icons.chevron_right_rounded,
-                  color: AppColors.textTertiary)
+              ? const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textTertiary,
+                )
               : null),
     );
   }
