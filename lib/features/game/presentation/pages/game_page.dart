@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/di.dart';
+import '../../../../core/services/ad_service.dart';
 import '../../../../core/services/mechanic_intro_service.dart';
+import '../../../../core/services/sound_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../achievements/presentation/bloc/achievements_bloc.dart';
+import '../../../onboarding/data/datasources/onboarding_local_datasource.dart';
+import '../../../onboarding/presentation/widgets/tutorial_overlay.dart';
 import '../../domain/entities/game_session.dart';
 import '../../domain/entities/move_direction.dart';
 import '../bloc/game_bloc.dart';
@@ -15,6 +18,10 @@ import '../widgets/score_display.dart';
 import '../widgets/powerup_bar.dart';
 import '../widgets/level_complete_dialog.dart';
 import '../widgets/game_over_dialog.dart';
+import '../widgets/screen_shake.dart';
+import '../widgets/combo_overlay.dart';
+import '../widgets/score_popup.dart';
+import '../widgets/particle_effects.dart';
 import '../../../levels/domain/entities/level.dart';
 
 class GamePage extends StatefulWidget {
@@ -30,9 +37,15 @@ class GamePage extends StatefulWidget {
 class _GamePageState extends State<GamePage> {
   bool _isHammerMode = false;
   bool _introChecked = false;
+  bool _showTutorial = false;
+
+  final _screenShakeKey = GlobalKey<ScreenShakeState>();
+  final _comboKey = GlobalKey<ComboOverlayState>();
+  final _scorePopupKey = GlobalKey<ScorePopupOverlayState>();
+  final _particleKey = GlobalKey<ParticleEffectState>();
 
   void _handleSwipe(MoveDirection direction) {
-    HapticFeedback.lightImpact();
+    HapticService.instance.light();
     context.read<GameBloc>().add(SwipeMade(direction));
   }
 
@@ -44,6 +57,8 @@ class _GamePageState extends State<GamePage> {
   void _checkMechanicIntro(BuildContext context) {
     if (_introChecked) return;
     _introChecked = true;
+
+    _checkTutorial();
 
     final introService = sl<MechanicIntroService>();
     final unseen = introService.getUnseenMechanicsForLevel(widget.level);
@@ -69,6 +84,119 @@ class _GamePageState extends State<GamePage> {
     });
   }
 
+  void _checkTutorial() {
+    final onboarding = sl<OnboardingLocalDataSource>();
+    if (onboarding.hasCompletedTutorial()) return;
+
+    final levelNum = widget.level.levelNumber;
+    if (levelNum >= 1 && levelNum <= 3) {
+      setState(() => _showTutorial = true);
+    }
+  }
+
+  void _onTutorialComplete() {
+    final onboarding = sl<OnboardingLocalDataSource>();
+    onboarding.saveLastTutorialStep(widget.level.levelNumber);
+    if (widget.level.levelNumber >= 3) {
+      onboarding.markTutorialCompleted();
+    }
+    setState(() => _showTutorial = false);
+  }
+
+  void _triggerJuiceEffects(GamePlaying state) {
+    if (state.lastScoreGained > 0) {
+      _scorePopupKey.currentState?.showPopup(state.lastScoreGained);
+      sl<SoundService>().playMerge(state.lastScoreGained);
+    }
+
+    if (state.comboCount >= 2) {
+      _comboKey.currentState?.showCombo(state.comboCount, state.lastScoreGained);
+      HapticService.instance.combo();
+    }
+
+    if (state.hadBombExplosion) {
+      _screenShakeKey.currentState?.shake();
+      _particleKey.currentState?.explode();
+      HapticService.instance.bomb();
+    } else if (state.lastMergeCount > 0) {
+      HapticService.instance.merge();
+    }
+  }
+
+  void _showWatchAdForUndo(BuildContext ctx) {
+    showModalBottomSheet(
+      context: ctx,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.textTertiary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Icon(Icons.undo_rounded, size: 48, color: AppColors.primary),
+            const SizedBox(height: 12),
+            const Text(
+              'Out of Undos!',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Watch a short ad to earn 1 extra undo',
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  sl<AdService>().loadRewardedAd(
+                    onRewarded: () {
+                      if (mounted) {
+                        context.read<GameBloc>().add(const GrantExtraUndo());
+                      }
+                    },
+                  );
+                },
+                icon: const Icon(Icons.play_circle_outline_rounded),
+                label: const Text('Watch Ad'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('No thanks',
+                  style: TextStyle(color: AppColors.textTertiary)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -81,6 +209,7 @@ class _GamePageState extends State<GamePage> {
         listener: (context, state) {
           if (state is GamePlaying) {
             _checkMechanicIntro(context);
+            _triggerJuiceEffects(state);
           }
           if (state is GameWon) {
             _trackAchievements(context, state);
@@ -138,102 +267,130 @@ class _GamePageState extends State<GamePage> {
               child: Container(
                 decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
                 child: SafeArea(
-                  child: Stack(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 8),
-                            Row(
+                  child: ScreenShake(
+                    key: _screenShakeKey,
+                    child: ComboOverlay(
+                      key: _comboKey,
+                      child: Stack(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Column(
                               children: [
-                                IconButton(
-                                  icon: const Icon(Icons.arrow_back_rounded,
-                                      color: AppColors.textPrimary),
-                                  onPressed: _handleBackPress,
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.arrow_back_rounded,
+                                          color: AppColors.textPrimary),
+                                      onPressed: _handleBackPress,
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        widget.isDailyChallenge
+                                            ? 'Daily Challenge'
+                                            : 'Level ${level.levelNumber}',
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.pause_rounded,
+                                          color: AppColors.textPrimary),
+                                      onPressed: () =>
+                                          context.read<GameBloc>().add(const PauseGame()),
+                                    ),
+                                  ],
                                 ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    ScoreDisplay(
+                                        label: 'Score',
+                                        value: session.board.score,
+                                        highlight: true),
+                                    ScoreDisplay(
+                                        label: 'Target', value: level.targetTileValue),
+                                    ScoreDisplay(
+                                        label: 'Moves', value: session.board.moveCount),
+                                  ],
+                                ),
+                                if (level.moveLimit != null) ...[
+                                  const SizedBox(height: 8),
+                                  _MoveLimitIndicator(
+                                    current: session.board.moveCount,
+                                    max: level.moveLimit!,
+                                  ),
+                                ],
+                                const SizedBox(height: 16),
                                 Expanded(
-                                  child: Text(
-                                    widget.isDailyChallenge
-                                        ? 'Daily Challenge'
-                                        : 'Level ${level.levelNumber}',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
+                                  child: Center(
+                                    child: ScorePopupOverlay(
+                                      key: _scorePopupKey,
+                                      child: Stack(
+                                        children: [
+                                          GameBoard(
+                                            board: session.board,
+                                            isHammerMode: _isHammerMode,
+                                            onTileTap: _isHammerMode
+                                                ? (tileId) {
+                                                    HapticService.instance.medium();
+                                                    context
+                                                        .read<GameBloc>()
+                                                        .add(UseHammer(tileId));
+                                                    setState(
+                                                        () => _isHammerMode = false);
+                                                  }
+                                                : null,
+                                          ),
+                                          ParticleEffect(key: _particleKey),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.pause_rounded,
-                                      color: AppColors.textPrimary),
-                                  onPressed: () =>
-                                      context.read<GameBloc>().add(const PauseGame()),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                ScoreDisplay(
-                                    label: 'Score',
-                                    value: session.board.score,
-                                    highlight: true),
-                                ScoreDisplay(
-                                    label: 'Target', value: level.targetTileValue),
-                                ScoreDisplay(
-                                    label: 'Moves', value: session.board.moveCount),
-                              ],
-                            ),
-                            if (level.moveLimit != null) ...[
-                              const SizedBox(height: 8),
-                              _MoveLimitIndicator(
-                                current: session.board.moveCount,
-                                max: level.moveLimit!,
-                              ),
-                            ],
-                            const SizedBox(height: 16),
-                            Expanded(
-                              child: Center(
-                                child: GameBoard(
-                                  board: session.board,
+                                const SizedBox(height: 16),
+                                PowerUpBar(
+                                  session: session,
                                   isHammerMode: _isHammerMode,
-                                  onTileTap: _isHammerMode
-                                      ? (tileId) {
-                                          HapticFeedback.mediumImpact();
-                                          context.read<GameBloc>().add(UseHammer(tileId));
-                                          setState(() => _isHammerMode = false);
-                                        }
-                                      : null,
+                                  onUndo: () {
+                                    if (session.undosRemaining <= 0) {
+                                      _showWatchAdForUndo(context);
+                                      return;
+                                    }
+                                    HapticService.instance.light();
+                                    context.read<GameBloc>().add(const UndoMove());
+                                  },
+                                  onHammer: () {
+                                    HapticService.instance.light();
+                                    setState(() => _isHammerMode = !_isHammerMode);
+                                  },
+                                  onShuffle: () {
+                                    HapticService.instance.medium();
+                                    context.read<GameBloc>().add(const UseShuffle());
+                                  },
+                                  onMergeBoost: () {},
                                 ),
+                                const SizedBox(height: 16),
+                              ],
+                            ),
+                          ),
+                          if (isPaused) _PauseOverlay(onBackPress: _handleBackPress),
+                          if (_showTutorial)
+                            Positioned.fill(
+                              child: TutorialOverlay(
+                                levelNumber: widget.level.levelNumber,
+                                onComplete: _onTutorialComplete,
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            PowerUpBar(
-                              session: session,
-                              isHammerMode: _isHammerMode,
-                              onUndo: () {
-                                HapticFeedback.lightImpact();
-                                context.read<GameBloc>().add(const UndoMove());
-                              },
-                              onHammer: () {
-                                HapticFeedback.lightImpact();
-                                setState(() => _isHammerMode = !_isHammerMode);
-                              },
-                              onShuffle: () {
-                                HapticFeedback.mediumImpact();
-                                context.read<GameBloc>().add(const UseShuffle());
-                              },
-                              onMergeBoost: () {},
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-                        ),
+                        ],
                       ),
-                      if (isPaused) _PauseOverlay(onBackPress: _handleBackPress),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -256,9 +413,7 @@ class _GamePageState extends State<GamePage> {
         undosUsed: 3 - state.session.undosRemaining,
         isDailyChallenge: widget.isDailyChallenge,
       ));
-    } catch (_) {
-      // AchievementsBloc not available in tree (e.g. not provided)
-    }
+    } catch (_) {}
   }
 
   void _showLevelComplete(BuildContext context, GameWon state) {

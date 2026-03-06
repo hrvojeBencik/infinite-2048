@@ -87,3 +87,7 @@ class ResumeFromPause extends GameEvent {
 class SaveAndExit extends GameEvent {
   const SaveAndExit();
 }
+
+class GrantExtraUndo extends GameEvent {
+  const GrantExtraUndo();
+}

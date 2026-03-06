@@ -5,14 +5,18 @@ import '../../domain/entities/move_direction.dart';
 import '../../domain/engine/game_engine.dart';
 import '../../domain/repositories/game_repository.dart';
 import '../../../levels/domain/entities/level.dart';
+import '../../../progression/data/datasources/progression_local_datasource.dart';
 
 part 'game_event.dart';
 part 'game_state.dart';
 
 class GameBloc extends Bloc<GameEvent, GameState> {
   final GameRepository repository;
+  final ProgressionLocalDataSource? progressionDataSource;
+  int _consecutiveMerges = 0;
 
-  GameBloc({required this.repository}) : super(GameInitial()) {
+  GameBloc({required this.repository, this.progressionDataSource})
+      : super(GameInitial()) {
     on<StartGame>(_onStartGame);
     on<ResumeGame>(_onResumeGame);
     on<SwipeMade>(_onSwipeMade);
@@ -23,6 +27,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<PauseGame>(_onPauseGame);
     on<ResumeFromPause>(_onResumeFromPause);
     on<SaveAndExit>(_onSaveAndExit);
+    on<GrantExtraUndo>(_onGrantExtraUndo);
   }
 
   Future<void> _onStartGame(StartGame event, Emitter<GameState> emit) async {
@@ -66,6 +71,12 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     final moveResult = GameEngine.moveTiles(session.board, event.direction);
     if (!moveResult.boardChanged) return;
 
+    if (moveResult.mergeCount > 0) {
+      _consecutiveMerges++;
+    } else {
+      _consecutiveMerges = 0;
+    }
+
     var newBoard = GameEngine.spawnTile(
       moveResult.board,
       spawnRates: currentState.level.specialTileSpawnRates,
@@ -81,6 +92,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       moveHistory: trimmedHistory,
     );
 
+    final hadExplosion = moveResult.explodedTileIds.isNotEmpty;
+
     if (newBoard.highestTile >= currentState.level.targetTileValue) {
       final stars = _calculateStars(newBoard.score, currentState.level);
       newSession = newSession.copyWith(status: GameStatus.won);
@@ -90,6 +103,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         stars: stars,
       );
       await repository.clearGameSession(currentState.level.id);
+      _awardXp(currentState.level, stars);
       emit(GameWon(session: newSession, level: currentState.level, stars: stars));
       return;
     }
@@ -112,7 +126,14 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     }
 
     await repository.saveGameSession(newSession);
-    emit(GamePlaying(session: newSession, level: currentState.level));
+    emit(GamePlaying(
+      session: newSession,
+      level: currentState.level,
+      comboCount: _consecutiveMerges,
+      lastScoreGained: moveResult.scoreGained,
+      hadBombExplosion: hadExplosion,
+      lastMergeCount: moveResult.mergeCount,
+    ));
   }
 
   void _onUndoMove(UndoMove event, Emitter<GameState> emit) {
@@ -217,6 +238,23 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       final sessionToSave = currentState.session.copyWith(status: GameStatus.playing);
       await repository.saveGameSession(sessionToSave);
     }
+  }
+
+  void _onGrantExtraUndo(GrantExtraUndo event, Emitter<GameState> emit) {
+    final currentState = state;
+    if (currentState is! GamePlaying) return;
+    final newSession = currentState.session.copyWith(
+      undosRemaining: currentState.session.undosRemaining + 1,
+    );
+    emit(GamePlaying(session: newSession, level: currentState.level));
+  }
+
+  void _awardXp(Level level, int stars) {
+    final ds = progressionDataSource;
+    if (ds == null) return;
+    final baseXp = 20 + (level.boardSize * 5);
+    final starBonus = stars * 10;
+    ds.addXp(baseXp + starBonus);
   }
 
   int _calculateStars(int score, Level level) {

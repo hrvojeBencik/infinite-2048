@@ -7,6 +7,7 @@ import 'app/app.dart';
 import 'app/di.dart';
 import 'core/constants/app_constants.dart';
 import 'core/services/ad_service.dart';
+import 'features/progression/data/datasources/progression_local_datasource.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -55,6 +56,12 @@ void main() async {
   } catch (_) {
     debugPrint('Ad service initialization failed.');
   }
+
+  // Record login for streak tracking
+  try {
+    final progressionDs = sl<ProgressionLocalDataSource>();
+    await progressionDs.recordLogin();
+  } catch (_) {}
 
   runApp(const InfiniteApp());
 }

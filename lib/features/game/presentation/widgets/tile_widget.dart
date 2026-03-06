@@ -33,10 +33,10 @@ class TileWidget extends StatelessWidget {
       tileContent = tileContent
           .animate()
           .scale(
-            begin: const Offset(1.2, 1.2),
+            begin: const Offset(1.3, 1.3),
             end: const Offset(1.0, 1.0),
-            duration: 200.ms,
-            curve: Curves.easeOut,
+            duration: 350.ms,
+            curve: Curves.elasticOut,
           );
     } else if (tile.wasSpawned) {
       tileContent = tileContent
@@ -44,9 +44,10 @@ class TileWidget extends StatelessWidget {
           .scale(
             begin: const Offset(0.0, 0.0),
             end: const Offset(1.0, 1.0),
-            duration: 150.ms,
-            curve: Curves.easeOut,
-          );
+            duration: 300.ms,
+            curve: Curves.elasticOut,
+          )
+          .fadeIn(duration: 150.ms);
     }
 
     if (onTap != null) {

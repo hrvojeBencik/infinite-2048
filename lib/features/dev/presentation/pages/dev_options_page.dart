@@ -11,6 +11,8 @@ import '../../../achievements/presentation/bloc/achievements_bloc.dart';
 import '../../../game/domain/entities/special_tile_type.dart';
 import '../../../levels/data/datasources/levels_local_datasource.dart';
 import '../../../levels/domain/entities/level.dart';
+import '../../../onboarding/data/datasources/onboarding_local_datasource.dart';
+import '../../../progression/data/datasources/progression_local_datasource.dart';
 
 class DevOptionsPage extends StatefulWidget {
   const DevOptionsPage({super.key});
@@ -100,6 +102,9 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
                       const SizedBox(height: 24),
                       _sectionTitle('MECHANIC INTROS'),
                       _buildMechanicIntroSection(),
+                      const SizedBox(height: 24),
+                      _sectionTitle('PROGRESSION'),
+                      _buildProgressionSection(),
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -483,6 +488,51 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
               }
               _showSnack('Mechanic intros reset');
             },
+          ),
+          const Divider(color: AppColors.divider, height: 1),
+          _DevActionTile(
+            icon: Icons.school_rounded,
+            iconColor: AppColors.zoneGlacier,
+            title: 'Reset Tutorial',
+            subtitle: 'Re-show onboarding tutorial steps',
+            onTap: () async {
+              await sl<OnboardingLocalDataSource>().resetTutorial();
+              _showSnack('Tutorial reset');
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressionSection() {
+    return GlassCard(
+      child: Column(
+        children: [
+          _DevActionTile(
+            icon: Icons.add_circle_outline_rounded,
+            iconColor: AppColors.success,
+            title: 'Add 500 XP',
+            subtitle: 'Grant XP for testing level-ups',
+            onTap: () async {
+              await sl<ProgressionLocalDataSource>().addXp(500);
+              _showSnack('Added 500 XP');
+            },
+          ),
+          const Divider(color: AppColors.divider, height: 1),
+          _DevActionTile(
+            icon: Icons.restart_alt_rounded,
+            iconColor: AppColors.error,
+            title: 'Reset Progression',
+            subtitle: 'Reset XP, themes, and streak',
+            onTap: () => _confirmAction(
+              'Reset all progression data?',
+              () async {
+                final box = Hive.box(AppConstants.hiveSettingsBox);
+                await box.delete('player_profile');
+                _showSnack('Progression reset');
+              },
+            ),
           ),
         ],
       ),

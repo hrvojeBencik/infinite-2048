@@ -1,16 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../constants/app_constants.dart';
+import '../../features/progression/domain/entities/tile_theme.dart'
+    as theme_model;
 import 'app_colors.dart';
 
 class TileThemes {
   TileThemes._();
 
+  static theme_model.TileTheme _activeTheme() {
+    try {
+      final box = Hive.box(AppConstants.hiveSettingsBox);
+      final data = box.get('player_profile');
+      if (data != null) {
+        final decoded = _extractThemeId(data as String);
+        if (decoded != null) {
+          return theme_model.TileThemes.getById(decoded);
+        }
+      }
+    } catch (_) {}
+    return theme_model.TileThemes.classic;
+  }
+
+  static String? _extractThemeId(String json) {
+    final match = RegExp(r'"activeTileThemeId"\s*:\s*"([^"]+)"').firstMatch(json);
+    return match?.group(1);
+  }
+
   static Color tileColor(int value) {
-    return _defaultTileColors[value] ?? AppColors.primary;
+    return _activeTheme().colorForValue(value);
   }
 
   static Color tileTextColor(int value) {
-    if (value <= 4) return const Color(0xFF776E65);
-    return Colors.white;
+    return _activeTheme().textColorForValue(value);
   }
 
   static double tileFontSize(int value, double cellSize) {
@@ -21,25 +43,6 @@ class TileThemes {
     if (digits == 5) return cellSize * 0.22;
     return cellSize * 0.18;
   }
-
-  static final Map<int, Color> _defaultTileColors = {
-    2: const Color(0xFFE8E0D6),
-    4: const Color(0xFFE8DCC4),
-    8: const Color(0xFFF2B179),
-    16: const Color(0xFFF59563),
-    32: const Color(0xFFF67C5F),
-    64: const Color(0xFFF65E3B),
-    128: const Color(0xFFEDCF72),
-    256: const Color(0xFFEDCC61),
-    512: const Color(0xFFEDC850),
-    1024: const Color(0xFFEDC53F),
-    2048: const Color(0xFFEDC22E),
-    4096: const Color(0xFF6C63FF),
-    8192: const Color(0xFF5A4FCF),
-    16384: const Color(0xFFFF4081),
-    32768: const Color(0xFFFF1744),
-    65536: const Color(0xFFFFD700),
-  };
 
   static Color specialTileOverlay(String type) {
     switch (type) {

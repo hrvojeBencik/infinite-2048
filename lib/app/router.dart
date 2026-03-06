@@ -17,6 +17,7 @@ import '../features/achievements/data/datasources/achievements_local_datasource.
 import '../features/auth/presentation/pages/profile_page.dart';
 import '../features/subscription/presentation/pages/paywall_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
+import '../features/progression/presentation/pages/theme_selection_page.dart';
 import '../features/levels/data/datasources/levels_local_datasource.dart';
 import '../features/levels/domain/entities/level.dart';
 
@@ -97,6 +98,44 @@ final GoRouter appRouter = GoRouter(
           child: GamePage(level: dailyLevel, isDailyChallenge: true),
         );
       },
+    ),
+    GoRoute(
+      path: '/challenge/weekly',
+      builder: (context, state) {
+        final achievementsDs = sl<AchievementsLocalDataSource>();
+        final challenge = achievementsDs.getWeeklyChallenge();
+
+        if (challenge.isCompleted) {
+          return const Scaffold(
+            body: Center(child: Text('Weekly challenge already completed!')),
+          );
+        }
+
+        final weeklyLevel = Level(
+          id: 'weekly_challenge',
+          zoneId: 'weekly',
+          levelNumber: 0,
+          boardSize: challenge.boardSize,
+          targetTileValue: challenge.targetTileValue,
+          moveLimit: challenge.moveLimit,
+          timeLimitSeconds: challenge.timeLimitSeconds,
+          starThreshold2: challenge.targetTileValue * 2,
+          starThreshold3: challenge.targetTileValue * 4,
+        );
+
+        return BlocProvider(
+          create: (_) => sl<GameBloc>()
+            ..add(StartGame(
+              level: weeklyLevel,
+              undosAvailable: challenge.noUndos ? 0 : 3,
+            )),
+          child: GamePage(level: weeklyLevel, isDailyChallenge: false),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/themes',
+      builder: (context, state) => const ThemeSelectionPage(),
     ),
     GoRoute(
       path: '/achievements',

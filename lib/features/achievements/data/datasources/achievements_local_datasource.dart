@@ -108,6 +108,74 @@ class AchievementsLocalDataSource {
   String _dailyChallengeKey(DateTime date) =>
       'daily_completed_${date.year}_${date.month}_${date.day}';
 
+  Challenge getWeeklyChallenge() {
+    final now = DateTime.now();
+    final weekday = now.weekday;
+    final monday = now.subtract(Duration(days: weekday - 1));
+    final sunday = monday.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+
+    final seed = monday.year * 10000 + monday.month * 100 + monday.day;
+    final boardSize = 5 + (seed % 2);
+    final target = [1024, 2048, 4096][seed % 3];
+    final moveLimit = seed % 2 == 0 ? 120 : null;
+
+    final weekKey = _weeklyChallengeKey(monday);
+    final completed = _isWeeklyChallengeCompletedSync(weekKey);
+    final bestScore = _getWeeklyChallengeBestScore(weekKey);
+
+    return Challenge(
+      id: 'weekly_${monday.year}_${monday.month}_${monday.day}',
+      type: ChallengeType.weekly,
+      title: 'Weekly Challenge',
+      description: 'Reach $target on a ${boardSize}x$boardSize board'
+          '${moveLimit != null ? ' in $moveLimit moves' : ''}',
+      boardSize: boardSize,
+      targetTileValue: target,
+      moveLimit: moveLimit,
+      noUndos: seed % 7 == 0,
+      availableFrom: DateTime(monday.year, monday.month, monday.day),
+      availableUntil: sunday,
+      isCompleted: completed,
+      bestScore: bestScore,
+    );
+  }
+
+  Future<void> completeWeeklyChallenge(String challengeId, int score) async {
+    final now = DateTime.now();
+    final weekday = now.weekday;
+    final monday = now.subtract(Duration(days: weekday - 1));
+    final weekKey = _weeklyChallengeKey(monday);
+
+    final existing = _box.get(weekKey);
+    Map<String, dynamic> data = {};
+    if (existing != null) {
+      data = jsonDecode(existing as String) as Map<String, dynamic>;
+    }
+    final prevScore = data['bestScore'] as int? ?? 0;
+    data['completed'] = true;
+    data['challengeId'] = challengeId;
+    data['bestScore'] = score > prevScore ? score : prevScore;
+    data['completedAt'] = now.toIso8601String();
+    await _box.put(weekKey, jsonEncode(data));
+  }
+
+  bool _isWeeklyChallengeCompletedSync(String weekKey) {
+    final data = _box.get(weekKey);
+    if (data == null) return false;
+    final map = jsonDecode(data as String) as Map<String, dynamic>;
+    return map['completed'] as bool? ?? false;
+  }
+
+  int? _getWeeklyChallengeBestScore(String weekKey) {
+    final data = _box.get(weekKey);
+    if (data == null) return null;
+    final map = jsonDecode(data as String) as Map<String, dynamic>;
+    return map['bestScore'] as int?;
+  }
+
+  String _weeklyChallengeKey(DateTime monday) =>
+      'weekly_completed_${monday.year}_${monday.month}_${monday.day}';
+
   int getCompletedLevelsInZone(String zoneId) {
     int count = 0;
     for (final key in _progressBox.keys) {

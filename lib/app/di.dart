@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import '../core/services/ad_service.dart';
 import '../core/services/mechanic_intro_service.dart';
+import '../core/services/sound_service.dart';
 import '../features/game/data/datasources/game_local_datasource.dart';
 import '../features/game/data/repositories/game_repository_impl.dart';
 import '../features/game/domain/repositories/game_repository.dart';
@@ -19,6 +20,8 @@ import '../features/achievements/presentation/bloc/achievements_bloc.dart';
 import '../features/subscription/data/repositories/subscription_repository_impl.dart';
 import '../features/subscription/domain/repositories/subscription_repository.dart';
 import '../features/subscription/presentation/bloc/subscription_bloc.dart';
+import '../features/onboarding/data/datasources/onboarding_local_datasource.dart';
+import '../features/progression/data/datasources/progression_local_datasource.dart';
 
 final sl = GetIt.instance;
 
@@ -26,12 +29,17 @@ Future<void> initDependencies({required bool firebaseAvailable}) async {
   // Services
   sl.registerLazySingleton<AdService>(() => AdService());
   sl.registerLazySingleton<MechanicIntroService>(() => MechanicIntroService());
+  sl.registerLazySingleton<SoundService>(() => SoundService());
 
   // Data sources
   sl.registerLazySingleton<GameLocalDataSource>(() => GameLocalDataSource());
   sl.registerLazySingleton<LevelsLocalDataSource>(() => LevelsLocalDataSource());
   sl.registerLazySingleton<AchievementsLocalDataSource>(
       () => AchievementsLocalDataSource());
+  sl.registerLazySingleton<OnboardingLocalDataSource>(
+      () => OnboardingLocalDataSource());
+  sl.registerLazySingleton<ProgressionLocalDataSource>(
+      () => ProgressionLocalDataSource());
 
   // Repositories
   sl.registerLazySingleton<GameRepository>(
@@ -53,7 +61,10 @@ Future<void> initDependencies({required bool firebaseAvailable}) async {
   }
 
   // BLoCs
-  sl.registerFactory<GameBloc>(() => GameBloc(repository: sl()));
+  sl.registerFactory<GameBloc>(() => GameBloc(
+        repository: sl(),
+        progressionDataSource: sl<ProgressionLocalDataSource>(),
+      ));
   sl.registerFactory<LevelsBloc>(() => LevelsBloc(repository: sl()));
   sl.registerFactory<AchievementsBloc>(
       () => AchievementsBloc(repository: sl()));

@@ -30,13 +30,18 @@ class AchievementsRepositoryImpl implements AchievementsRepository {
   }
 
   @override
-  Future<List<Challenge>> getWeeklyChallenges() async {
-    return [];
+  Future<Challenge?> getWeeklyChallenge() async {
+    return localDataSource.getWeeklyChallenge();
   }
 
   @override
   Future<void> completeDailyChallenge(String challengeId, int score) async {
     await localDataSource.completeDailyChallenge(challengeId, score);
+  }
+
+  @override
+  Future<void> completeWeeklyChallenge(String challengeId, int score) async {
+    await localDataSource.completeWeeklyChallenge(challengeId, score);
   }
 
   @override

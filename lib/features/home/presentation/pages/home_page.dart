@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../app/di.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/animated_button.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../../../../core/widgets/premium_badge.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../achievements/presentation/bloc/achievements_bloc.dart';
+import '../../../progression/data/datasources/progression_local_datasource.dart';
+import '../../../progression/domain/entities/player_profile.dart';
+import '../../../progression/presentation/widgets/xp_bar.dart';
+import '../../../progression/presentation/widgets/streak_calendar.dart';
 import '../../../subscription/presentation/bloc/subscription_bloc.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,9 +23,28 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  PlayerProfile _profile = PlayerProfile.fromTotalXp(
+    totalXp: 0,
+    activeTileThemeId: 'classic',
+    unlockedTileThemeIds: const ['classic'],
+    loginStreak: 0,
+  );
+
   @override
   void initState() {
     super.initState();
+    context.read<AchievementsBloc>().add(const LoadAchievements());
+    _loadProfile();
+  }
+
+  void _loadProfile() {
+    final ds = sl<ProgressionLocalDataSource>();
+    setState(() => _profile = ds.getProfile());
+  }
+
+  void _refresh() {
+    if (!mounted) return;
+    _loadProfile();
     context.read<AchievementsBloc>().add(const LoadAchievements());
   }
 
@@ -38,15 +62,35 @@ class _HomePageState extends State<HomePage> {
               children: [
                 const SizedBox(height: 16),
                 _Header(),
-                const SizedBox(height: 32),
-                _PlayButton().animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
+                const SizedBox(height: 16),
+                XpBar(profile: _profile)
+                    .animate()
+                    .fadeIn(delay: 100.ms)
+                    .slideY(begin: 0.1),
+                if (_profile.loginStreak > 0) ...[
+                  const SizedBox(height: 12),
+                  StreakCalendar(profile: _profile)
+                      .animate()
+                      .fadeIn(delay: 150.ms)
+                      .slideY(begin: 0.1),
+                ],
+                const SizedBox(height: 24),
+                _PlayButton(onReturn: _refresh)
+                    .animate()
+                    .fadeIn(delay: 200.ms)
+                    .slideY(begin: 0.2),
                 const SizedBox(height: 20),
-                _DailyChallengeCard()
+                _DailyChallengeCard(onReturn: _refresh)
                     .animate()
                     .fadeIn(delay: 400.ms)
                     .slideY(begin: 0.2),
+                const SizedBox(height: 12),
+                _WeeklyChallengeCard(onReturn: _refresh)
+                    .animate()
+                    .fadeIn(delay: 500.ms)
+                    .slideY(begin: 0.2),
                 const SizedBox(height: 20),
-                _QuickActions()
+                _QuickActions(onReturn: _refresh)
                     .animate()
                     .fadeIn(delay: 600.ms)
                     .slideY(begin: 0.2),
@@ -124,10 +168,13 @@ class _Header extends StatelessWidget {
 }
 
 class _PlayButton extends StatelessWidget {
+  final VoidCallback? onReturn;
+  const _PlayButton({this.onReturn});
+
   @override
   Widget build(BuildContext context) {
     return AnimatedButton(
-      onPressed: () => context.push('/zones'),
+      onPressed: () => context.push('/zones').then((_) => onReturn?.call()),
       gradient: AppColors.primaryGradient,
       borderRadius: 20,
       padding: const EdgeInsets.symmetric(vertical: 24),
@@ -154,6 +201,9 @@ class _PlayButton extends StatelessWidget {
 }
 
 class _DailyChallengeCard extends StatelessWidget {
+  final VoidCallback? onReturn;
+  const _DailyChallengeCard({this.onReturn});
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AchievementsBloc, AchievementsState>(
@@ -169,9 +219,7 @@ class _DailyChallengeCard extends StatelessWidget {
               ? null
               : () {
                   context.push('/challenge/daily').then((_) {
-                    if (context.mounted) {
-                      context.read<AchievementsBloc>().add(const LoadAchievements());
-                    }
+                    onReturn?.call();
                   });
                 },
           borderColor: isCompleted
@@ -236,26 +284,48 @@ class _DailyChallengeCard extends StatelessWidget {
 }
 
 class _QuickActions extends StatelessWidget {
+  final VoidCallback? onReturn;
+  const _QuickActions({this.onReturn});
+
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _ActionCard(
-            icon: Icons.emoji_events_rounded,
-            label: 'Achievements',
-            color: AppColors.secondary,
-            onTap: () => context.push('/achievements'),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _ActionCard(
+                icon: Icons.emoji_events_rounded,
+                label: 'Achievements',
+                color: AppColors.secondary,
+                onTap: () => context.push('/achievements').then((_) => onReturn?.call()),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _ActionCard(
+                icon: Icons.palette_rounded,
+                label: 'Themes',
+                color: AppColors.primary,
+                onTap: () => context.push('/themes').then((_) => onReturn?.call()),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _ActionCard(
-            icon: Icons.leaderboard_rounded,
-            label: 'Leaderboard',
-            color: AppColors.success,
-            onTap: () {},
-          ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _ActionCard(
+                icon: Icons.leaderboard_rounded,
+                label: 'Leaderboard',
+                color: AppColors.success,
+                onTap: () {},
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(child: SizedBox()),
+          ],
         ),
       ],
     );
@@ -293,6 +363,89 @@ class _ActionCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _WeeklyChallengeCard extends StatelessWidget {
+  final VoidCallback? onReturn;
+  const _WeeklyChallengeCard({this.onReturn});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AchievementsBloc, AchievementsState>(
+      builder: (context, state) {
+        if (state is! AchievementsLoaded || state.weeklyChallenge == null) {
+          return const SizedBox.shrink();
+        }
+        final challenge = state.weeklyChallenge!;
+        final isCompleted = challenge.isCompleted;
+
+        return GlassCard(
+          onTap: isCompleted
+              ? null
+              : () {
+                  context.push('/challenge/weekly').then((_) {
+                    onReturn?.call();
+                  });
+                },
+          borderColor: isCompleted
+              ? AppColors.success.withAlpha(40)
+              : AppColors.primary.withAlpha(40),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: isCompleted
+                      ? LinearGradient(colors: [
+                          AppColors.success,
+                          AppColors.success.withAlpha(180),
+                        ])
+                      : AppColors.primaryGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  isCompleted ? Icons.check_rounded : Icons.date_range_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isCompleted ? 'Weekly Complete!' : 'Weekly Challenge',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: isCompleted ? AppColors.success : AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isCompleted
+                          ? 'New challenge next Monday'
+                          : challenge.description,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (!isCompleted)
+                const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary)
+              else
+                const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 28),
+            ],
+          ),
+        );
+      },
     );
   }
 }

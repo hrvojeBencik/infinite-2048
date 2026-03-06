@@ -10,12 +10,14 @@ class MoveResult {
   final int scoreGained;
   final bool boardChanged;
   final List<String> explodedTileIds;
+  final int mergeCount;
 
   const MoveResult({
     required this.board,
     this.scoreGained = 0,
     this.boardChanged = false,
     this.explodedTileIds = const [],
+    this.mergeCount = 0,
   });
 }
 
@@ -88,6 +90,7 @@ class GameEngine {
     int scoreGained = 0;
     bool changed = false;
     List<String> explodedIds = [];
+    int totalMerges = 0;
 
     List<List<Tile?>> grid = _tilesToGrid(tiles, size);
     grid = _rotateForDirection(grid, direction, size);
@@ -96,6 +99,7 @@ class GameEngine {
       final result = _processRow(grid[row], size);
       if (result.changed) changed = true;
       scoreGained += result.scoreGained;
+      totalMerges += result.mergeCount;
       explodedIds.addAll(result.explodedTileIds);
       grid[row] = result.row;
     }
@@ -138,12 +142,14 @@ class GameEngine {
       scoreGained: scoreGained,
       boardChanged: changed,
       explodedTileIds: explodedIds,
+      mergeCount: totalMerges,
     );
   }
 
   static _RowResult _processRow(List<Tile?> row, int size) {
     int scoreGained = 0;
     bool changed = false;
+    int mergeCount = 0;
     List<String> explodedIds = [];
 
     // Separate movable and immovable tiles
@@ -168,6 +174,7 @@ class GameEngine {
         final mergeResult = _mergeTiles(movable[i], movable[i + 1]);
         merged.add(mergeResult.tile);
         scoreGained += mergeResult.scoreGained;
+        mergeCount++;
         if (mergeResult.isBombExplosion) {
           explodedIds.add(mergeResult.tile.id);
         }
@@ -208,6 +215,7 @@ class GameEngine {
       row: result,
       scoreGained: scoreGained,
       changed: changed,
+      mergeCount: mergeCount,
       explodedTileIds: explodedIds,
     );
   }
@@ -388,12 +396,14 @@ class _RowResult {
   final List<Tile?> row;
   final int scoreGained;
   final bool changed;
+  final int mergeCount;
   final List<String> explodedTileIds;
 
   const _RowResult({
     required this.row,
     this.scoreGained = 0,
     this.changed = false,
+    this.mergeCount = 0,
     this.explodedTileIds = const [],
   });
 }

@@ -60,10 +60,12 @@ class AchievementsLoading extends AchievementsState {}
 class AchievementsLoaded extends AchievementsState {
   final List<Achievement> achievements;
   final Challenge? dailyChallenge;
+  final Challenge? weeklyChallenge;
 
   const AchievementsLoaded({
     required this.achievements,
     this.dailyChallenge,
+    this.weeklyChallenge,
   });
 
   int get unlockedCount => achievements.where((a) => a.isUnlocked).length;
@@ -73,7 +75,7 @@ class AchievementsLoaded extends AchievementsState {
       achievements.where((a) => a.category == category).toList();
 
   @override
-  List<Object?> get props => [achievements, dailyChallenge];
+  List<Object?> get props => [achievements, dailyChallenge, weeklyChallenge];
 }
 
 class AchievementUnlocked extends AchievementsState {
@@ -99,7 +101,12 @@ class AchievementsBloc extends Bloc<AchievementsEvent, AchievementsState> {
     try {
       final achievements = await repository.getAchievements();
       final daily = await repository.getDailyChallenge();
-      emit(AchievementsLoaded(achievements: achievements, dailyChallenge: daily));
+      final weekly = await repository.getWeeklyChallenge();
+      emit(AchievementsLoaded(
+        achievements: achievements,
+        dailyChallenge: daily,
+        weeklyChallenge: weekly,
+      ));
     } catch (e) {
       emit(AchievementsLoaded(achievements: const []));
     }
@@ -188,7 +195,12 @@ class AchievementsBloc extends Bloc<AchievementsEvent, AchievementsState> {
   Future<void> _emitLoaded(Emitter<AchievementsState> emit) async {
     final all = await repository.getAchievements();
     final daily = await repository.getDailyChallenge();
-    emit(AchievementsLoaded(achievements: all, dailyChallenge: daily));
+    final weekly = await repository.getWeeklyChallenge();
+    emit(AchievementsLoaded(
+      achievements: all,
+      dailyChallenge: daily,
+      weeklyChallenge: weekly,
+    ));
   }
 
   static const _zoneLevelCounts = {

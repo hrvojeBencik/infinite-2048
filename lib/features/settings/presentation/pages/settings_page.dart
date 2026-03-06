@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import '../../../../app/di.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/sound_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_card.dart';
 
@@ -14,16 +15,14 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  late Box _settingsBox;
   bool _soundEnabled = true;
   bool _hapticsEnabled = true;
 
   @override
   void initState() {
     super.initState();
-    _settingsBox = Hive.box(AppConstants.hiveSettingsBox);
-    _soundEnabled = _settingsBox.get('soundEnabled', defaultValue: true) as bool;
-    _hapticsEnabled = _settingsBox.get('hapticsEnabled', defaultValue: true) as bool;
+    _soundEnabled = sl<SoundService>().isSoundEnabled;
+    _hapticsEnabled = HapticService.instance.isEnabled;
   }
 
   @override
@@ -74,7 +73,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 value: _soundEnabled,
                                 onChanged: (v) {
                                   setState(() => _soundEnabled = v);
-                                  _settingsBox.put('soundEnabled', v);
+                                  sl<SoundService>().setSoundEnabled(v);
                                 },
                                 activeTrackColor: AppColors.primary,
                               ),
@@ -87,7 +86,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 value: _hapticsEnabled,
                                 onChanged: (v) {
                                   setState(() => _hapticsEnabled = v);
-                                  _settingsBox.put('hapticsEnabled', v);
+                                  HapticService.instance.setEnabled(v);
                                 },
                                 activeTrackColor: AppColors.primary,
                               ),

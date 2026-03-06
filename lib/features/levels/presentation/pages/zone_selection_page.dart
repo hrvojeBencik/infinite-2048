@@ -118,7 +118,13 @@ class _ZoneCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       onTap: isLocked
           ? null
-          : () => context.push('/zones/${zone.id}/levels'),
+          : () {
+              context.push('/zones/${zone.id}/levels').then((_) {
+                if (context.mounted) {
+                  context.read<LevelsBloc>().add(const LoadZones());
+                }
+              });
+            },
       child: Opacity(
         opacity: isLocked ? 0.5 : 1.0,
         child: Row(
