@@ -26,6 +26,8 @@ class ParticleEffectState extends State<ParticleEffect>
     Color(0xFFFFD700),
     Color(0xFFFF5252),
     Color(0xFFFFAB40),
+    Color(0xFFFFEB3B),
+    Color(0xFFFF7043),
   ];
 
   @override
@@ -33,19 +35,26 @@ class ParticleEffectState extends State<ParticleEffect>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 800),
     );
   }
 
   void explode() {
-    _particles = List.generate(20, (_) {
+    _particles = List.generate(30, (i) {
       final angle = _random.nextDouble() * 2 * pi;
-      final speed = 80 + _random.nextDouble() * 120;
+      final speed = 60 + _random.nextDouble() * 180;
+      final color = _particleColors[_random.nextInt(_particleColors.length)];
       return _Particle(
         dx: cos(angle) * speed,
         dy: sin(angle) * speed,
-        color: _particleColors[_random.nextInt(_particleColors.length)],
-        size: 4 + _random.nextDouble() * 6,
+        color: color,
+        size: 3 + _random.nextDouble() * 7,
+        // Gravity simulation: heavier particles fall faster
+        gravity: 40 + _random.nextDouble() * 80,
+        // Rotation for visual variety
+        rotationSpeed: (_random.nextDouble() - 0.5) * 6,
+        // Some particles are "sparks" (smaller, brighter, faster fade)
+        isSpark: i % 4 == 0,
       );
     });
     _controller.forward(from: 0.0);
@@ -88,12 +97,18 @@ class _Particle {
     required this.dy,
     required this.color,
     required this.size,
+    required this.gravity,
+    required this.rotationSpeed,
+    required this.isSpark,
   });
 
   final double dx;
   final double dy;
   final Color color;
   final double size;
+  final double gravity;
+  final double rotationSpeed;
+  final bool isSpark;
 }
 
 class _ParticlePainter extends CustomPainter {
@@ -110,16 +125,38 @@ class _ParticlePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
 
     for (final particle in particles) {
-      final distance = Curves.easeOut.transform(progress);
+      final distance = Curves.easeOutCubic.transform(progress);
       final x = center.dx + particle.dx * distance;
-      final y = center.dy + particle.dy * distance;
-      final opacity = (1 - progress).clamp(0.0, 1.0);
+      // Add gravity effect - particles arc downward
+      final y = center.dy + particle.dy * distance + particle.gravity * progress * progress;
+
+      // Sparks fade faster
+      final fadeStart = particle.isSpark ? 0.3 : 0.5;
+      final opacity = progress < fadeStart
+          ? 1.0
+          : (1.0 - ((progress - fadeStart) / (1.0 - fadeStart))).clamp(0.0, 1.0);
+
+      final effectiveSize = particle.isSpark
+          ? particle.size * (1 - progress * 0.8)
+          : particle.size * (1 - progress * 0.4);
+
+      if (effectiveSize <= 0 || opacity <= 0) continue;
 
       final paint = Paint()
         ..color = particle.color.withValues(alpha: opacity)
         ..style = PaintingStyle.fill;
 
-      canvas.drawCircle(Offset(x, y), particle.size, paint);
+      // Draw main particle
+      canvas.drawCircle(Offset(x, y), effectiveSize.clamp(0.5, 20.0), paint);
+
+      // Draw subtle glow around larger particles
+      if (!particle.isSpark && effectiveSize > 3) {
+        final glowPaint = Paint()
+          ..color = particle.color.withValues(alpha: opacity * 0.3)
+          ..style = PaintingStyle.fill
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+        canvas.drawCircle(Offset(x, y), effectiveSize * 1.5, glowPaint);
+      }
     }
   }
 

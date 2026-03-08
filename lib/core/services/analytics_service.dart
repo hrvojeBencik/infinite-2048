@@ -31,11 +31,14 @@ class AnalyticsService {
     required int boardSize,
     required int targetTile,
   }) async {
-    await _analytics?.logEvent(name: 'level_started', parameters: {
-      'level_id': levelId,
-      'board_size': boardSize,
-      'target_tile': targetTile,
-    });
+    await _analytics?.logEvent(
+      name: 'level_started',
+      parameters: {
+        'level_id': levelId,
+        'board_size': boardSize,
+        'target_tile': targetTile,
+      },
+    );
   }
 
   Future<void> logLevelCompleted({
@@ -45,13 +48,16 @@ class AnalyticsService {
     required int moves,
     required int highestTile,
   }) async {
-    await _analytics?.logEvent(name: 'level_completed', parameters: {
-      'level_id': levelId,
-      'score': score,
-      'stars': stars,
-      'moves': moves,
-      'highest_tile': highestTile,
-    });
+    await _analytics?.logEvent(
+      name: 'level_completed',
+      parameters: {
+        'level_id': levelId,
+        'score': score,
+        'stars': stars,
+        'moves': moves,
+        'highest_tile': highestTile,
+      },
+    );
   }
 
   Future<void> logLevelFailed({
@@ -60,12 +66,15 @@ class AnalyticsService {
     required int moves,
     required int highestTile,
   }) async {
-    await _analytics?.logEvent(name: 'level_failed', parameters: {
-      'level_id': levelId,
-      'score': score,
-      'moves': moves,
-      'highest_tile': highestTile,
-    });
+    await _analytics?.logEvent(
+      name: 'level_failed',
+      parameters: {
+        'level_id': levelId,
+        'score': score,
+        'moves': moves,
+        'highest_tile': highestTile,
+      },
+    );
   }
 
   // --- Endless Mode ---
@@ -80,12 +89,15 @@ class AnalyticsService {
     required int highestTile,
     required bool isNewRecord,
   }) async {
-    await _analytics?.logEvent(name: 'endless_game_over', parameters: {
-      'score': score,
-      'moves': moves,
-      'highest_tile': highestTile,
-      'is_new_record': isNewRecord ? 1 : 0,
-    });
+    await _analytics?.logEvent(
+      name: 'endless_game_over',
+      parameters: {
+        'score': score,
+        'moves': moves,
+        'highest_tile': highestTile,
+        'is_new_record': isNewRecord ? 1 : 0,
+      },
+    );
   }
 
   // --- Challenges ---
@@ -96,8 +108,9 @@ class AnalyticsService {
 
   Future<void> logDailyChallengeCompleted({required int score}) async {
     await _analytics?.logEvent(
-        name: 'daily_challenge_completed',
-        parameters: {'score': score});
+      name: 'daily_challenge_completed',
+      parameters: {'score': score},
+    );
   }
 
   Future<void> logWeeklyChallengeStarted() async {
@@ -106,15 +119,18 @@ class AnalyticsService {
 
   Future<void> logWeeklyChallengeCompleted({required int score}) async {
     await _analytics?.logEvent(
-        name: 'weekly_challenge_completed',
-        parameters: {'score': score});
+      name: 'weekly_challenge_completed',
+      parameters: {'score': score},
+    );
   }
 
   // --- Features ---
 
   Future<void> logThemeChanged({required String themeId}) async {
     await _analytics?.logEvent(
-        name: 'theme_changed', parameters: {'theme_id': themeId});
+      name: 'theme_changed',
+      parameters: {'theme_id': themeId},
+    );
   }
 
   Future<void> logAchievementUnlocked({required String achievementId}) async {
@@ -123,23 +139,39 @@ class AnalyticsService {
 
   Future<void> logPowerUpUsed({required String powerUp}) async {
     await _analytics?.logEvent(
-        name: 'power_up_used', parameters: {'type': powerUp});
+      name: 'power_up_used',
+      parameters: {'type': powerUp},
+    );
   }
 
   // --- Monetization ---
 
   Future<void> logAdWatched({required String type}) async {
     await _analytics?.logEvent(
-        name: 'ad_watched', parameters: {'ad_type': type});
+      name: 'ad_watched',
+      parameters: {'ad_type': type},
+    );
   }
 
-  Future<void> logPaywallOpened() async {
-    await _analytics?.logEvent(name: 'paywall_opened');
+  Future<void> logPaywallOpened({String? source}) async {
+    await _analytics?.logEvent(
+      name: 'paywall_opened',
+      parameters: {'source': ?source},
+    );
+  }
+
+  Future<void> logPaywallDismissed({String? source}) async {
+    await _analytics?.logEvent(
+      name: 'paywall_dismissed',
+      parameters: {'source': ?source},
+    );
   }
 
   Future<void> logPurchaseStarted({required String productId}) async {
     await _analytics?.logEvent(
-        name: 'purchase_started', parameters: {'product_id': productId});
+      name: 'purchase_started',
+      parameters: {'product_id': productId},
+    );
   }
 
   // --- Engagement ---
@@ -150,6 +182,8 @@ class AnalyticsService {
 
   Future<void> logLoginStreakDay({required int streakDay}) async {
     await _analytics?.logEvent(
-        name: 'login_streak', parameters: {'day': streakDay});
+      name: 'login_streak',
+      parameters: {'day': streakDay},
+    );
   }
 }

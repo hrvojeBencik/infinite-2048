@@ -23,11 +23,13 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<UndoMove>(_onUndoMove);
     on<UseHammer>(_onUseHammer);
     on<UseShuffle>(_onUseShuffle);
+    on<UseMergeBoost>(_onUseMergeBoost);
     on<RestartLevel>(_onRestartLevel);
     on<PauseGame>(_onPauseGame);
     on<ResumeFromPause>(_onResumeFromPause);
     on<SaveAndExit>(_onSaveAndExit);
     on<GrantExtraUndo>(_onGrantExtraUndo);
+    on<ContinueAfterLoss>(_onContinueAfterLoss);
   }
 
   Future<void> _onStartGame(StartGame event, Emitter<GameState> emit) async {
@@ -187,6 +189,44 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     emit(GamePlaying(session: newSession, level: currentState.level));
   }
 
+  void _onUseMergeBoost(UseMergeBoost event, Emitter<GameState> emit) {
+    final currentState = state;
+    if (currentState is! GamePlaying) return;
+
+    final session = currentState.session;
+    if (session.mergeBoostsRemaining <= 0) return;
+
+    final result = GameEngine.mergeBoost(session.board);
+    if (result == null) return; // no mergeable pair found
+
+    var newSession = session.copyWith(
+      board: result.board,
+      mergeBoostsRemaining: session.mergeBoostsRemaining - 1,
+    );
+
+    // Check win condition after merge
+    if (result.board.highestTile >= currentState.level.targetTileValue) {
+      final stars = _calculateStars(result.board.score, currentState.level);
+      newSession = newSession.copyWith(status: GameStatus.won);
+      repository.saveLevelResult(
+        levelId: currentState.level.id,
+        score: result.board.score,
+        stars: stars,
+      );
+      repository.clearGameSession(currentState.level.id);
+      _awardXp(currentState.level, stars);
+      emit(GameWon(session: newSession, level: currentState.level, stars: stars));
+      return;
+    }
+
+    emit(GamePlaying(
+      session: newSession,
+      level: currentState.level,
+      lastScoreGained: result.scoreGained,
+      lastMergeCount: 1,
+    ));
+  }
+
   void _onRestartLevel(RestartLevel event, Emitter<GameState> emit) {
     final currentState = state;
     Level? level;
@@ -246,6 +286,28 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     final newSession = currentState.session.copyWith(
       undosRemaining: currentState.session.undosRemaining + 1,
     );
+    emit(GamePlaying(session: newSession, level: currentState.level));
+  }
+
+  void _onContinueAfterLoss(ContinueAfterLoss event, Emitter<GameState> emit) {
+    final currentState = state;
+    if (currentState is! GameLost) return;
+
+    // Undo the last move to give the player another chance
+    final session = currentState.session;
+    if (session.moveHistory.isEmpty) return;
+
+    final previousBoard = session.moveHistory.last;
+    final newHistory =
+        session.moveHistory.sublist(0, session.moveHistory.length - 1);
+
+    final newSession = session.copyWith(
+      board: previousBoard,
+      status: GameStatus.playing,
+      moveHistory: newHistory,
+      undosRemaining: session.undosRemaining + 1,
+    );
+
     emit(GamePlaying(session: newSession, level: currentState.level));
   }
 

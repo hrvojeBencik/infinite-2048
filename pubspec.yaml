@@ -1,7 +1,7 @@
 name: infinite_2048
 description: "An infinite 2048 puzzle game with levels, zones, achievements, and premium features."
 publish_to: 'none'
-version: 0.1.0
+version: 1.0.0+1
 
 environment:
   sdk: ^3.10.7
@@ -13,6 +13,7 @@ dependencies:
   firebase_auth: ^6.2.0
   firebase_analytics: ^12.0.2
   firebase_core: ^4.5.0
+  firebase_crashlytics: ^5.0.8
   firebase_remote_config: ^6.0.2
   flutter:
     sdk: flutter
@@ -22,13 +23,13 @@ dependencies:
   go_router: ^17.1.0
   google_fonts: ^8.0.2
   google_mobile_ads: ^7.0.0
-  google_sign_in: ^7.2.0
+  games_services: ^4.0.2
   hive_flutter: ^1.1.0
   intl: ^0.20.2
   path_provider: ^2.1.5
   purchases_flutter: ^9.13.1
-  sign_in_with_apple: ^7.0.1
   in_app_review: ^2.0.10
+  package_info_plus: ^8.2.1
   url_launcher: ^6.3.1
   uuid: ^4.5.3
 
@@ -36,9 +37,19 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+
 
 flutter:
   uses-material-design: true
   assets:
     - assets/levels/
     - assets/audio/
+    - assets/icon/
+
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/icon/icon.png"

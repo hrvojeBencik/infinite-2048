@@ -13,6 +13,7 @@ import '../../../levels/data/datasources/levels_local_datasource.dart';
 import '../../../levels/domain/entities/level.dart';
 import '../../../onboarding/data/datasources/onboarding_local_datasource.dart';
 import '../../../progression/data/datasources/progression_local_datasource.dart';
+import '../../../subscription/presentation/bloc/subscription_bloc.dart';
 
 class DevOptionsPage extends StatefulWidget {
   const DevOptionsPage({super.key});
@@ -102,6 +103,9 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
                       const SizedBox(height: 24),
                       _sectionTitle('MECHANIC INTROS'),
                       _buildMechanicIntroSection(),
+                      const SizedBox(height: 24),
+                      _sectionTitle('SUBSCRIPTION'),
+                      _buildSubscriptionSection(),
                       const SizedBox(height: 24),
                       _sectionTitle('PROGRESSION'),
                       _buildProgressionSection(),
@@ -501,6 +505,39 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionSection() {
+    final isOverridden = Hive.box(AppConstants.hiveSettingsBox)
+        .get(SubscriptionBloc.devOverrideKey, defaultValue: false) as bool;
+    return GlassCard(
+      child: SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        secondary: Icon(
+          Icons.workspace_premium_rounded,
+          color: isOverridden ? AppColors.secondary : AppColors.textTertiary,
+          size: 22,
+        ),
+        title: const Text(
+          'Unlock Premium',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        subtitle: Text(
+          isOverridden ? 'Premium features active' : 'Simulate premium subscription',
+          style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+        ),
+        value: isOverridden,
+        activeTrackColor: AppColors.secondary,
+        onChanged: (value) {
+          context.read<SubscriptionBloc>().add(DevOverrideSubscription(value));
+          setState(() {});
+        },
       ),
     );
   }

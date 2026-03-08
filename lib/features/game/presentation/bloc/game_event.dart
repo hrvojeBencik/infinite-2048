@@ -62,6 +62,10 @@ class UseShuffle extends GameEvent {
   const UseShuffle();
 }
 
+class UseMergeBoost extends GameEvent {
+  const UseMergeBoost();
+}
+
 class RestartLevel extends GameEvent {
   final int undosAvailable;
   final int hammersAvailable;
@@ -90,4 +94,8 @@ class SaveAndExit extends GameEvent {
 
 class GrantExtraUndo extends GameEvent {
   const GrantExtraUndo();
+}
+
+class ContinueAfterLoss extends GameEvent {
+  const ContinueAfterLoss();
 }

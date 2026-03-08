@@ -31,21 +31,30 @@ class GameBoard extends StatelessWidget {
           padding: EdgeInsets.all(padding),
           decoration: BoxDecoration(
             color: AppColors.gridBackground,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: AppColors.cardBorder,
-              width: 1,
+              color: AppColors.cardBorder.withAlpha(80),
+              width: 1.5,
             ),
             boxShadow: [
+              // Outer ambient glow
               BoxShadow(
-                color: AppColors.primary.withAlpha(20),
-                blurRadius: 20,
-                spreadRadius: 2,
+                color: AppColors.primary.withAlpha(12),
+                blurRadius: 30,
+                spreadRadius: 4,
+              ),
+              // Inner depth shadow
+              BoxShadow(
+                color: Colors.black.withAlpha(40),
+                blurRadius: 12,
+                spreadRadius: -2,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Stack(
             children: [
+              // Empty cells with subtle inner shadows
               ...List.generate(board.size * board.size, (index) {
                 final row = index ~/ board.size;
                 final col = index % board.size;
@@ -57,16 +66,24 @@ class GameBoard extends StatelessWidget {
                     height: cellSize - 4,
                     decoration: BoxDecoration(
                       color: AppColors.cellEmpty,
-                      borderRadius: BorderRadius.circular(cellSize * 0.1),
+                      borderRadius: BorderRadius.circular(cellSize * 0.12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withAlpha(15),
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
                   ),
                 );
               }),
+              // Tiles with smooth cubic movement
               ...board.tiles.map((tile) {
                 return AnimatedPositioned(
                   key: ValueKey(tile.id),
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOutBack,
+                  duration: const Duration(milliseconds: 160),
+                  curve: Curves.easeOutCubic,
                   left: tile.col * cellSize + 2,
                   top: tile.row * cellSize + 2,
                   child: TileWidget(

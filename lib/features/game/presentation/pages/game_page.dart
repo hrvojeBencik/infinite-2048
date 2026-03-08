@@ -1,9 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/di.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/ad_service.dart';
 import '../../../../core/services/analytics_service.dart';
+import '../../../../core/services/games_service.dart';
 import '../../../../core/services/mechanic_intro_service.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../leaderboard/data/datasources/leaderboard_remote_datasource.dart';
@@ -29,6 +33,7 @@ import '../widgets/combo_overlay.dart';
 import '../widgets/score_popup.dart';
 import '../widgets/particle_effects.dart';
 import '../../../levels/domain/entities/level.dart';
+import '../../../subscription/presentation/bloc/subscription_bloc.dart';
 
 class GamePage extends StatefulWidget {
   final Level level;
@@ -44,6 +49,22 @@ class _GamePageState extends State<GamePage> {
   bool _isHammerMode = false;
   bool _introChecked = false;
   bool _showTutorial = false;
+
+  bool get _isPremium {
+    try {
+      final state = context.read<SubscriptionBloc>().state;
+      return state is SubscriptionLoaded && state.isPremium;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  RestartLevel get _restartEvent => RestartLevel(
+        undosAvailable: _isPremium ? 99 : 3,
+        hammersAvailable: _isPremium ? 5 : 0,
+        shufflesAvailable: _isPremium ? 3 : 0,
+        mergeBoostsAvailable: _isPremium ? 3 : 0,
+      );
 
   final _screenShakeKey = GlobalKey<ScreenShakeState>();
   final _comboKey = GlobalKey<ComboOverlayState>();
@@ -260,21 +281,19 @@ class _GamePageState extends State<GamePage> {
             backgroundColor: AppColors.background,
             body: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onHorizontalDragEnd: isPaused
+              onPanEnd: isPaused
                   ? null
                   : (details) {
-                      if (details.primaryVelocity == null) return;
-                      if (details.primaryVelocity! > 0) {
+                      final velocity = details.velocity.pixelsPerSecond;
+                      if (velocity.distance < 100) return;
+                      final angle = math.atan2(velocity.dy, velocity.dx);
+                      // Determine direction from angle:
+                      // right: -45 to 45, down: 45 to 135, left: 135/-135, up: -135 to -45
+                      if (angle.abs() <= math.pi / 4) {
                         _handleSwipe(MoveDirection.right);
-                      } else {
+                      } else if (angle.abs() >= 3 * math.pi / 4) {
                         _handleSwipe(MoveDirection.left);
-                      }
-                    },
-              onVerticalDragEnd: isPaused
-                  ? null
-                  : (details) {
-                      if (details.primaryVelocity == null) return;
-                      if (details.primaryVelocity! > 0) {
+                      } else if (angle > 0) {
                         _handleSwipe(MoveDirection.down);
                       } else {
                         _handleSwipe(MoveDirection.up);
@@ -374,6 +393,7 @@ class _GamePageState extends State<GamePage> {
                                 PowerUpBar(
                                   session: session,
                                   isHammerMode: _isHammerMode,
+                                  isPremiumUser: _isPremium,
                                   onUndo: () {
                                     if (session.undosRemaining <= 0) {
                                       _showWatchAdForUndo(context);
@@ -383,20 +403,38 @@ class _GamePageState extends State<GamePage> {
                                     context.read<GameBloc>().add(const UndoMove());
                                   },
                                   onHammer: () {
+                                    if (!_isPremium) {
+                                      context.push('/paywall');
+                                      return;
+                                    }
                                     HapticService.instance.light();
                                     setState(() => _isHammerMode = !_isHammerMode);
                                   },
                                   onShuffle: () {
+                                    if (!_isPremium) {
+                                      context.push('/paywall');
+                                      return;
+                                    }
                                     HapticService.instance.medium();
                                     context.read<GameBloc>().add(const UseShuffle());
                                   },
-                                  onMergeBoost: () {},
+                                  onMergeBoost: () {
+                                    if (!_isPremium) {
+                                      context.push('/paywall');
+                                      return;
+                                    }
+                                    HapticService.instance.medium();
+                                    context.read<GameBloc>().add(const UseMergeBoost());
+                                  },
                                 ),
                                 const SizedBox(height: 16),
                               ],
                             ),
                           ),
-                          if (isPaused) _PauseOverlay(onBackPress: _handleBackPress),
+                          if (isPaused) _PauseOverlay(
+                            onBackPress: _handleBackPress,
+                            onRestart: () => context.read<GameBloc>().add(_restartEvent),
+                          ),
                           if (_showTutorial)
                             Positioned.fill(
                               child: TutorialOverlay(
@@ -479,34 +517,46 @@ class _GamePageState extends State<GamePage> {
     required int score,
     required int highestTile,
   }) {
-    if (!sl.isRegistered<LeaderboardRemoteDataSource>()) return;
-
     try {
       final authState = context.read<AuthBloc>().state;
       if (authState is! AuthAuthenticated) return;
-
       final user = authState.user;
+
       LeaderboardMode mode;
+      String nativeLeaderboardId;
       if (widget.level.id == 'daily_challenge') {
         mode = LeaderboardMode.daily;
+        nativeLeaderboardId = AppConstants.leaderboardDailyId;
       } else if (widget.level.id == 'weekly_challenge') {
         mode = LeaderboardMode.weekly;
+        nativeLeaderboardId = AppConstants.leaderboardWeeklyId;
       } else {
         mode = LeaderboardMode.story;
+        nativeLeaderboardId = AppConstants.leaderboardStoryId;
       }
 
-      sl<LeaderboardRemoteDataSource>().submitScore(
-        uid: user.uid,
-        displayName: user.displayName ?? 'Player',
-        photoUrl: user.photoUrl,
+      // Submit to Firestore leaderboard
+      if (sl.isRegistered<LeaderboardRemoteDataSource>()) {
+        sl<LeaderboardRemoteDataSource>().submitScore(
+          uid: user.uid,
+          displayName: user.username,
+          photoUrl: user.photoUrl,
+          score: score,
+          highestTile: highestTile,
+          mode: mode,
+        );
+      }
+
+      // Submit to native Game Center / Google Play Games
+      sl<GamesService>().submitScore(
         score: score,
-        highestTile: highestTile,
-        mode: mode,
+        leaderboardId: nativeLeaderboardId,
       );
     } catch (_) {}
   }
 
   void _showLevelComplete(BuildContext context, GameWon state) {
+    sl<AdService>().onLevelCompleted(isPremium: _isPremium);
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -514,6 +564,13 @@ class _GamePageState extends State<GamePage> {
         score: state.session.board.score,
         stars: state.stars,
         levelNumber: state.level.levelNumber,
+        isPremium: _isPremium,
+        onUpgrade: !_isPremium
+            ? () {
+                Navigator.of(context).pop();
+                context.push('/paywall');
+              }
+            : null,
         onNextLevel: () {
           Navigator.of(context).pop();
           context.pop('next');
@@ -524,7 +581,7 @@ class _GamePageState extends State<GamePage> {
         },
         onReplay: () {
           Navigator.of(context).pop();
-          context.read<GameBloc>().add(const RestartLevel());
+          context.read<GameBloc>().add(_restartEvent);
         },
       ),
     );
@@ -540,15 +597,44 @@ class _GamePageState extends State<GamePage> {
       );
     } catch (_) {}
 
+    final hasHistory = state.session.moveHistory.isNotEmpty;
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => GameOverDialog(
         score: state.session.board.score,
         highestTile: state.session.board.highestTile,
+        isPremium: _isPremium,
+        onContinuePremium: _isPremium && hasHistory
+            ? () {
+                Navigator.of(context).pop();
+                context.read<GameBloc>().add(const ContinueAfterLoss());
+              }
+            : null,
+        onWatchAdToContinue: !_isPremium && hasHistory
+            ? () {
+                Navigator.of(context).pop();
+                sl<AdService>().loadRewardedAd(
+                  onRewarded: () {
+                    if (mounted) {
+                      context
+                          .read<GameBloc>()
+                          .add(const ContinueAfterLoss());
+                    }
+                  },
+                );
+              }
+            : null,
+        onUpgrade: !_isPremium
+            ? () {
+                Navigator.of(context).pop();
+                context.push('/paywall');
+              }
+            : null,
         onRetry: () {
           Navigator.of(context).pop();
-          context.read<GameBloc>().add(const RestartLevel());
+          context.read<GameBloc>().add(_restartEvent);
         },
         onBackToLevels: () {
           Navigator.of(context).pop();
@@ -561,8 +647,9 @@ class _GamePageState extends State<GamePage> {
 
 class _PauseOverlay extends StatelessWidget {
   final VoidCallback onBackPress;
+  final VoidCallback onRestart;
 
-  const _PauseOverlay({required this.onBackPress});
+  const _PauseOverlay({required this.onBackPress, required this.onRestart});
 
   @override
   Widget build(BuildContext context) {
@@ -615,9 +702,7 @@ class _PauseOverlay extends StatelessWidget {
             SizedBox(
               width: 200,
               child: OutlinedButton(
-                onPressed: () {
-                  context.read<GameBloc>().add(const RestartLevel());
-                },
+                onPressed: onRestart,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.textSecondary,
                   side: const BorderSide(color: AppColors.cardBorder),

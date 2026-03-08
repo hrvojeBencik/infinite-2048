@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1079167930168",
+    "project_id": "merge-quest-551a1",
+    "storage_bucket": "merge-quest-551a1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1079167930168:android:5c11e4e1ff7de9ce4fbbcd",
+        "android_client_info": {
+          "package_name": "dev.hrvojebencik.mq"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1079167930168-l0pu2tlbn0sc2a3asrmvmd2ht4gevf9o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.hrvojebencik.mq",
+            "certificate_hash": "2135b39c9a73040225a734fc03b8540ed25f4b67"
+          }
+        },
+        {
+          "client_id": "1079167930168-ukthr4lc6akcamclb7ljee9ih36skb9i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBw0yrZpEh_cOO0Jg7gHP74EVX-Tsj94jA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1079167930168-ukthr4lc6akcamclb7ljee9ih36skb9i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1079167930168-dclioabd6cruu29188rg9i4lpaalctsu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "dev.hrvojebencik.mq"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -146,19 +145,17 @@ class _Header extends StatelessWidget {
               onTap: () => context.push('/profile'),
               child: CircleAvatar(
                 radius: 22,
-                backgroundColor: AppColors.surface,
-                backgroundImage:
-                    state is AuthAuthenticated && state.user.photoUrl != null
-                    ? NetworkImage(state.user.photoUrl!)
-                    : null,
-                child:
-                    state is! AuthAuthenticated || state.user.photoUrl == null
-                    ? const Icon(
-                        Icons.person_outline_rounded,
-                        color: AppColors.textTertiary,
-                        size: 22,
-                      )
-                    : null,
+                backgroundColor: AppColors.primary,
+                child: Text(
+                  state is AuthAuthenticated
+                      ? state.user.username[0].toUpperCase()
+                      : '?',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             );
           },
@@ -382,20 +379,10 @@ class _QuickActions extends StatelessWidget {
     if (authState is AuthAuthenticated) {
       context.push('/leaderboard', extra: authState.user.uid);
     } else {
-      _showLoginPrompt(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Setting up your account...')),
+      );
     }
-  }
-
-  void _showLoginPrompt(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => BlocProvider.value(
-        value: context.read<AuthBloc>(),
-        child: _LoginBottomSheet(),
-      ),
-    );
   }
 
   @override
@@ -643,153 +630,3 @@ class _PremiumBanner extends StatelessWidget {
   }
 }
 
-class _LoginBottomSheet extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is AuthAuthenticated) {
-          Navigator.of(context).pop();
-          context.push('/leaderboard', extra: state.user.uid);
-        }
-        if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
-        }
-      },
-      child: Container(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: MediaQuery.of(context).padding.bottom + 24,
-        ),
-        decoration: const BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.textTertiary.withAlpha(80),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Icon(
-              Icons.leaderboard_rounded,
-              size: 48,
-              color: AppColors.primary,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Sign In to Access\nthe Leaderboard',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Compete with players worldwide and\ntrack your ranking across all modes.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 28),
-            BlocBuilder<AuthBloc, AuthState>(
-              builder: (context, state) {
-                if (state is AuthLoading) {
-                  return const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(color: AppColors.primary),
-                  );
-                }
-                return Column(
-                  children: [
-                    AnimatedButton(
-                      onPressed: () => context
-                          .read<AuthBloc>()
-                          .add(const AuthGoogleSignInRequested()),
-                      backgroundColor: Colors.white,
-                      gradient: null,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Image.network(
-                            'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                            width: 20,
-                            height: 20,
-                            errorBuilder: (_, _, _) => const Icon(
-                                Icons.g_mobiledata,
-                                size: 20,
-                                color: Colors.black87),
-                          ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'Continue with Google',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (Platform.isIOS) ...[
-                      const SizedBox(height: 12),
-                      AnimatedButton(
-                        onPressed: () => context
-                            .read<AuthBloc>()
-                            .add(const AuthAppleSignInRequested()),
-                        backgroundColor: Colors.white,
-                        gradient: null,
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.apple,
-                                size: 22, color: Colors.black87),
-                            SizedBox(width: 12),
-                            Text(
-                              'Continue with Apple',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'Maybe later',
-                style: TextStyle(
-                  color: AppColors.textTertiary,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

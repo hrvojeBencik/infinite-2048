@@ -15,12 +15,11 @@ class AuthCheckRequested extends AuthEvent {
   const AuthCheckRequested();
 }
 
-class AuthGoogleSignInRequested extends AuthEvent {
-  const AuthGoogleSignInRequested();
-}
-
-class AuthAppleSignInRequested extends AuthEvent {
-  const AuthAppleSignInRequested();
+class AuthUpdateUsername extends AuthEvent {
+  final String username;
+  const AuthUpdateUsername(this.username);
+  @override
+  List<Object?> get props => [username];
 }
 
 class AuthSignOutRequested extends AuthEvent {
@@ -68,52 +67,49 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   AuthBloc({this.repository}) : super(AuthInitial()) {
     on<AuthCheckRequested>(_onCheckRequested);
-    on<AuthGoogleSignInRequested>(_onGoogleSignIn);
-    on<AuthAppleSignInRequested>(_onAppleSignIn);
+    on<AuthUpdateUsername>(_onUpdateUsername);
     on<AuthSignOutRequested>(_onSignOut);
     on<_AuthUserChanged>(_onUserChanged);
   }
 
-  void _onCheckRequested(AuthCheckRequested event, Emitter<AuthState> emit) {
+  Future<void> _onCheckRequested(
+      AuthCheckRequested event, Emitter<AuthState> emit) async {
     if (repository == null) {
       emit(AuthUnauthenticated());
       return;
     }
+
+    // Check if already signed in
+    final currentUser = await repository!.currentUser;
+    if (currentUser != null) {
+      emit(AuthAuthenticated(currentUser));
+    } else {
+      // Auto sign-in anonymously
+      try {
+        final user = await repository!.signInAnonymously();
+        emit(AuthAuthenticated(user));
+      } catch (e) {
+        emit(AuthError(e.toString()));
+        emit(AuthUnauthenticated());
+      }
+    }
+
+    // Listen for future auth state changes
     _authSub?.cancel();
     _authSub = repository!.authStateChanges.listen(
       (user) => add(_AuthUserChanged(user)),
     );
   }
 
-  Future<void> _onGoogleSignIn(
-      AuthGoogleSignInRequested event, Emitter<AuthState> emit) async {
-    if (repository == null) {
-      emit(const AuthError('Firebase not configured'));
-      return;
-    }
-    emit(AuthLoading());
-    try {
-      final user = await repository!.signInWithGoogle();
-      emit(AuthAuthenticated(user));
-    } catch (e) {
-      emit(AuthError(e.toString()));
-      emit(AuthUnauthenticated());
-    }
-  }
+  Future<void> _onUpdateUsername(
+      AuthUpdateUsername event, Emitter<AuthState> emit) async {
+    if (repository == null) return;
+    await repository!.updateUsername(event.username);
 
-  Future<void> _onAppleSignIn(
-      AuthAppleSignInRequested event, Emitter<AuthState> emit) async {
-    if (repository == null) {
-      emit(const AuthError('Firebase not configured'));
-      return;
-    }
-    emit(AuthLoading());
-    try {
-      final user = await repository!.signInWithApple();
-      emit(AuthAuthenticated(user));
-    } catch (e) {
-      emit(AuthError(e.toString()));
-      emit(AuthUnauthenticated());
+    // Refresh user state
+    final currentUser = await repository!.currentUser;
+    if (currentUser != null) {
+      emit(AuthAuthenticated(currentUser));
     }
   }
 

@@ -5,6 +5,7 @@ class TileTheme {
   final String name;
   final String description;
   final int requiredLevel;
+  final bool isPremium;
   final Map<int, Color> tileColors;
   final Color textColorLight;
   final Color textColorDark;
@@ -14,6 +15,7 @@ class TileTheme {
     required this.name,
     required this.description,
     required this.requiredLevel,
+    this.isPremium = false,
     required this.tileColors,
     required this.textColorLight,
     required this.textColorDark,
@@ -165,6 +167,76 @@ class TileThemes {
     textColorDark: Color(0xFFFFFFFF),
   );
 
+  // Premium-exclusive themes
+  static const TileTheme diamond = TileTheme(
+    id: 'diamond',
+    name: 'Diamond',
+    description: 'Brilliant icy blues and silvers',
+    requiredLevel: 0,
+    isPremium: true,
+    tileColors: {
+      2: Color(0xFFE8F4FD),
+      4: Color(0xFFCDE9F7),
+      8: Color(0xFFA8D8EA),
+      16: Color(0xFF7EC8E3),
+      32: Color(0xFF5BB3D5),
+      64: Color(0xFF3A9CC5),
+      128: Color(0xFFB8D4E3),
+      256: Color(0xFF8BB8D0),
+      512: Color(0xFF6BA3C2),
+      1024: Color(0xFF4A8CB3),
+      2048: Color(0xFFC0E0F0),
+    },
+    textColorLight: Color(0xFF2C6E8A),
+    textColorDark: Color(0xFFFFFFFF),
+  );
+
+  static const TileTheme aurora = TileTheme(
+    id: 'aurora',
+    name: 'Aurora',
+    description: 'Northern lights palette',
+    requiredLevel: 0,
+    isPremium: true,
+    tileColors: {
+      2: Color(0xFFE0F2E9),
+      4: Color(0xFFB2DFDB),
+      8: Color(0xFF80CBC4),
+      16: Color(0xFF4DB6AC),
+      32: Color(0xFF26A69A),
+      64: Color(0xFF009688),
+      128: Color(0xFF7E57C2),
+      256: Color(0xFF5C6BC0),
+      512: Color(0xFF42A5F5),
+      1024: Color(0xFF26C6DA),
+      2048: Color(0xFF66BB6A),
+    },
+    textColorLight: Color(0xFF00695C),
+    textColorDark: Color(0xFFFFFFFF),
+  );
+
+  static const TileTheme obsidian = TileTheme(
+    id: 'obsidian',
+    name: 'Obsidian',
+    description: 'Dark volcanic glass tones',
+    requiredLevel: 0,
+    isPremium: true,
+    tileColors: {
+      2: Color(0xFF37474F),
+      4: Color(0xFF455A64),
+      8: Color(0xFFD84315),
+      16: Color(0xFFE64A19),
+      32: Color(0xFFFF5722),
+      64: Color(0xFFFF6E40),
+      128: Color(0xFFFF3D00),
+      256: Color(0xFFDD2C00),
+      512: Color(0xFFBF360C),
+      1024: Color(0xFFFFAB00),
+      2048: Color(0xFFFFD600),
+    },
+    textColorLight: Color(0xFFCFD8DC),
+    textColorDark: Color(0xFFFFFFFF),
+  );
+
   static const List<TileTheme> all = [
     classic,
     neon,
@@ -172,6 +244,9 @@ class TileThemes {
     sunset,
     galaxy,
     monochrome,
+    diamond,
+    aurora,
+    obsidian,
   ];
 
   static TileTheme? byId(String id) {

@@ -8,7 +8,11 @@ abstract class EndlessEvent extends Equatable {
 }
 
 class StartEndless extends EndlessEvent {
-  const StartEndless();
+  final int undosAvailable;
+  const StartEndless({this.undosAvailable = 3});
+
+  @override
+  List<Object?> get props => [undosAvailable];
 }
 
 class EndlessSwipe extends EndlessEvent {
@@ -36,5 +40,9 @@ class EndlessSaveAndExit extends EndlessEvent {
 }
 
 class EndlessRestart extends EndlessEvent {
-  const EndlessRestart();
+  final int undosAvailable;
+  const EndlessRestart({this.undosAvailable = 3});
+
+  @override
+  List<Object?> get props => [undosAvailable];
 }

@@ -130,10 +130,11 @@ class PaywallPage extends StatelessWidget {
 
   static const _features = [
     (Icons.block_rounded, 'Ad-free experience'),
-    (Icons.undo_rounded, 'Unlimited undos'),
-    (Icons.shuffle_rounded, 'Shuffle & Merge Boost power-ups'),
+    (Icons.undo_rounded, '99 undos per level'),
     (Icons.gavel_rounded, '5 Hammers per level'),
-    (Icons.palette_rounded, 'Premium tile themes & backgrounds'),
+    (Icons.shuffle_rounded, 'Shuffle & Merge Boost'),
+    (Icons.play_circle_rounded, 'Continue without watching ads'),
+    (Icons.palette_rounded, 'Exclusive premium tile themes'),
     (Icons.star_rounded, 'Exclusive profile badge'),
   ];
 }

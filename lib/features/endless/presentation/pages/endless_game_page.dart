@@ -4,7 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../app/di.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/analytics_service.dart';
+import '../../../../core/services/games_service.dart';
 import '../../../../core/services/sound_service.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../leaderboard/data/datasources/leaderboard_remote_datasource.dart';
@@ -13,6 +15,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/animated_button.dart';
 import '../../../game/domain/entities/game_session.dart';
 import '../../../game/domain/entities/move_direction.dart';
+import '../../../subscription/presentation/bloc/subscription_bloc.dart';
 import '../../../game/presentation/widgets/game_board.dart';
 import '../../../game/presentation/widgets/score_display.dart';
 import '../../../game/presentation/widgets/screen_shake.dart';
@@ -29,6 +32,15 @@ class EndlessGamePage extends StatefulWidget {
 }
 
 class _EndlessGamePageState extends State<EndlessGamePage> {
+  bool get _isPremium {
+    try {
+      final state = context.read<SubscriptionBloc>().state;
+      return state is SubscriptionLoaded && state.isPremium;
+    } catch (_) {
+      return false;
+    }
+  }
+
   final _screenShakeKey = GlobalKey<ScreenShakeState>();
   final _comboKey = GlobalKey<ComboOverlayState>();
   final _scorePopupKey = GlobalKey<ScorePopupOverlayState>();
@@ -89,9 +101,16 @@ class _EndlessGamePageState extends State<EndlessGamePage> {
         highScore: state.highScore,
         moves: state.session.board.moveCount,
         isNewRecord: state.isNewRecord,
+        isPremium: _isPremium,
+        onUpgrade: !_isPremium
+            ? () {
+                Navigator.of(context).pop();
+                context.push('/paywall');
+              }
+            : null,
         onRestart: () {
           Navigator.of(context).pop();
-          context.read<EndlessBloc>().add(const EndlessRestart());
+          context.read<EndlessBloc>().add(EndlessRestart(undosAvailable: _isPremium ? 99 : 3));
         },
         onExit: () {
           Navigator.of(context).pop();
@@ -106,18 +125,27 @@ class _EndlessGamePageState extends State<EndlessGamePage> {
     required int score,
     required int highestTile,
   }) {
-    if (!sl.isRegistered<LeaderboardRemoteDataSource>()) return;
     try {
       final authState = context.read<AuthBloc>().state;
       if (authState is! AuthAuthenticated) return;
       final user = authState.user;
-      sl<LeaderboardRemoteDataSource>().submitScore(
-        uid: user.uid,
-        displayName: user.displayName ?? 'Player',
-        photoUrl: user.photoUrl,
+
+      // Submit to Firestore leaderboard
+      if (sl.isRegistered<LeaderboardRemoteDataSource>()) {
+        sl<LeaderboardRemoteDataSource>().submitScore(
+          uid: user.uid,
+          displayName: user.username,
+          photoUrl: user.photoUrl,
+          score: score,
+          highestTile: highestTile,
+          mode: LeaderboardMode.endless,
+        );
+      }
+
+      // Submit to native Game Center / Google Play Games
+      sl<GamesService>().submitScore(
         score: score,
-        highestTile: highestTile,
-        mode: LeaderboardMode.endless,
+        leaderboardId: AppConstants.leaderboardEndlessId,
       );
     } catch (_) {}
   }
@@ -286,7 +314,7 @@ class _EndlessGamePageState extends State<EndlessGamePage> {
                                   .add(const EndlessResume()),
                               onRestart: () => context
                                   .read<EndlessBloc>()
-                                  .add(const EndlessRestart()),
+                                  .add(EndlessRestart(undosAvailable: _isPremium ? 99 : 3)),
                               onQuit: _handleBackPress,
                             ),
                         ],
@@ -394,6 +422,8 @@ class _EndlessGameOverDialog extends StatelessWidget {
   final int highScore;
   final int moves;
   final bool isNewRecord;
+  final bool isPremium;
+  final VoidCallback? onUpgrade;
   final VoidCallback onRestart;
   final VoidCallback onExit;
 
@@ -403,6 +433,8 @@ class _EndlessGameOverDialog extends StatelessWidget {
     required this.highScore,
     required this.moves,
     required this.isNewRecord,
+    this.isPremium = false,
+    this.onUpgrade,
     required this.onRestart,
     required this.onExit,
   });
@@ -485,7 +517,14 @@ class _EndlessGameOverDialog extends StatelessWidget {
                 _Stat(label: 'High Score', value: '$highScore'),
               ],
             ),
-            const SizedBox(height: 28),
+            if (!isPremium && onUpgrade != null) ...[
+              const SizedBox(height: 20),
+              _EndlessPremiumUpsell(onUpgrade: onUpgrade!)
+                  .animate(delay: 500.ms)
+                  .fadeIn(duration: 400.ms)
+                  .slideY(begin: 0.2),
+            ],
+            const SizedBox(height: 20),
             AnimatedButton(
               onPressed: onRestart,
               gradient: AppColors.primaryGradient,
@@ -659,6 +698,97 @@ class _EndlessPauseOverlay extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _EndlessPremiumUpsell extends StatelessWidget {
+  final VoidCallback onUpgrade;
+
+  const _EndlessPremiumUpsell({required this.onUpgrade});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onUpgrade,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.secondary.withAlpha(12),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.secondary.withAlpha(50)),
+        ),
+        child: Column(
+          children: [
+            const Text(
+              'Go further next time',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.secondary,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _UpsellPill(icon: Icons.undo_rounded, label: '99 Undos'),
+                const SizedBox(width: 8),
+                _UpsellPill(icon: Icons.block_rounded, label: 'No Ads'),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: AppColors.premiumGradient,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                'Go Premium',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0A0E21),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UpsellPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _UpsellPill({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.secondary.withAlpha(20),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: AppColors.secondary),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
       ),
     );
   }

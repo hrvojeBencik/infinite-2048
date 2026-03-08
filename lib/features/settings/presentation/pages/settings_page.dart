@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/di.dart';
-import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/services/sound_service.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -19,11 +19,20 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _hapticsEnabled = true;
+  String _appVersion = '';
 
   @override
   void initState() {
     super.initState();
     _hapticsEnabled = HapticService.instance.isEnabled;
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() => _appVersion = info.version);
+    }
   }
 
   @override
@@ -119,10 +128,12 @@ class _SettingsPageState extends State<SettingsPage> {
                       GlassCard(
                         child: Column(
                           children: [
-                            const _SettingsTile(
+                            _SettingsTile(
                               icon: Icons.info_outline_rounded,
                               title: 'Version',
-                              subtitle: AppConstants.appVersion,
+                              subtitle: _appVersion.isEmpty
+                                  ? '...'
+                                  : _appVersion,
                             ),
                             const Divider(color: AppColors.divider, height: 1),
                             _SettingsTile(

@@ -1,5 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../domain/entities/subscription_status.dart';
 import '../../domain/repositories/subscription_repository.dart';
 
@@ -23,6 +25,13 @@ class PurchaseSubscription extends SubscriptionEvent {
 
 class RestorePurchases extends SubscriptionEvent {
   const RestorePurchases();
+}
+
+class DevOverrideSubscription extends SubscriptionEvent {
+  final bool unlock;
+  const DevOverrideSubscription(this.unlock);
+  @override
+  List<Object?> get props => [unlock];
 }
 
 // States
@@ -65,12 +74,25 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     on<LoadSubscription>(_onLoad);
     on<PurchaseSubscription>(_onPurchase);
     on<RestorePurchases>(_onRestore);
+    on<DevOverrideSubscription>(_onDevOverride);
   }
+
+  static const devOverrideKey = 'dev_premium_override';
 
   Future<void> _onLoad(
       LoadSubscription event, Emitter<SubscriptionState> emit) async {
     emit(SubscriptionLoading());
     try {
+      final devOverride = Hive.box(AppConstants.hiveSettingsBox)
+          .get(devOverrideKey, defaultValue: false) as bool;
+      if (devOverride) {
+        final offerings = await repository.getOfferings();
+        emit(SubscriptionLoaded(
+          status: const SubscriptionStatus(tier: SubscriptionTier.premium),
+          offerings: offerings,
+        ));
+        return;
+      }
       final status = await repository.getSubscriptionStatus();
       final offerings = await repository.getOfferings();
       emit(SubscriptionLoaded(status: status, offerings: offerings));
@@ -80,6 +102,13 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         offerings: const [],
       ));
     }
+  }
+
+  Future<void> _onDevOverride(
+      DevOverrideSubscription event, Emitter<SubscriptionState> emit) async {
+    await Hive.box(AppConstants.hiveSettingsBox)
+        .put(devOverrideKey, event.unlock);
+    add(const LoadSubscription());
   }
 
   Future<void> _onPurchase(

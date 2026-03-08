@@ -1,4 +1,4 @@
-package com.example.infinite_2048
+package dev.hrvojebencik.mq
 
 import io.flutter.embedding.android.FlutterActivity
 

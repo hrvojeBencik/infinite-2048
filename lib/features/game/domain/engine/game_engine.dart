@@ -343,6 +343,51 @@ class GameEngine {
     return board.copyWith(tiles: [...immovableTiles, ...shuffled]);
   }
 
+  /// Merge Boost: finds the highest-value matching pair (two tiles with the
+  /// same value) anywhere on the board and merges them into one, regardless
+  /// of position or adjacency. Returns null if no matching pair exists.
+  static MergeBoostResult? mergeBoost(Board board) {
+    final mergeable = board.tiles
+        .where((t) => t.canMerge && t.value > 0)
+        .toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    // Find the highest-value pair with matching values
+    Tile? tileA;
+    Tile? tileB;
+    for (int i = 0; i < mergeable.length - 1; i++) {
+      if (mergeable[i].value == mergeable[i + 1].value) {
+        tileA = mergeable[i];
+        tileB = mergeable[i + 1];
+        break;
+      }
+    }
+
+    if (tileA == null || tileB == null) return null;
+
+    final mergedValue = tileA.value * 2;
+
+    final mergedTile = Tile(
+      id: tileA.id,
+      value: mergedValue,
+      row: tileA.row,
+      col: tileA.col,
+      wasMerged: true,
+    );
+
+    final newTiles = board.tiles
+        .where((t) => t.id != tileA!.id && t.id != tileB!.id)
+        .toList()
+      ..add(mergedTile);
+
+    final newBoard = board.copyWith(
+      tiles: newTiles,
+      score: board.score + mergedValue,
+    );
+
+    return MergeBoostResult(board: newBoard, scoreGained: mergedValue);
+  }
+
   static Board removeTile(Board board, String tileId) {
     return board.copyWith(
       tiles: board.tiles.where((t) => t.id != tileId).toList(),
@@ -425,4 +470,11 @@ class _MergeResult {
     this.scoreGained = 0,
     this.isBombExplosion = false,
   });
+}
+
+class MergeBoostResult {
+  final Board board;
+  final int scoreGained;
+
+  const MergeBoostResult({required this.board, required this.scoreGained});
 }

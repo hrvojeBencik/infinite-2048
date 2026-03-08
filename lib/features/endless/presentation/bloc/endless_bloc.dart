@@ -40,7 +40,7 @@ class EndlessBloc extends Bloc<EndlessEvent, EndlessState> {
     final session = GameSession(
       board: board,
       levelId: 'endless',
-      undosRemaining: 3,
+      undosRemaining: event.undosAvailable,
     );
 
     emit(EndlessPlaying(
@@ -179,7 +179,7 @@ class EndlessBloc extends Bloc<EndlessEvent, EndlessState> {
     final session = GameSession(
       board: board,
       levelId: 'endless',
-      undosRemaining: 3,
+      undosRemaining: event.undosAvailable,
     );
 
     emit(EndlessPlaying(

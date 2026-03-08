@@ -10,6 +10,8 @@ class LevelCompleteDialog extends StatefulWidget {
   final int score;
   final int stars;
   final int levelNumber;
+  final bool isPremium;
+  final VoidCallback? onUpgrade;
   final VoidCallback onNextLevel;
   final VoidCallback onBackToLevels;
   final VoidCallback onReplay;
@@ -19,6 +21,8 @@ class LevelCompleteDialog extends StatefulWidget {
     required this.score,
     required this.stars,
     required this.levelNumber,
+    this.isPremium = false,
+    this.onUpgrade,
     required this.onNextLevel,
     required this.onBackToLevels,
     required this.onReplay,
@@ -152,6 +156,29 @@ class _LevelCompleteDialogState extends State<LevelCompleteDialog>
                     },
                   ),
                 ).animate(delay: 600.ms).fadeIn(),
+                if (!widget.isPremium && widget.stars == 1 && widget.onUpgrade != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: GestureDetector(
+                      onTap: widget.onUpgrade,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.workspace_premium_rounded,
+                              size: 14, color: AppColors.secondary.withAlpha(180)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Premium power-ups could help you get 3 stars',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.secondary.withAlpha(180),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ).animate(delay: 1200.ms).fadeIn(duration: 500.ms),
                 const SizedBox(height: 28),
                 AnimatedButton(
                   onPressed: widget.onNextLevel,
