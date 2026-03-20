@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../../core/constants/app_constants.dart';
@@ -96,7 +97,8 @@ class StatisticsLocalDataSource {
     try {
       final map = jsonDecode(data as String) as Map<String, dynamic>;
       return GameStats.fromJson(map);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Failed to parse game stats: $e');
       return const GameStats();
     }
   }

@@ -9,10 +9,10 @@ class GameConstants {
   static const double highValueSpawnChance = 0.1;
   static const int highSpawnValue = 4;
 
-  static const int freeUndosPerLevel = 3;
-  static const int premiumHammersPerLevel = 5;
-  static const int premiumShufflesPerLevel = 3;
-  static const int premiumMergeBoostsPerLevel = 1;
+  static const int undosPerLevel = 5;
+  static const int hammersPerLevel = 3;
+  static const int shufflesPerLevel = 2;
+  static const int mergeBoostsPerLevel = 1;
 
   static const Duration tileAnimationDuration = Duration(milliseconds: 150);
   static const Duration mergeAnimationDuration = Duration(milliseconds: 200);

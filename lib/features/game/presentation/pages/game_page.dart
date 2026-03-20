@@ -4,10 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/di.dart';
-import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/game_constants.dart';
 import '../../../../core/services/ad_service.dart';
 import '../../../../core/services/analytics_service.dart';
-import '../../../../core/services/games_service.dart';
 import '../../../../core/services/mechanic_intro_service.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../leaderboard/data/datasources/leaderboard_remote_datasource.dart';
@@ -33,7 +32,6 @@ import '../widgets/combo_overlay.dart';
 import '../widgets/score_popup.dart';
 import '../widgets/particle_effects.dart';
 import '../../../levels/domain/entities/level.dart';
-import '../../../subscription/presentation/bloc/subscription_bloc.dart';
 
 class GamePage extends StatefulWidget {
   final Level level;
@@ -50,20 +48,11 @@ class _GamePageState extends State<GamePage> {
   bool _introChecked = false;
   bool _showTutorial = false;
 
-  bool get _isPremium {
-    try {
-      final state = context.read<SubscriptionBloc>().state;
-      return state is SubscriptionLoaded && state.isPremium;
-    } catch (_) {
-      return false;
-    }
-  }
-
   RestartLevel get _restartEvent => RestartLevel(
-        undosAvailable: _isPremium ? 99 : 3,
-        hammersAvailable: _isPremium ? 5 : 0,
-        shufflesAvailable: _isPremium ? 3 : 0,
-        mergeBoostsAvailable: _isPremium ? 3 : 0,
+        undosAvailable: GameConstants.undosPerLevel,
+        hammersAvailable: GameConstants.hammersPerLevel,
+        shufflesAvailable: GameConstants.shufflesPerLevel,
+        mergeBoostsAvailable: GameConstants.mergeBoostsPerLevel,
       );
 
   final _screenShakeKey = GlobalKey<ScreenShakeState>();
@@ -127,6 +116,7 @@ class _GamePageState extends State<GamePage> {
     if (widget.level.levelNumber >= 3) {
       onboarding.markTutorialCompleted();
     }
+    try { sl<AnalyticsService>().logTutorialCompleted(levelNumber: widget.level.levelNumber); } catch (_) {}
     setState(() => _showTutorial = false);
   }
 
@@ -156,7 +146,9 @@ class _GamePageState extends State<GamePage> {
           hadBombExplosion: state.hadBombExplosion,
           comboCount: state.comboCount,
         );
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Failed to record move stats: $e');
+      }
     }
   }
 
@@ -205,6 +197,7 @@ class _GamePageState extends State<GamePage> {
                   sl<AdService>().loadRewardedAd(
                     onRewarded: () {
                       if (mounted) {
+                        try { sl<AnalyticsService>().logAdWatched(type: AnalyticsAdType.rewardedUndo); } catch (_) {}
                         context.read<GameBloc>().add(const GrantExtraUndo());
                       }
                     },
@@ -244,6 +237,16 @@ class _GamePageState extends State<GamePage> {
       },
       child: BlocConsumer<GameBloc, GameState>(
         listener: (context, state) {
+          if (state is GamePlaying && state.session.board.moveCount == 0) {
+            try {
+              sl<AnalyticsService>().logLevelStarted(
+                levelId: widget.level.id,
+                boardSize: widget.level.boardSize,
+                targetTile: widget.level.targetTileValue,
+                isDailyChallenge: widget.isDailyChallenge,
+              );
+            } catch (_) {}
+          }
           if (state is GamePlaying) {
             _checkMechanicIntro(context);
             _triggerJuiceEffects(state);
@@ -287,8 +290,6 @@ class _GamePageState extends State<GamePage> {
                       final velocity = details.velocity.pixelsPerSecond;
                       if (velocity.distance < 100) return;
                       final angle = math.atan2(velocity.dy, velocity.dx);
-                      // Determine direction from angle:
-                      // right: -45 to 45, down: 45 to 135, left: 135/-135, up: -135 to -45
                       if (angle.abs() <= math.pi / 4) {
                         _handleSwipe(MoveDirection.right);
                       } else if (angle.abs() >= 3 * math.pi / 4) {
@@ -393,39 +394,38 @@ class _GamePageState extends State<GamePage> {
                                 PowerUpBar(
                                   session: session,
                                   isHammerMode: _isHammerMode,
-                                  isPremiumUser: _isPremium,
                                   onUndo: () {
                                     if (session.undosRemaining <= 0) {
                                       _showWatchAdForUndo(context);
                                       return;
                                     }
                                     HapticService.instance.light();
+                                    try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.undo); } catch (_) {}
                                     context.read<GameBloc>().add(const UndoMove());
                                   },
-                                  onHammer: () {
-                                    if (!_isPremium) {
-                                      context.push('/paywall');
-                                      return;
-                                    }
-                                    HapticService.instance.light();
-                                    setState(() => _isHammerMode = !_isHammerMode);
-                                  },
-                                  onShuffle: () {
-                                    if (!_isPremium) {
-                                      context.push('/paywall');
-                                      return;
-                                    }
-                                    HapticService.instance.medium();
-                                    context.read<GameBloc>().add(const UseShuffle());
-                                  },
-                                  onMergeBoost: () {
-                                    if (!_isPremium) {
-                                      context.push('/paywall');
-                                      return;
-                                    }
-                                    HapticService.instance.medium();
-                                    context.read<GameBloc>().add(const UseMergeBoost());
-                                  },
+                                  onHammer: session.hammersRemaining > 0
+                                      ? () {
+                                          HapticService.instance.light();
+                                          if (!_isHammerMode) {
+                                            try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.hammer); } catch (_) {}
+                                          }
+                                          setState(() => _isHammerMode = !_isHammerMode);
+                                        }
+                                      : null,
+                                  onShuffle: session.shufflesRemaining > 0
+                                      ? () {
+                                          HapticService.instance.medium();
+                                          try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.shuffle); } catch (_) {}
+                                          context.read<GameBloc>().add(const UseShuffle());
+                                        }
+                                      : null,
+                                  onMergeBoost: session.mergeBoostsRemaining > 0
+                                      ? () {
+                                          HapticService.instance.medium();
+                                          try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.mergeBoost); } catch (_) {}
+                                          context.read<GameBloc>().add(const UseMergeBoost());
+                                        }
+                                      : null,
                                 ),
                                 const SizedBox(height: 16),
                               ],
@@ -433,7 +433,10 @@ class _GamePageState extends State<GamePage> {
                           ),
                           if (isPaused) _PauseOverlay(
                             onBackPress: _handleBackPress,
-                            onRestart: () => context.read<GameBloc>().add(_restartEvent),
+                            onRestart: () {
+                              try { sl<AnalyticsService>().logLevelRestarted(levelId: widget.level.id); } catch (_) {}
+                              context.read<GameBloc>().add(_restartEvent);
+                            },
                           ),
                           if (_showTutorial)
                             Positioned.fill(
@@ -464,10 +467,12 @@ class _GamePageState extends State<GamePage> {
         stars: state.stars,
         highestTile: state.session.board.highestTile,
         moveCount: state.session.board.moveCount,
-        undosUsed: 3 - state.session.undosRemaining,
+        undosUsed: GameConstants.undosPerLevel - state.session.undosRemaining,
         isDailyChallenge: widget.isDailyChallenge,
       ));
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to track achievements: $e');
+    }
 
     try {
       sl<StatisticsLocalDataSource>().recordLevelCompleted(
@@ -476,11 +481,13 @@ class _GamePageState extends State<GamePage> {
         highestTile: state.session.board.highestTile,
         merges: state.session.board.score ~/ 4,
         moves: state.session.board.moveCount,
-        undosUsed: 3 - state.session.undosRemaining,
+        undosUsed: GameConstants.undosPerLevel - state.session.undosRemaining,
         bombExplosions: 0,
         bestCombo: 0,
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to record level stats: $e');
+    }
 
     _checkRateAppPrompt(state.stars);
 
@@ -492,7 +499,9 @@ class _GamePageState extends State<GamePage> {
         moves: state.session.board.moveCount,
         highestTile: state.session.board.highestTile,
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to log analytics: $e');
+    }
 
     _submitLeaderboardScore(
       context,
@@ -523,16 +532,12 @@ class _GamePageState extends State<GamePage> {
       final user = authState.user;
 
       LeaderboardMode mode;
-      String nativeLeaderboardId;
       if (widget.level.id == 'daily_challenge') {
         mode = LeaderboardMode.daily;
-        nativeLeaderboardId = AppConstants.leaderboardDailyId;
       } else if (widget.level.id == 'weekly_challenge') {
         mode = LeaderboardMode.weekly;
-        nativeLeaderboardId = AppConstants.leaderboardWeeklyId;
       } else {
         mode = LeaderboardMode.story;
-        nativeLeaderboardId = AppConstants.leaderboardStoryId;
       }
 
       // Submit to Firestore leaderboard
@@ -546,17 +551,13 @@ class _GamePageState extends State<GamePage> {
           mode: mode,
         );
       }
-
-      // Submit to native Game Center / Google Play Games
-      sl<GamesService>().submitScore(
-        score: score,
-        leaderboardId: nativeLeaderboardId,
-      );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to submit leaderboard score: $e');
+    }
   }
 
   void _showLevelComplete(BuildContext context, GameWon state) {
-    sl<AdService>().onLevelCompleted(isPremium: _isPremium);
+    sl<AdService>().onLevelCompleted();
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -564,13 +565,6 @@ class _GamePageState extends State<GamePage> {
         score: state.session.board.score,
         stars: state.stars,
         levelNumber: state.level.levelNumber,
-        isPremium: _isPremium,
-        onUpgrade: !_isPremium
-            ? () {
-                Navigator.of(context).pop();
-                context.push('/paywall');
-              }
-            : null,
         onNextLevel: () {
           Navigator.of(context).pop();
           context.pop('next');
@@ -595,7 +589,9 @@ class _GamePageState extends State<GamePage> {
         moves: state.session.board.moveCount,
         highestTile: state.session.board.highestTile,
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to log level failure: $e');
+    }
 
     final hasHistory = state.session.moveHistory.isNotEmpty;
 
@@ -605,19 +601,16 @@ class _GamePageState extends State<GamePage> {
       builder: (_) => GameOverDialog(
         score: state.session.board.score,
         highestTile: state.session.board.highestTile,
-        isPremium: _isPremium,
-        onContinuePremium: _isPremium && hasHistory
-            ? () {
-                Navigator.of(context).pop();
-                context.read<GameBloc>().add(const ContinueAfterLoss());
-              }
-            : null,
-        onWatchAdToContinue: !_isPremium && hasHistory
+        onWatchAdToContinue: hasHistory
             ? () {
                 Navigator.of(context).pop();
                 sl<AdService>().loadRewardedAd(
                   onRewarded: () {
                     if (mounted) {
+                      try {
+                        sl<AnalyticsService>().logAdWatched(type: AnalyticsAdType.rewardedContinue);
+                        sl<AnalyticsService>().logContinueAfterLoss(source: 'ad', levelId: state.level.id);
+                      } catch (_) {}
                       context
                           .read<GameBloc>()
                           .add(const ContinueAfterLoss());
@@ -626,14 +619,9 @@ class _GamePageState extends State<GamePage> {
                 );
               }
             : null,
-        onUpgrade: !_isPremium
-            ? () {
-                Navigator.of(context).pop();
-                context.push('/paywall');
-              }
-            : null,
         onRetry: () {
           Navigator.of(context).pop();
+          try { sl<AnalyticsService>().logLevelRestarted(levelId: state.level.id); } catch (_) {}
           context.read<GameBloc>().add(_restartEvent);
         },
         onBackToLevels: () {

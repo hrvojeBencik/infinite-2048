@@ -18,7 +18,9 @@ class TileThemes {
           return theme_model.TileThemes.getById(decoded);
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to load active tile theme: $e');
+    }
     return theme_model.TileThemes.classic;
   }
 

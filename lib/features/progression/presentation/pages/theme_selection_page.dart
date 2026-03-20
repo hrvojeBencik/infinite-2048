@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../app/di.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_card.dart';
-import '../../../subscription/presentation/bloc/subscription_bloc.dart';
 import '../../data/datasources/progression_local_datasource.dart';
 import '../../domain/entities/player_profile.dart';
 import '../../domain/entities/tile_theme.dart';
@@ -20,15 +17,6 @@ class _ThemeSelectionPageState extends State<ThemeSelectionPage> {
   late ProgressionLocalDataSource _ds;
   late PlayerProfile _profile;
 
-  bool get _isPremium {
-    try {
-      final state = context.read<SubscriptionBloc>().state;
-      return state is SubscriptionLoaded && state.isPremium;
-    } catch (_) {
-      return false;
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -42,7 +30,8 @@ class _ThemeSelectionPageState extends State<ThemeSelectionPage> {
   }
 
   bool _isThemeUnlocked(TileTheme theme) {
-    if (theme.isPremium) return _isPremium;
+    // Previously premium themes are now available to everyone
+    if (theme.isPremium) return true;
     return _profile.unlockedTileThemeIds.contains(theme.id) ||
         _profile.level >= theme.requiredLevel;
   }
@@ -90,16 +79,12 @@ class _ThemeSelectionPageState extends State<ThemeSelectionPage> {
                       child: GlassCard(
                         onTap: isUnlocked
                             ? () => _selectTheme(theme)
-                            : theme.isPremium
-                                ? () => context.push('/paywall')
-                                : null,
+                            : null,
                         borderColor: isActive
                             ? AppColors.primary
-                            : theme.isPremium && !isUnlocked
-                                ? AppColors.secondary.withAlpha(40)
-                                : isUnlocked
-                                    ? AppColors.cardBorder
-                                    : AppColors.textTertiary.withAlpha(40),
+                            : isUnlocked
+                                ? AppColors.cardBorder
+                                : AppColors.textTertiary.withAlpha(40),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -141,60 +126,24 @@ class _ThemeSelectionPageState extends State<ThemeSelectionPage> {
                                               ),
                                             ),
                                           ],
-                                          if (theme.isPremium) ...[
-                                            const SizedBox(width: 8),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                gradient: AppColors.premiumGradient,
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                              ),
-                                              child: const Text(
-                                                'PRO',
-                                                style: TextStyle(
-                                                  fontSize: 9,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: Color(0xFF0A0E21),
-                                                  letterSpacing: 0.5,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
                                         ],
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         isUnlocked
                                             ? theme.description
-                                            : theme.isPremium
-                                                ? 'Premium exclusive'
-                                                : 'Unlocks at Level ${theme.requiredLevel}',
+                                            : 'Unlocks at Level ${theme.requiredLevel}',
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: isUnlocked
                                               ? AppColors.textSecondary
-                                              : theme.isPremium
-                                                  ? AppColors.secondary.withAlpha(180)
-                                                  : AppColors.textTertiary,
+                                              : AppColors.textTertiary,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                if (!isUnlocked && theme.isPremium)
-                                  Container(
-                                    width: 28,
-                                    height: 28,
-                                    decoration: BoxDecoration(
-                                      gradient: AppColors.premiumGradient,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.lock_rounded,
-                                        color: Color(0xFF0A0E21), size: 14),
-                                  )
-                                else if (!isUnlocked)
+                                if (!isUnlocked)
                                   Icon(Icons.lock_rounded,
                                       color: AppColors.textTertiary.withAlpha(120),
                                       size: 24),

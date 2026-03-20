@@ -2,6 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/achievement.dart';
 import '../../domain/entities/challenge.dart';
+import '../../../../app/di.dart';
+import '../../../../core/services/analytics_service.dart';
 import '../../domain/repositories/achievements_repository.dart';
 
 // Events
@@ -171,6 +173,7 @@ class AchievementsBloc extends Bloc<AchievementsEvent, AchievementsState> {
       final daily = await repository.getDailyChallenge();
       if (daily != null && !daily.isCompleted) {
         await repository.completeDailyChallenge(daily.id, event.score);
+        try { sl<AnalyticsService>().logDailyChallengeCompleted(score: event.score); } catch (_) {}
       }
     }
 
@@ -189,6 +192,7 @@ class AchievementsBloc extends Bloc<AchievementsEvent, AchievementsState> {
         updated.progressPercentage >= 1.0 &&
         !updated.isUnlocked) {
       await repository.unlockAchievement(achievementId);
+      try { sl<AnalyticsService>().logAchievementUnlocked(achievementId: achievementId); } catch (_) {}
     }
   }
 

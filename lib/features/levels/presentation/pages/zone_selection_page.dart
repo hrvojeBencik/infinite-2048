@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/tile_themes.dart';
-import '../../../../core/widgets/glass_card.dart';
+import '../../../../app/di.dart';
+import '../../../../core/services/analytics_service.dart';
 import '../../domain/entities/zone.dart';
 import '../bloc/levels_bloc.dart';
 
@@ -30,9 +32,9 @@ class ZoneSelectionPage extends StatelessWidget {
                       onPressed: () => context.pop(),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       'Zones',
-                      style: TextStyle(
+                      style: GoogleFonts.spaceGrotesk(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
@@ -41,20 +43,33 @@ class ZoneSelectionPage extends StatelessWidget {
                     const Spacer(),
                     BlocBuilder<LevelsBloc, LevelsState>(
                       builder: (context, state) {
-                        final stars = state is ZonesLoaded ? state.totalStars : 0;
-                        return Row(
-                          children: [
-                            const Icon(Icons.star_rounded, color: AppColors.secondary, size: 20),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$stars',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.secondary,
+                        final stars =
+                            state is ZonesLoaded ? state.totalStars : 0;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.secondary.withAlpha(15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: AppColors.secondary.withAlpha(40)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.star_rounded,
+                                  color: AppColors.secondary, size: 18),
+                              const SizedBox(width: 6),
+                              Text(
+                                '$stars',
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.secondary,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         );
                       },
                     ),
@@ -67,7 +82,8 @@ class ZoneSelectionPage extends StatelessWidget {
                   builder: (context, state) {
                     if (state is LevelsLoading) {
                       return const Center(
-                        child: CircularProgressIndicator(color: AppColors.primary),
+                        child: CircularProgressIndicator(
+                            color: AppColors.primary),
                       );
                     }
                     if (state is ZonesLoaded) {
@@ -82,7 +98,7 @@ class ZoneSelectionPage extends StatelessWidget {
                           )
                               .animate(delay: (100 * index).ms)
                               .fadeIn(duration: 400.ms)
-                              .slideX(begin: 0.1);
+                              .slideX(begin: 0.08);
                         },
                       );
                     }
@@ -113,115 +129,233 @@ class _ZoneCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLocked = totalStars < zone.requiredStarsToUnlock;
     final colors = TileThemes.zoneGradient(zone.id);
+    final progress = zone.completionPercentage;
 
-    return GlassCard(
-      margin: const EdgeInsets.only(bottom: 16),
-      onTap: isLocked
-          ? null
-          : () {
-              context.push('/zones/${zone.id}/levels').then((_) {
-                if (context.mounted) {
-                  context.read<LevelsBloc>().add(const LoadZones());
-                }
-              });
-            },
-      child: Opacity(
-        opacity: isLocked ? 0.5 : 1.0,
-        child: Row(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: colors),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                _zoneIcon(zone.id),
-                color: Colors.white,
-                size: 28,
-              ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: GestureDetector(
+        onTap: isLocked
+            ? null
+            : () {
+                try { sl<AnalyticsService>().logZoneSelected(zoneId: zone.id); } catch (_) {}
+                context.push('/zones/${zone.id}/levels').then((_) {
+                  if (context.mounted) {
+                    context.read<LevelsBloc>().add(const LoadZones());
+                  }
+                });
+              },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: isLocked
+                  ? [
+                      AppColors.surface.withAlpha(80),
+                      AppColors.surface.withAlpha(60),
+                    ]
+                  : [
+                      AppColors.surface.withAlpha(180),
+                      colors[0].withAlpha(12),
+                    ],
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    zone.name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isLocked
+                  ? AppColors.cardBorder.withAlpha(40)
+                  : colors[0].withAlpha(40),
+              width: 1,
+            ),
+            boxShadow: !isLocked
+                ? [
+                    BoxShadow(
+                      color: colors[0].withAlpha(15),
+                      blurRadius: 20,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 4),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    zone.description,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
+                  ]
+                : null,
+          ),
+          child: Opacity(
+            opacity: isLocked ? 0.45 : 1.0,
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    // Zone icon with gradient
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            colors[0].withAlpha(isLocked ? 80 : 200),
+                            colors[1].withAlpha(isLocked ? 60 : 160),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: !isLocked
+                            ? [
+                                BoxShadow(
+                                  color: colors[0].withAlpha(40),
+                                  blurRadius: 12,
+                                  spreadRadius: 0,
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Icon(
+                        _zoneIcon(zone.id),
+                        color: Colors.white,
+                        size: 28,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
+                    const SizedBox(width: 16),
+                    // Zone info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            zone.name,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            zone.description,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Right side: lock or chevron
+                    if (isLocked)
+                      Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface.withAlpha(120),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.lock_rounded,
+                                color: AppColors.textTertiary, size: 18),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.star_rounded,
+                                  size: 12, color: AppColors.textTertiary),
+                              const SizedBox(width: 2),
+                              Text(
+                                '${zone.requiredStarsToUnlock}',
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textTertiary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    else
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: colors[0].withAlpha(120),
+                        size: 28,
+                      ),
+                  ],
+                ),
+                if (!isLocked) ...[
+                  const SizedBox(height: 14),
+                  // Progress section
                   Row(
                     children: [
                       Text(
-                        '${zone.completedLevels}/${zone.levels.length}',
+                        '${zone.completedLevels}/${zone.levels.length} levels',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: colors[0],
+                          color: colors[0].withAlpha(200),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: LinearProgressIndicator(
-                          value: zone.completionPercentage,
-                          backgroundColor: AppColors.surface,
-                          valueColor: AlwaysStoppedAnimation(colors[0]),
-                          borderRadius: BorderRadius.circular(4),
-                          minHeight: 4,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.star_rounded,
-                        size: 14,
-                        color: AppColors.secondary.withAlpha(180),
-                      ),
-                      Text(
-                        ' ${zone.totalStars}/${zone.maxStars}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textTertiary,
-                        ),
+                      const Spacer(),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.star_rounded,
+                              size: 14,
+                              color: AppColors.secondary.withAlpha(200)),
+                          const SizedBox(width: 3),
+                          Text(
+                            '${zone.totalStars}/${zone.maxStars}',
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            if (isLocked)
-              Column(
-                children: [
-                  const Icon(Icons.lock_rounded, color: AppColors.textTertiary, size: 20),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${zone.requiredStarsToUnlock}★',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.textTertiary,
+                  const SizedBox(height: 8),
+                  // Progress bar
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: SizedBox(
+                      height: 5,
+                      child: Stack(
+                        children: [
+                          // Background
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          // Fill
+                          FractionallySizedBox(
+                            widthFactor: progress,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(colors: colors),
+                                borderRadius: BorderRadius.circular(4),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: colors[0].withAlpha(60),
+                                    blurRadius: 6,
+                                    spreadRadius: 0,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
-              )
-            else
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textTertiary,
-              ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );

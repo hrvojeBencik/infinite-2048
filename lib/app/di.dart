@@ -2,7 +2,6 @@ import 'package:get_it/get_it.dart';
 
 import '../core/services/ad_service.dart';
 import '../core/services/analytics_service.dart';
-import '../core/services/games_service.dart';
 import '../core/services/mechanic_intro_service.dart';
 import '../core/services/rate_app_service.dart';
 import '../core/services/remote_config_service.dart';
@@ -29,9 +28,6 @@ import '../features/levels/presentation/bloc/levels_bloc.dart';
 import '../features/onboarding/data/datasources/onboarding_local_datasource.dart';
 import '../features/progression/data/datasources/progression_local_datasource.dart';
 import '../features/statistics/data/datasources/statistics_local_datasource.dart';
-import '../features/subscription/data/repositories/subscription_repository_impl.dart';
-import '../features/subscription/domain/repositories/subscription_repository.dart';
-import '../features/subscription/presentation/bloc/subscription_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -43,7 +39,6 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<SoundService>(() => SoundService());
   sl.registerLazySingleton<RateAppService>(() => RateAppService());
   sl.registerLazySingleton<RemoteConfigService>(() => RemoteConfigService());
-  sl.registerLazySingleton<GamesService>(() => GamesService());
 
   // Data sources
   sl.registerLazySingleton<GameLocalDataSource>(() => GameLocalDataSource());
@@ -80,9 +75,6 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<AchievementsRepository>(
     () => AchievementsRepositoryImpl(localDataSource: sl()),
   );
-  sl.registerLazySingleton<SubscriptionRepository>(
-    () => SubscriptionRepositoryImpl(),
-  );
 
   // Auth (only if Firebase is available)
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl());
@@ -98,11 +90,11 @@ Future<void> initDependencies() async {
   sl.registerFactory<AchievementsBloc>(
     () => AchievementsBloc(repository: sl()),
   );
-  sl.registerFactory<SubscriptionBloc>(
-    () => SubscriptionBloc(repository: sl()),
-  );
   sl.registerFactory<AuthBloc>(
-    () => AuthBloc(repository: sl<AuthRepository>()),
+    () => AuthBloc(
+      repository: sl<AuthRepository>(),
+      leaderboardDataSource: sl<LeaderboardRemoteDataSource>(),
+    ),
   );
   sl.registerFactory<EndlessBloc>(
     () => EndlessBloc(dataSource: sl<EndlessLocalDataSource>()),

@@ -11,11 +11,6 @@ class AppConstants {
   static const String hiveSettingsBox = 'settings';
   static const String hiveUserBox = 'user';
 
-  static const String revenueCatApiKeyIos = 'test_qGujcKEIroDcOteFaPjjhOeZAbG';
-  static const String revenueCatApiKeyAndroid =
-      'test_qGujcKEIroDcOteFaPjjhOeZAbG';
-  static const String revenueCatEntitlementId = '2048: Merge Quest Pro';
-
   static const String adMobBannerIdAndroid = kDebugMode
       ? 'ca-app-pub-3940256099942544/9214589741'
       : 'ca-app-pub-7471321356104495/1683269527';
@@ -39,13 +34,6 @@ class AppConstants {
   static const String adMobRewardedIdIos = kDebugMode
       ? 'ca-app-pub-3940256099942544/1712485313'
       : 'ca-app-pub-7471321356104495/8181704628';
-
-  // Game Center / Google Play Games leaderboard IDs
-  // TODO: Replace with real IDs from App Store Connect / Google Play Console
-  static const String leaderboardStoryId = 'merge_quest_story';
-  static const String leaderboardEndlessId = 'merge_quest_endless';
-  static const String leaderboardDailyId = 'merge_quest_daily';
-  static const String leaderboardWeeklyId = 'merge_quest_weekly';
 
   static const Duration cloudSyncDebounce = Duration(seconds: 30);
   static const Duration staleDataThreshold = Duration(minutes: 5);

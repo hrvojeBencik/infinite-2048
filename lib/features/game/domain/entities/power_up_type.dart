@@ -30,16 +30,5 @@ enum PowerUpType {
     }
   }
 
-  bool get isPremiumOnly {
-    switch (this) {
-      case PowerUpType.undo:
-        return false;
-      case PowerUpType.hammer:
-        return false;
-      case PowerUpType.shuffle:
-        return true;
-      case PowerUpType.mergeBoost:
-        return true;
-    }
-  }
+  bool get isPremiumOnly => false;
 }

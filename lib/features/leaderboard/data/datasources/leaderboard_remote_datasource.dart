@@ -64,6 +64,25 @@ class LeaderboardRemoteDataSource {
     }
   }
 
+  /// Update displayName on all leaderboard entries for a given user.
+  Future<void> updateDisplayName({
+    required String uid,
+    required String displayName,
+  }) async {
+    try {
+      final snapshot = await _ref.where('uid', isEqualTo: uid).get();
+      if (snapshot.docs.isEmpty) return;
+
+      final batch = FirebaseFirestore.instance.batch();
+      for (final doc in snapshot.docs) {
+        batch.update(doc.reference, {'displayName': displayName});
+      }
+      await batch.commit();
+    } catch (e) {
+      debugPrint('Leaderboard displayName update failed: $e');
+    }
+  }
+
   /// Get a specific user's rank for a given mode.
   Future<int?> getUserRank({
     required String uid,

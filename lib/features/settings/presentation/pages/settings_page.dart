@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/di.dart';
 import '../../../../core/services/remote_config_service.dart';
+import '../../../../core/services/analytics_service.dart';
 import '../../../../core/services/sound_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_card.dart';
@@ -97,6 +98,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 onChanged: (v) {
                                   setState(() => _hapticsEnabled = v);
                                   HapticService.instance.setEnabled(v);
+                                  try { sl<AnalyticsService>().logSettingChanged(setting: 'haptics', value: v.toString()); } catch (_) {}
                                 },
                                 activeTrackColor: AppColors.primary,
                               ),
@@ -114,13 +116,17 @@ class _SettingsPageState extends State<SettingsPage> {
                               title: 'Profile',
                               onTap: () => context.push('/profile'),
                             ),
-                            const Divider(color: AppColors.divider, height: 1),
-                            _SettingsTile(
-                              icon: Icons.workspace_premium_rounded,
-                              title: 'Subscription',
-                              onTap: () => context.push('/paywall'),
-                            ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      _sectionTitle('SUPPORT'),
+                      GlassCard(
+                        child: _SettingsTile(
+                          icon: Icons.feedback_rounded,
+                          title: 'Send Feedback',
+                          subtitle: 'Report bugs or suggest features',
+                          onTap: () => context.push('/feedback'),
                         ),
                       ),
                       const SizedBox(height: 24),

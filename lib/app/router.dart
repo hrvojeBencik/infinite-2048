@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'di.dart';
+import '../core/constants/game_constants.dart';
 import '../core/services/analytics_service.dart';
 import '../features/dev/presentation/pages/dev_options_page.dart';
 import '../features/home/presentation/pages/home_page.dart';
@@ -16,7 +17,7 @@ import '../features/achievements/presentation/pages/achievements_page.dart';
 import '../features/achievements/presentation/bloc/achievements_bloc.dart';
 import '../features/achievements/data/datasources/achievements_local_datasource.dart';
 import '../features/auth/presentation/pages/profile_page.dart';
-import '../features/subscription/presentation/pages/paywall_page.dart';
+import '../features/settings/presentation/pages/bug_report_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/progression/presentation/pages/theme_selection_page.dart';
 import '../features/statistics/presentation/pages/statistics_page.dart';
@@ -27,16 +28,6 @@ import '../features/leaderboard/presentation/pages/leaderboard_page.dart';
 import '../features/leaderboard/domain/entities/leaderboard_entry.dart';
 import '../features/levels/data/datasources/levels_local_datasource.dart';
 import '../features/levels/domain/entities/level.dart';
-import '../features/subscription/presentation/bloc/subscription_bloc.dart';
-
-bool _isPremium(BuildContext context) {
-  try {
-    final state = context.read<SubscriptionBloc>().state;
-    return state is SubscriptionLoaded && state.isPremium;
-  } catch (_) {
-    return false;
-  }
-}
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -117,17 +108,16 @@ final GoRouter appRouter = GoRouter(
             child: const Scaffold(body: Center(child: Text('Level not found'))),
           );
         }
-        final premium = _isPremium(context);
         return _buildTransitionPage(
           state: state,
           child: BlocProvider(
             create: (_) => sl<GameBloc>()
               ..add(StartGame(
                 level: level,
-                undosAvailable: premium ? 99 : 3,
-                hammersAvailable: premium ? 5 : 0,
-                shufflesAvailable: premium ? 3 : 0,
-                mergeBoostsAvailable: premium ? 3 : 0,
+                undosAvailable: GameConstants.undosPerLevel,
+                hammersAvailable: GameConstants.hammersPerLevel,
+                shufflesAvailable: GameConstants.shufflesPerLevel,
+                mergeBoostsAvailable: GameConstants.mergeBoostsPerLevel,
               )),
             child: GamePage(level: level),
           ),
@@ -161,17 +151,16 @@ final GoRouter appRouter = GoRouter(
           starThreshold3: challenge.targetTileValue * 4,
         );
 
-        final premium = _isPremium(context);
         return _buildTransitionPage(
           state: state,
           child: BlocProvider(
             create: (_) => sl<GameBloc>()
               ..add(StartGame(
                 level: dailyLevel,
-                undosAvailable: challenge.noUndos ? 0 : (premium ? 99 : 3),
-                hammersAvailable: premium ? 5 : 0,
-                shufflesAvailable: premium ? 3 : 0,
-                mergeBoostsAvailable: premium ? 3 : 0,
+                undosAvailable: challenge.noUndos ? 0 : GameConstants.undosPerLevel,
+                hammersAvailable: GameConstants.hammersPerLevel,
+                shufflesAvailable: GameConstants.shufflesPerLevel,
+                mergeBoostsAvailable: GameConstants.mergeBoostsPerLevel,
               )),
             child: GamePage(level: dailyLevel, isDailyChallenge: true),
           ),
@@ -205,17 +194,16 @@ final GoRouter appRouter = GoRouter(
           starThreshold3: challenge.targetTileValue * 4,
         );
 
-        final premium = _isPremium(context);
         return _buildTransitionPage(
           state: state,
           child: BlocProvider(
             create: (_) => sl<GameBloc>()
               ..add(StartGame(
                 level: weeklyLevel,
-                undosAvailable: challenge.noUndos ? 0 : (premium ? 99 : 3),
-                hammersAvailable: premium ? 5 : 0,
-                shufflesAvailable: premium ? 3 : 0,
-                mergeBoostsAvailable: premium ? 3 : 0,
+                undosAvailable: challenge.noUndos ? 0 : GameConstants.undosPerLevel,
+                hammersAvailable: GameConstants.hammersPerLevel,
+                shufflesAvailable: GameConstants.shufflesPerLevel,
+                mergeBoostsAvailable: GameConstants.mergeBoostsPerLevel,
               )),
             child: GamePage(level: weeklyLevel, isDailyChallenge: false),
           ),
@@ -232,12 +220,11 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/endless',
       pageBuilder: (context, state) {
-        final premium = _isPremium(context);
         return _buildTransitionPage(
           state: state,
           child: BlocProvider(
             create: (_) => sl<EndlessBloc>()
-              ..add(StartEndless(undosAvailable: premium ? 99 : 3)),
+              ..add(StartEndless(undosAvailable: GameConstants.undosPerLevel)),
             child: const EndlessGamePage(),
           ),
         );
@@ -286,17 +273,17 @@ final GoRouter appRouter = GoRouter(
       ),
     ),
     GoRoute(
-      path: '/paywall',
-      pageBuilder: (context, state) => _buildTransitionPage(
-        state: state,
-        child: const PaywallPage(),
-      ),
-    ),
-    GoRoute(
       path: '/settings',
       pageBuilder: (context, state) => _buildTransitionPage(
         state: state,
         child: const SettingsPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/feedback',
+      pageBuilder: (context, state) => _buildTransitionPage(
+        state: state,
+        child: const BugReportPage(),
       ),
     ),
     if (kDebugMode) ...[

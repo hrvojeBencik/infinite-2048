@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../../leaderboard/data/datasources/leaderboard_remote_datasource.dart';
 
 // Events
 abstract class AuthEvent extends Equatable {
@@ -63,9 +64,10 @@ class AuthError extends AuthState {
 // BLoC
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository? repository;
+  final LeaderboardRemoteDataSource? leaderboardDataSource;
   StreamSubscription<AppUser?>? _authSub;
 
-  AuthBloc({this.repository}) : super(AuthInitial()) {
+  AuthBloc({this.repository, this.leaderboardDataSource}) : super(AuthInitial()) {
     on<AuthCheckRequested>(_onCheckRequested);
     on<AuthUpdateUsername>(_onUpdateUsername);
     on<AuthSignOutRequested>(_onSignOut);
@@ -106,9 +108,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     if (repository == null) return;
     await repository!.updateUsername(event.username);
 
-    // Refresh user state
+    // Update leaderboard entries with new username
     final currentUser = await repository!.currentUser;
     if (currentUser != null) {
+      leaderboardDataSource?.updateDisplayName(
+        uid: currentUser.uid,
+        displayName: event.username,
+      );
       emit(AuthAuthenticated(currentUser));
     }
   }

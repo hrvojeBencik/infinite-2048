@@ -4,7 +4,6 @@ import '../core/theme/app_theme.dart';
 import 'di.dart';
 import 'router.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
-import '../features/subscription/presentation/bloc/subscription_bloc.dart';
 import '../features/achievements/presentation/bloc/achievements_bloc.dart';
 
 class InfiniteApp extends StatelessWidget {
@@ -16,9 +15,6 @@ class InfiniteApp extends StatelessWidget {
       providers: [
         BlocProvider<AuthBloc>(
           create: (_) => sl<AuthBloc>()..add(const AuthCheckRequested()),
-        ),
-        BlocProvider<SubscriptionBloc>(
-          create: (_) => sl<SubscriptionBloc>()..add(const LoadSubscription()),
         ),
         BlocProvider<AchievementsBloc>(
           create: (_) => sl<AchievementsBloc>()..add(const LoadAchievements()),

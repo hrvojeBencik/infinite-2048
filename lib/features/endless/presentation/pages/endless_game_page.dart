@@ -4,9 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../app/di.dart';
-import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/game_constants.dart';
 import '../../../../core/services/analytics_service.dart';
-import '../../../../core/services/games_service.dart';
 import '../../../../core/services/sound_service.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../leaderboard/data/datasources/leaderboard_remote_datasource.dart';
@@ -15,7 +14,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/animated_button.dart';
 import '../../../game/domain/entities/game_session.dart';
 import '../../../game/domain/entities/move_direction.dart';
-import '../../../subscription/presentation/bloc/subscription_bloc.dart';
 import '../../../game/presentation/widgets/game_board.dart';
 import '../../../game/presentation/widgets/score_display.dart';
 import '../../../game/presentation/widgets/screen_shake.dart';
@@ -32,15 +30,6 @@ class EndlessGamePage extends StatefulWidget {
 }
 
 class _EndlessGamePageState extends State<EndlessGamePage> {
-  bool get _isPremium {
-    try {
-      final state = context.read<SubscriptionBloc>().state;
-      return state is SubscriptionLoaded && state.isPremium;
-    } catch (_) {
-      return false;
-    }
-  }
-
   final _screenShakeKey = GlobalKey<ScreenShakeState>();
   final _comboKey = GlobalKey<ComboOverlayState>();
   final _scorePopupKey = GlobalKey<ScorePopupOverlayState>();
@@ -84,7 +73,9 @@ class _EndlessGamePageState extends State<EndlessGamePage> {
         highestTile: state.session.board.highestTile,
         isNewRecord: state.isNewRecord,
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to log endless game over: $e');
+    }
 
     _submitEndlessScore(
       context,
@@ -101,16 +92,10 @@ class _EndlessGamePageState extends State<EndlessGamePage> {
         highScore: state.highScore,
         moves: state.session.board.moveCount,
         isNewRecord: state.isNewRecord,
-        isPremium: _isPremium,
-        onUpgrade: !_isPremium
-            ? () {
-                Navigator.of(context).pop();
-                context.push('/paywall');
-              }
-            : null,
         onRestart: () {
           Navigator.of(context).pop();
-          context.read<EndlessBloc>().add(EndlessRestart(undosAvailable: _isPremium ? 99 : 3));
+          try { sl<AnalyticsService>().logEndlessRestarted(); } catch (_) {}
+          context.read<EndlessBloc>().add(EndlessRestart(undosAvailable: GameConstants.undosPerLevel));
         },
         onExit: () {
           Navigator.of(context).pop();
@@ -130,7 +115,6 @@ class _EndlessGamePageState extends State<EndlessGamePage> {
       if (authState is! AuthAuthenticated) return;
       final user = authState.user;
 
-      // Submit to Firestore leaderboard
       if (sl.isRegistered<LeaderboardRemoteDataSource>()) {
         sl<LeaderboardRemoteDataSource>().submitScore(
           uid: user.uid,
@@ -141,13 +125,9 @@ class _EndlessGamePageState extends State<EndlessGamePage> {
           mode: LeaderboardMode.endless,
         );
       }
-
-      // Submit to native Game Center / Google Play Games
-      sl<GamesService>().submitScore(
-        score: score,
-        leaderboardId: AppConstants.leaderboardEndlessId,
-      );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to submit endless score: $e');
+    }
   }
 
   @override
@@ -160,6 +140,9 @@ class _EndlessGamePageState extends State<EndlessGamePage> {
       },
       child: BlocConsumer<EndlessBloc, EndlessState>(
         listener: (context, state) {
+          if (state is EndlessPlaying && state.session.board.moveCount == 0) {
+            try { sl<AnalyticsService>().logEndlessStarted(); } catch (_) {}
+          }
           if (state is EndlessPlaying) {
             _triggerJuiceEffects(state);
           }
@@ -312,9 +295,12 @@ class _EndlessGamePageState extends State<EndlessGamePage> {
                               onResume: () => context
                                   .read<EndlessBloc>()
                                   .add(const EndlessResume()),
-                              onRestart: () => context
-                                  .read<EndlessBloc>()
-                                  .add(EndlessRestart(undosAvailable: _isPremium ? 99 : 3)),
+                              onRestart: () {
+                                try { sl<AnalyticsService>().logEndlessRestarted(); } catch (_) {}
+                                context
+                                    .read<EndlessBloc>()
+                                    .add(EndlessRestart(undosAvailable: GameConstants.undosPerLevel));
+                              },
                               onQuit: _handleBackPress,
                             ),
                         ],
@@ -422,8 +408,6 @@ class _EndlessGameOverDialog extends StatelessWidget {
   final int highScore;
   final int moves;
   final bool isNewRecord;
-  final bool isPremium;
-  final VoidCallback? onUpgrade;
   final VoidCallback onRestart;
   final VoidCallback onExit;
 
@@ -433,8 +417,6 @@ class _EndlessGameOverDialog extends StatelessWidget {
     required this.highScore,
     required this.moves,
     required this.isNewRecord,
-    this.isPremium = false,
-    this.onUpgrade,
     required this.onRestart,
     required this.onExit,
   });
@@ -517,13 +499,6 @@ class _EndlessGameOverDialog extends StatelessWidget {
                 _Stat(label: 'High Score', value: '$highScore'),
               ],
             ),
-            if (!isPremium && onUpgrade != null) ...[
-              const SizedBox(height: 20),
-              _EndlessPremiumUpsell(onUpgrade: onUpgrade!)
-                  .animate(delay: 500.ms)
-                  .fadeIn(duration: 400.ms)
-                  .slideY(begin: 0.2),
-            ],
             const SizedBox(height: 20),
             AnimatedButton(
               onPressed: onRestart,
@@ -616,42 +591,16 @@ class _EndlessPauseOverlay extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.pause_circle_outline_rounded,
-              size: 64,
-              color: AppColors.primary,
-            ),
+            const Icon(Icons.pause_circle_outline_rounded, size: 64, color: AppColors.primary),
             const SizedBox(height: 16),
-            const Text(
-              'PAUSED',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w900,
-                color: AppColors.textPrimary,
-                letterSpacing: 4,
-              ),
-            ),
+            const Text('PAUSED', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: AppColors.textPrimary, letterSpacing: 4)),
             const SizedBox(height: 40),
             SizedBox(
               width: 200,
               child: ElevatedButton(
                 onPressed: onResume,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text(
-                  'RESUME',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 2,
-                  ),
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                child: const Text('RESUME', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 2)),
               ),
             ),
             const SizedBox(height: 12),
@@ -659,22 +608,8 @@ class _EndlessPauseOverlay extends StatelessWidget {
               width: 200,
               child: OutlinedButton(
                 onPressed: onRestart,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textSecondary,
-                  side: const BorderSide(color: AppColors.cardBorder),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text(
-                  'RESTART',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2,
-                  ),
-                ),
+                style: OutlinedButton.styleFrom(foregroundColor: AppColors.textSecondary, side: const BorderSide(color: AppColors.cardBorder), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                child: const Text('RESTART', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 2)),
               ),
             ),
             const SizedBox(height: 12),
@@ -682,113 +617,12 @@ class _EndlessPauseOverlay extends StatelessWidget {
               width: 200,
               child: TextButton(
                 onPressed: onQuit,
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.textTertiary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text(
-                  'QUIT',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 2,
-                  ),
-                ),
+                style: TextButton.styleFrom(foregroundColor: AppColors.textTertiary, padding: const EdgeInsets.symmetric(vertical: 16)),
+                child: const Text('QUIT', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 2)),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _EndlessPremiumUpsell extends StatelessWidget {
-  final VoidCallback onUpgrade;
-
-  const _EndlessPremiumUpsell({required this.onUpgrade});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onUpgrade,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.secondary.withAlpha(12),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.secondary.withAlpha(50)),
-        ),
-        child: Column(
-          children: [
-            const Text(
-              'Go further next time',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.secondary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _UpsellPill(icon: Icons.undo_rounded, label: '99 Undos'),
-                const SizedBox(width: 8),
-                _UpsellPill(icon: Icons.block_rounded, label: 'No Ads'),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: AppColors.premiumGradient,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text(
-                'Go Premium',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0A0E21),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _UpsellPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _UpsellPill({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.secondary.withAlpha(20),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: AppColors.secondary),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ],
       ),
     );
   }

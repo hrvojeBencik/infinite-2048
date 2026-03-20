@@ -1,6 +1,68 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
 
+/// All analytics event names in one place.
+/// Keeps naming consistent and makes it easy to audit what we track.
+abstract class AnalyticsEvents {
+  // --- Game: Story Mode ---
+  static const levelStarted = 'level_started';
+  static const levelCompleted = 'level_completed';
+  static const levelFailed = 'level_failed';
+  static const levelRestarted = 'level_restarted';
+  static const levelAbandoned = 'level_abandoned';
+
+  // --- Game: Endless Mode ---
+  static const endlessStarted = 'endless_started';
+  static const endlessGameOver = 'endless_game_over';
+  static const endlessRestarted = 'endless_restarted';
+
+  // --- Challenges ---
+  static const dailyChallengeStarted = 'daily_challenge_started';
+  static const dailyChallengeCompleted = 'daily_challenge_completed';
+  static const weeklyChallengeStarted = 'weekly_challenge_started';
+  static const weeklyChallengeCompleted = 'weekly_challenge_completed';
+
+  // --- Power-ups ---
+  static const powerUpUsed = 'power_up_used';
+
+  // --- Navigation / Engagement ---
+  static const zoneSelected = 'zone_selected';
+  static const levelSelected = 'level_selected';
+  static const settingChanged = 'setting_changed';
+  static const themeChanged = 'theme_changed';
+
+  // --- Monetization ---
+  static const adWatched = 'ad_watched';
+  static const paywallOpened = 'paywall_opened';
+  static const paywallDismissed = 'paywall_dismissed';
+  static const purchaseStarted = 'purchase_started';
+  static const purchaseCompleted = 'purchase_completed';
+  static const purchaseRestored = 'purchase_restored';
+
+  // --- Achievements ---
+  static const achievementUnlocked = 'achievement_unlocked';
+
+  // --- Engagement ---
+  static const loginStreak = 'login_streak';
+  static const tutorialCompleted = 'tutorial_completed';
+  static const continueAfterLoss = 'continue_after_loss';
+}
+
+/// Power-up type values for [AnalyticsEvents.powerUpUsed].
+abstract class AnalyticsPowerUp {
+  static const undo = 'undo';
+  static const hammer = 'hammer';
+  static const shuffle = 'shuffle';
+  static const mergeBoost = 'merge_boost';
+}
+
+/// Ad type values for [AnalyticsEvents.adWatched].
+abstract class AnalyticsAdType {
+  static const rewardedUndo = 'rewarded_undo';
+  static const rewardedContinue = 'rewarded_continue';
+  static const interstitial = 'interstitial';
+}
+
 class AnalyticsService {
   FirebaseAnalytics? _analytics;
 
@@ -18,28 +80,41 @@ class AnalyticsService {
     return FirebaseAnalyticsObserver(analytics: _analytics!);
   }
 
-  // --- Navigation ---
+  // ---------------------------------------------------------------------------
+  // Core helper — every event flows through here
+  // ---------------------------------------------------------------------------
 
-  Future<void> logScreenView(String screenName) async {
-    await _analytics?.logScreenView(screenName: screenName);
+  Future<void> _log(String name, [Map<String, Object>? params]) async {
+    try {
+      await _analytics?.logEvent(name: name, parameters: params);
+    } catch (_) {}
   }
 
-  // --- Game Events ---
+  // ---------------------------------------------------------------------------
+  // Navigation
+  // ---------------------------------------------------------------------------
+
+  Future<void> logScreenView(String screenName) async {
+    try {
+      await _analytics?.logScreenView(screenName: screenName);
+    } catch (_) {}
+  }
+
+  // ---------------------------------------------------------------------------
+  // Game: Story Mode
+  // ---------------------------------------------------------------------------
 
   Future<void> logLevelStarted({
     required String levelId,
     required int boardSize,
     required int targetTile,
-  }) async {
-    await _analytics?.logEvent(
-      name: 'level_started',
-      parameters: {
-        'level_id': levelId,
-        'board_size': boardSize,
-        'target_tile': targetTile,
-      },
-    );
-  }
+    bool isDailyChallenge = false,
+  }) => _log(AnalyticsEvents.levelStarted, {
+    'level_id': levelId,
+    'board_size': boardSize,
+    'target_tile': targetTile,
+    'is_daily_challenge': isDailyChallenge ? 1 : 0,
+  });
 
   Future<void> logLevelCompleted({
     required String levelId,
@@ -47,143 +122,155 @@ class AnalyticsService {
     required int stars,
     required int moves,
     required int highestTile,
-  }) async {
-    await _analytics?.logEvent(
-      name: 'level_completed',
-      parameters: {
-        'level_id': levelId,
-        'score': score,
-        'stars': stars,
-        'moves': moves,
-        'highest_tile': highestTile,
-      },
-    );
-  }
+  }) => _log(AnalyticsEvents.levelCompleted, {
+    'level_id': levelId,
+    'score': score,
+    'stars': stars,
+    'moves': moves,
+    'highest_tile': highestTile,
+  });
 
   Future<void> logLevelFailed({
     required String levelId,
     required int score,
     required int moves,
     required int highestTile,
-  }) async {
-    await _analytics?.logEvent(
-      name: 'level_failed',
-      parameters: {
-        'level_id': levelId,
-        'score': score,
-        'moves': moves,
-        'highest_tile': highestTile,
-      },
-    );
-  }
+  }) => _log(AnalyticsEvents.levelFailed, {
+    'level_id': levelId,
+    'score': score,
+    'moves': moves,
+    'highest_tile': highestTile,
+  });
 
-  // --- Endless Mode ---
+  Future<void> logLevelRestarted({required String levelId}) =>
+      _log(AnalyticsEvents.levelRestarted, {'level_id': levelId});
 
-  Future<void> logEndlessStarted() async {
-    await _analytics?.logEvent(name: 'endless_started');
-  }
+  Future<void> logLevelAbandoned({
+    required String levelId,
+    required int score,
+    required int moves,
+  }) => _log(AnalyticsEvents.levelAbandoned, {
+    'level_id': levelId,
+    'score': score,
+    'moves': moves,
+  });
+
+  // ---------------------------------------------------------------------------
+  // Game: Endless Mode
+  // ---------------------------------------------------------------------------
+
+  Future<void> logEndlessStarted() => _log(AnalyticsEvents.endlessStarted);
 
   Future<void> logEndlessGameOver({
     required int score,
     required int moves,
     required int highestTile,
     required bool isNewRecord,
-  }) async {
-    await _analytics?.logEvent(
-      name: 'endless_game_over',
-      parameters: {
-        'score': score,
-        'moves': moves,
-        'highest_tile': highestTile,
-        'is_new_record': isNewRecord ? 1 : 0,
-      },
-    );
-  }
+  }) => _log(AnalyticsEvents.endlessGameOver, {
+    'score': score,
+    'moves': moves,
+    'highest_tile': highestTile,
+    'is_new_record': isNewRecord ? 1 : 0,
+  });
 
-  // --- Challenges ---
+  Future<void> logEndlessRestarted() => _log(AnalyticsEvents.endlessRestarted);
 
-  Future<void> logDailyChallengeStarted() async {
-    await _analytics?.logEvent(name: 'daily_challenge_started');
-  }
+  // ---------------------------------------------------------------------------
+  // Challenges
+  // ---------------------------------------------------------------------------
 
-  Future<void> logDailyChallengeCompleted({required int score}) async {
-    await _analytics?.logEvent(
-      name: 'daily_challenge_completed',
-      parameters: {'score': score},
-    );
-  }
+  Future<void> logDailyChallengeStarted() =>
+      _log(AnalyticsEvents.dailyChallengeStarted);
 
-  Future<void> logWeeklyChallengeStarted() async {
-    await _analytics?.logEvent(name: 'weekly_challenge_started');
-  }
+  Future<void> logDailyChallengeCompleted({required int score}) =>
+      _log(AnalyticsEvents.dailyChallengeCompleted, {'score': score});
 
-  Future<void> logWeeklyChallengeCompleted({required int score}) async {
-    await _analytics?.logEvent(
-      name: 'weekly_challenge_completed',
-      parameters: {'score': score},
-    );
-  }
+  Future<void> logWeeklyChallengeStarted() =>
+      _log(AnalyticsEvents.weeklyChallengeStarted);
 
-  // --- Features ---
+  Future<void> logWeeklyChallengeCompleted({required int score}) =>
+      _log(AnalyticsEvents.weeklyChallengeCompleted, {'score': score});
 
-  Future<void> logThemeChanged({required String themeId}) async {
-    await _analytics?.logEvent(
-      name: 'theme_changed',
-      parameters: {'theme_id': themeId},
-    );
-  }
+  // ---------------------------------------------------------------------------
+  // Power-ups
+  // ---------------------------------------------------------------------------
+
+  Future<void> logPowerUpUsed({required String powerUp, String? context}) =>
+      _log(AnalyticsEvents.powerUpUsed, {'type': powerUp, 'context': ?context});
+
+  // ---------------------------------------------------------------------------
+  // Navigation / Engagement
+  // ---------------------------------------------------------------------------
+
+  Future<void> logZoneSelected({required String zoneId}) =>
+      _log(AnalyticsEvents.zoneSelected, {'zone_id': zoneId});
+
+  Future<void> logLevelSelected({required String levelId}) =>
+      _log(AnalyticsEvents.levelSelected, {'level_id': levelId});
+
+  Future<void> logSettingChanged({
+    required String setting,
+    required String value,
+  }) => _log(AnalyticsEvents.settingChanged, {
+    'setting': setting,
+    'value': value,
+  });
+
+  Future<void> logThemeChanged({required String themeId}) =>
+      _log(AnalyticsEvents.themeChanged, {'theme_id': themeId});
+
+  Future<void> logTutorialCompleted({required int levelNumber}) =>
+      _log(AnalyticsEvents.tutorialCompleted, {'level_number': levelNumber});
+
+  // ---------------------------------------------------------------------------
+  // Monetization
+  // ---------------------------------------------------------------------------
+
+  Future<void> logAdWatched({required String type}) =>
+      _log(AnalyticsEvents.adWatched, {'ad_type': type});
+
+  Future<void> logPaywallOpened({String? source}) =>
+      _log(AnalyticsEvents.paywallOpened, {'source': ?source});
+
+  Future<void> logPaywallDismissed({String? source}) =>
+      _log(AnalyticsEvents.paywallDismissed, {'source': ?source});
+
+  Future<void> logPurchaseStarted({required String productId}) =>
+      _log(AnalyticsEvents.purchaseStarted, {'product_id': productId});
+
+  Future<void> logPurchaseCompleted({required String productId}) =>
+      _log(AnalyticsEvents.purchaseCompleted, {'product_id': productId});
+
+  Future<void> logPurchaseRestored() => _log(AnalyticsEvents.purchaseRestored);
+
+  // ---------------------------------------------------------------------------
+  // Achievements
+  // ---------------------------------------------------------------------------
 
   Future<void> logAchievementUnlocked({required String achievementId}) async {
-    await _analytics?.logUnlockAchievement(id: achievementId);
+    try {
+      await _analytics?.logUnlockAchievement(id: achievementId);
+    } catch (_) {}
   }
 
-  Future<void> logPowerUpUsed({required String powerUp}) async {
-    await _analytics?.logEvent(
-      name: 'power_up_used',
-      parameters: {'type': powerUp},
-    );
-  }
-
-  // --- Monetization ---
-
-  Future<void> logAdWatched({required String type}) async {
-    await _analytics?.logEvent(
-      name: 'ad_watched',
-      parameters: {'ad_type': type},
-    );
-  }
-
-  Future<void> logPaywallOpened({String? source}) async {
-    await _analytics?.logEvent(
-      name: 'paywall_opened',
-      parameters: {'source': ?source},
-    );
-  }
-
-  Future<void> logPaywallDismissed({String? source}) async {
-    await _analytics?.logEvent(
-      name: 'paywall_dismissed',
-      parameters: {'source': ?source},
-    );
-  }
-
-  Future<void> logPurchaseStarted({required String productId}) async {
-    await _analytics?.logEvent(
-      name: 'purchase_started',
-      parameters: {'product_id': productId},
-    );
-  }
-
-  // --- Engagement ---
+  // ---------------------------------------------------------------------------
+  // Engagement
+  // ---------------------------------------------------------------------------
 
   Future<void> logAppOpened() async {
-    await _analytics?.logAppOpen();
+    try {
+      await _analytics?.logAppOpen();
+    } catch (_) {}
   }
 
-  Future<void> logLoginStreakDay({required int streakDay}) async {
-    await _analytics?.logEvent(
-      name: 'login_streak',
-      parameters: {'day': streakDay},
-    );
-  }
+  Future<void> logLoginStreakDay({required int streakDay}) =>
+      _log(AnalyticsEvents.loginStreak, {'day': streakDay});
+
+  Future<void> logContinueAfterLoss({
+    required String source,
+    String? levelId,
+  }) => _log(AnalyticsEvents.continueAfterLoss, {
+    'source': source,
+    'level_id': ?levelId,
+  });
 }

@@ -12,7 +12,6 @@ import 'app/di.dart';
 import 'core/constants/app_constants.dart';
 import 'core/services/ad_service.dart';
 import 'core/services/analytics_service.dart';
-import 'core/services/games_service.dart';
 import 'core/services/remote_config_service.dart';
 import 'features/progression/data/datasources/progression_local_datasource.dart';
 import 'firebase_options.dart';
@@ -44,26 +43,30 @@ void main() async {
       await Hive.openBox(AppConstants.hiveSettingsBox);
       await Hive.openBox(AppConstants.hiveUserBox);
 
+      // Initialize Firebase
+      bool firebaseAvailable = false;
       try {
         await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform,
         );
+        firebaseAvailable = true;
       } catch (e) {
         debugPrint('Firebase not configured: $e');
         debugPrint('Running in offline mode.');
       }
 
-      // Initialize Crashlytics
-      FlutterError.onError =
-          FirebaseCrashlytics.instance.recordFlutterFatalError;
-      PlatformDispatcher.instance.onError = (error, stack) {
-        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-        return true;
-      };
-      // Disable Crashlytics in debug mode
-      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
-        !kDebugMode,
-      );
+      // Initialize Crashlytics only if Firebase is available
+      if (firebaseAvailable) {
+        FlutterError.onError =
+            FirebaseCrashlytics.instance.recordFlutterFatalError;
+        PlatformDispatcher.instance.onError = (error, stack) {
+          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+          return true;
+        };
+        await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+          !kDebugMode,
+        );
+      }
 
       // Initialize dependencies
       await initDependencies();
@@ -71,41 +74,49 @@ void main() async {
       // Initialize ad service
       try {
         await sl<AdService>().initialize();
-      } catch (_) {
-        debugPrint('Ad service initialization failed.');
+      } catch (e) {
+        debugPrint('Ad service initialization failed: $e');
       }
 
       // Initialize Firebase services (only if Firebase is available)
-      try {
-        await sl<AnalyticsService>().initialize();
-        sl<AnalyticsService>().logAppOpened();
-      } catch (_) {
-        debugPrint('Analytics initialization failed.');
-      }
+      if (firebaseAvailable) {
+        try {
+          await sl<AnalyticsService>().initialize();
+          sl<AnalyticsService>().logAppOpened();
+        } catch (e) {
+          debugPrint('Analytics initialization failed: $e');
+        }
 
-      try {
-        await sl<RemoteConfigService>().initialize();
-      } catch (_) {
-        debugPrint('Remote Config initialization failed.');
+        try {
+          await sl<RemoteConfigService>().initialize();
+        } catch (e) {
+          debugPrint('Remote Config initialization failed: $e');
+        }
       }
 
       // Record login for streak tracking
       try {
         final progressionDs = sl<ProgressionLocalDataSource>();
         await progressionDs.recordLogin();
-      } catch (_) {}
-
-      // Check Game Center / Google Play Games sign-in status
-      try {
-        await sl<GamesService>().checkSignInStatus();
-      } catch (_) {
-        debugPrint('Games Services check failed.');
+        final profile = progressionDs.getProfile();
+        if (profile.loginStreak > 0) {
+          sl<AnalyticsService>().logLoginStreakDay(
+            streakDay: profile.loginStreak,
+          );
+        }
+      } catch (e) {
+        debugPrint('Login streak recording failed: $e');
       }
 
       runApp(const InfiniteApp());
     },
     (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      debugPrint('Uncaught error: $error');
+      try {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      } catch (_) {
+        // Firebase not available, error already printed above
+      }
     },
   );
 }

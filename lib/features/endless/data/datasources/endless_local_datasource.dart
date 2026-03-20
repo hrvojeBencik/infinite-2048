@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../game/domain/entities/game_session.dart';
@@ -22,7 +23,8 @@ class EndlessLocalDataSource {
       return GameSession.fromJson(
         jsonDecode(data as String) as Map<String, dynamic>,
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Failed to load endless session: $e');
       return null;
     }
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
 import '../../../../app/di.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -13,7 +14,6 @@ import '../../../levels/data/datasources/levels_local_datasource.dart';
 import '../../../levels/domain/entities/level.dart';
 import '../../../onboarding/data/datasources/onboarding_local_datasource.dart';
 import '../../../progression/data/datasources/progression_local_datasource.dart';
-import '../../../subscription/presentation/bloc/subscription_bloc.dart';
 
 class DevOptionsPage extends StatefulWidget {
   const DevOptionsPage({super.key});
@@ -48,8 +48,11 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
                       onPressed: () => context.pop(),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(Icons.bug_report_rounded,
-                        color: AppColors.warning, size: 24),
+                    const Icon(
+                      Icons.bug_report_rounded,
+                      color: AppColors.warning,
+                      size: 24,
+                    ),
                     const SizedBox(width: 8),
                     const Text(
                       'Dev Options',
@@ -62,12 +65,15 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.warning.withAlpha(30),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                            color: AppColors.warning.withAlpha(60)),
+                          color: AppColors.warning.withAlpha(60),
+                        ),
                       ),
                       child: const Text(
                         'DEBUG',
@@ -103,9 +109,6 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
                       const SizedBox(height: 24),
                       _sectionTitle('MECHANIC INTROS'),
                       _buildMechanicIntroSection(),
-                      const SizedBox(height: 24),
-                      _sectionTitle('SUBSCRIPTION'),
-                      _buildSubscriptionSection(),
                       const SizedBox(height: 24),
                       _sectionTitle('PROGRESSION'),
                       _buildProgressionSection(),
@@ -230,10 +233,7 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
               icon: const Icon(Icons.play_arrow_rounded, size: 20),
               label: const Text(
                 'LAUNCH SANDBOX',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.warning,
@@ -252,13 +252,25 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
 
   List<Widget> _buildSpawnRateToggles() {
     final types = [
-      (SpecialTileType.bomb, 'Bomb', Icons.local_fire_department_rounded,
-          Colors.red),
+      (
+        SpecialTileType.bomb,
+        'Bomb',
+        Icons.local_fire_department_rounded,
+        Colors.red,
+      ),
       (SpecialTileType.ice, 'Ice', Icons.ac_unit_rounded, Colors.cyan),
-      (SpecialTileType.multiplier, 'Multiplier', Icons.flash_on_rounded,
-          AppColors.secondary),
-      (SpecialTileType.wildcard, 'Wildcard', Icons.star_rounded,
-          AppColors.primary),
+      (
+        SpecialTileType.multiplier,
+        'Multiplier',
+        Icons.flash_on_rounded,
+        AppColors.secondary,
+      ),
+      (
+        SpecialTileType.wildcard,
+        'Wildcard',
+        Icons.star_rounded,
+        AppColors.primary,
+      ),
     ];
 
     return types.map((t) {
@@ -279,7 +291,10 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
                 });
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: active ? t.$4.withAlpha(30) : AppColors.surface,
                   borderRadius: BorderRadius.circular(8),
@@ -290,7 +305,11 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(t.$3, size: 16, color: active ? t.$4 : AppColors.textTertiary),
+                    Icon(
+                      t.$3,
+                      size: 16,
+                      color: active ? t.$4 : AppColors.textTertiary,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       t.$2,
@@ -347,14 +366,11 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
             iconColor: AppColors.error,
             title: 'Reset All Progress',
             subtitle: 'Clears levels, stars, saved games',
-            onTap: () => _confirmAction(
-              'Reset all level progress?',
-              () async {
-                await Hive.box(AppConstants.hiveLevelProgressBox).clear();
-                await Hive.box(AppConstants.hiveGameStateBox).clear();
-                _showSnack('Level progress reset');
-              },
-            ),
+            onTap: () => _confirmAction('Reset all level progress?', () async {
+              await Hive.box(AppConstants.hiveLevelProgressBox).clear();
+              await Hive.box(AppConstants.hiveGameStateBox).clear();
+              _showSnack('Level progress reset');
+            }),
           ),
           const Divider(color: AppColors.divider, height: 1),
           _DevActionTile(
@@ -362,22 +378,19 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
             iconColor: AppColors.secondary,
             title: 'Reset Achievements',
             subtitle: 'Clears all achievement progress',
-            onTap: () => _confirmAction(
-              'Reset all achievements?',
-              () async {
-                final box = Hive.box(AppConstants.hiveAchievementsBox);
-                final keysToRemove = box.keys
-                    .where((k) => !k.toString().startsWith('daily_completed'))
-                    .toList();
-                for (final key in keysToRemove) {
-                  await box.delete(key);
-                }
-                if (mounted) {
-                  context.read<AchievementsBloc>().add(const LoadAchievements());
-                }
-                _showSnack('Achievements reset');
-              },
-            ),
+            onTap: () => _confirmAction('Reset all achievements?', () async {
+              final box = Hive.box(AppConstants.hiveAchievementsBox);
+              final keysToRemove = box.keys
+                  .where((k) => !k.toString().startsWith('daily_completed'))
+                  .toList();
+              for (final key in keysToRemove) {
+                await box.delete(key);
+              }
+              if (mounted) {
+                context.read<AchievementsBloc>().add(const LoadAchievements());
+              }
+              _showSnack('Achievements reset');
+            }),
           ),
           const Divider(color: AppColors.divider, height: 1),
           _DevActionTile(
@@ -385,20 +398,20 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
             iconColor: AppColors.zoneGlacier,
             title: 'Reset Daily Challenge',
             subtitle: 'Allows replaying today\'s challenge',
-            onTap: () => _confirmAction(
-              'Reset today\'s daily challenge?',
-              () async {
-                final box = Hive.box(AppConstants.hiveAchievementsBox);
-                final now = DateTime.now();
-                final key =
-                    'daily_completed_${now.year}_${now.month}_${now.day}';
-                await box.delete(key);
-                if (mounted) {
-                  context.read<AchievementsBloc>().add(const LoadAchievements());
-                }
-                _showSnack('Daily challenge reset');
-              },
-            ),
+            onTap: () =>
+                _confirmAction('Reset today\'s daily challenge?', () async {
+                  final box = Hive.box(AppConstants.hiveAchievementsBox);
+                  final now = DateTime.now();
+                  final key =
+                      'daily_completed_${now.year}_${now.month}_${now.day}';
+                  await box.delete(key);
+                  if (mounted) {
+                    context.read<AchievementsBloc>().add(
+                      const LoadAchievements(),
+                    );
+                  }
+                  _showSnack('Daily challenge reset');
+                }),
           ),
           const Divider(color: AppColors.divider, height: 1),
           _DevActionTile(
@@ -406,23 +419,21 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
             iconColor: AppColors.zoneNexus,
             title: 'Complete All Levels (3 stars)',
             subtitle: 'Marks every level as completed',
-            onTap: () => _confirmAction(
-              'Mark all levels as complete?',
-              () async {
-                final ds = sl<LevelsLocalDataSource>();
-                final zones = ds.getZones();
-                for (final zone in zones) {
-                  for (final level in zone.levels) {
-                    await ds.saveLevelProgress(
-                      levelId: level.id,
-                      score: level.starThreshold3,
-                      stars: 3,
-                    );
+            onTap: () =>
+                _confirmAction('Mark all levels as complete?', () async {
+                  final ds = sl<LevelsLocalDataSource>();
+                  final zones = ds.getZones();
+                  for (final zone in zones) {
+                    for (final level in zone.levels) {
+                      await ds.saveLevelProgress(
+                        levelId: level.id,
+                        score: level.starThreshold3,
+                        stars: 3,
+                      );
+                    }
                   }
-                }
-                _showSnack('All levels completed with 3 stars');
-              },
-            ),
+                  _showSnack('All levels completed with 3 stars');
+                }),
           ),
           const Divider(color: AppColors.divider, height: 1),
           _DevActionTile(
@@ -438,7 +449,9 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
                 await Hive.box(AppConstants.hiveAchievementsBox).clear();
                 await Hive.box(AppConstants.hiveSettingsBox).clear();
                 if (mounted) {
-                  context.read<AchievementsBloc>().add(const LoadAchievements());
+                  context.read<AchievementsBloc>().add(
+                    const LoadAchievements(),
+                  );
                 }
                 _showSnack('All data wiped');
               },
@@ -458,18 +471,15 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
             iconColor: AppColors.success,
             title: 'Unlock All Achievements',
             subtitle: 'Instantly unlocks every achievement',
-            onTap: () => _confirmAction(
-              'Unlock all achievements?',
-              () async {
-                final bloc = context.read<AchievementsBloc>();
-                final achievements =
-                    await sl<AchievementsRepository>().getAchievements();
-                for (final a in achievements) {
-                  bloc.add(TrackProgress(a.id, a.targetValue));
-                }
-                _showSnack('All achievements unlocked');
-              },
-            ),
+            onTap: () => _confirmAction('Unlock all achievements?', () async {
+              final bloc = context.read<AchievementsBloc>();
+              final achievements = await sl<AchievementsRepository>()
+                  .getAchievements();
+              for (final a in achievements) {
+                bloc.add(TrackProgress(a.id, a.targetValue));
+              }
+              _showSnack('All achievements unlocked');
+            }),
           ),
         ],
       ),
@@ -509,39 +519,6 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
     );
   }
 
-  Widget _buildSubscriptionSection() {
-    final isOverridden = Hive.box(AppConstants.hiveSettingsBox)
-        .get(SubscriptionBloc.devOverrideKey, defaultValue: false) as bool;
-    return GlassCard(
-      child: SwitchListTile(
-        contentPadding: EdgeInsets.zero,
-        secondary: Icon(
-          Icons.workspace_premium_rounded,
-          color: isOverridden ? AppColors.secondary : AppColors.textTertiary,
-          size: 22,
-        ),
-        title: const Text(
-          'Unlock Premium',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        subtitle: Text(
-          isOverridden ? 'Premium features active' : 'Simulate premium subscription',
-          style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
-        ),
-        value: isOverridden,
-        activeTrackColor: AppColors.secondary,
-        onChanged: (value) {
-          context.read<SubscriptionBloc>().add(DevOverrideSubscription(value));
-          setState(() {});
-        },
-      ),
-    );
-  }
-
   Widget _buildProgressionSection() {
     return GlassCard(
       child: Column(
@@ -562,14 +539,12 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
             iconColor: AppColors.error,
             title: 'Reset Progression',
             subtitle: 'Reset XP, themes, and streak',
-            onTap: () => _confirmAction(
-              'Reset all progression data?',
-              () async {
-                final box = Hive.box(AppConstants.hiveSettingsBox);
-                await box.delete('player_profile');
-                _showSnack('Progression reset');
-              },
-            ),
+            onTap: () =>
+                _confirmAction('Reset all progression data?', () async {
+                  final box = Hive.box(AppConstants.hiveSettingsBox);
+                  await box.delete('player_profile');
+                  _showSnack('Progression reset');
+                }),
           ),
         ],
       ),
@@ -581,14 +556,17 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
   }
 
   void _launchSandbox() {
-    context.push('/dev/sandbox', extra: {
-      'boardSize': _sandboxBoardSize,
-      'target': _sandboxTarget,
-      'undos': _sandboxUndos,
-      'hammers': _sandboxHammers,
-      'shuffles': _sandboxShuffles,
-      'spawnRates': Map<SpecialTileType, double>.from(_sandboxSpawnRates),
-    });
+    context.push(
+      '/dev/sandbox',
+      extra: {
+        'boardSize': _sandboxBoardSize,
+        'target': _sandboxTarget,
+        'undos': _sandboxUndos,
+        'hammers': _sandboxHammers,
+        'shuffles': _sandboxShuffles,
+        'spawnRates': Map<SpecialTileType, double>.from(_sandboxSpawnRates),
+      },
+    );
   }
 
   void _confirmAction(String message, VoidCallback onConfirm) {
@@ -608,16 +586,20 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
               onConfirm();
             },
-            child: const Text('Confirm',
-                style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              'Confirm',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -726,8 +708,11 @@ class _DevActionTile extends StatelessWidget {
         subtitle,
         style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
       ),
-      trailing: const Icon(Icons.chevron_right_rounded,
-          color: AppColors.textTertiary, size: 20),
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        color: AppColors.textTertiary,
+        size: 20,
+      ),
     );
   }
 }
@@ -771,7 +756,10 @@ class _SliderRow extends StatelessWidget {
           Expanded(
             child: values != null
                 ? Slider(
-                    value: values!.indexOf(value).clamp(0, values!.length - 1).toDouble(),
+                    value: values!
+                        .indexOf(value)
+                        .clamp(0, values!.length - 1)
+                        .toDouble(),
                     min: 0,
                     max: (values!.length - 1).toDouble(),
                     divisions: values!.length - 1,

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../../core/constants/app_constants.dart';
@@ -17,7 +18,8 @@ class ProgressionLocalDataSource {
     try {
       final map = jsonDecode(data as String) as Map<String, dynamic>;
       return PlayerProfile.fromJson(map);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Failed to parse player profile: $e');
       return _defaultProfile();
     }
   }

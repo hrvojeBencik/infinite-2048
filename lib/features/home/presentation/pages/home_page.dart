@@ -4,10 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/di.dart';
+import '../../../../core/services/analytics_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/animated_button.dart';
 import '../../../../core/widgets/glass_card.dart';
-import '../../../../core/widgets/premium_badge.dart';
+import '../../../../core/widgets/banner_ad_widget.dart';
 import '../../../achievements/presentation/bloc/achievements_bloc.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../leaderboard/data/datasources/leaderboard_remote_datasource.dart';
@@ -15,7 +16,6 @@ import '../../../progression/data/datasources/progression_local_datasource.dart'
 import '../../../progression/domain/entities/player_profile.dart';
 import '../../../progression/presentation/widgets/streak_calendar.dart';
 import '../../../progression/presentation/widgets/xp_bar.dart';
-import '../../../subscription/presentation/bloc/subscription_bloc.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -74,11 +74,6 @@ class _HomePageState extends State<HomePage> {
                     profile: _profile,
                   ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.1),
                 ],
-                const SizedBox(height: 16),
-                _PremiumBanner()
-                    .animate()
-                    .fadeIn(delay: 200.ms)
-                    .slideY(begin: 0.1),
                 const SizedBox(height: 20),
                 _PlayButton(
                   onReturn: _refresh,
@@ -99,7 +94,9 @@ class _HomePageState extends State<HomePage> {
                 _QuickActions(
                   onReturn: _refresh,
                 ).animate().fadeIn(delay: 650.ms).slideY(begin: 0.2),
-                const SizedBox(height: 32),
+                const SizedBox(height: 12),
+                const BannerAdWidget(),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -287,6 +284,7 @@ class _DailyChallengeCard extends StatelessWidget {
           onTap: isCompleted
               ? null
               : () {
+                  try { sl<AnalyticsService>().logDailyChallengeStarted(); } catch (_) {}
                   context.push('/challenge/daily').then((_) {
                     onReturn?.call();
                   });
@@ -492,6 +490,7 @@ class _WeeklyChallengeCard extends StatelessWidget {
           onTap: isCompleted
               ? null
               : () {
+                  try { sl<AnalyticsService>().logWeeklyChallengeStarted(); } catch (_) {}
                   context.push('/challenge/weekly').then((_) {
                     onReturn?.call();
                   });
@@ -567,66 +566,3 @@ class _WeeklyChallengeCard extends StatelessWidget {
     );
   }
 }
-
-class _PremiumBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<SubscriptionBloc, SubscriptionState>(
-      builder: (context, state) {
-        if (state is SubscriptionLoaded && state.isPremium) {
-          return const SizedBox.shrink();
-        }
-        return GestureDetector(
-          onTap: () => context.push('/paywall'),
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.secondary.withAlpha(20),
-                  AppColors.primary.withAlpha(20),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.secondary.withAlpha(40)),
-            ),
-            child: Row(
-              children: [
-                const PremiumBadge(size: 24),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Upgrade to Premium',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Ad-free, unlimited undos & more',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.secondary,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-

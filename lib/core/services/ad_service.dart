@@ -1,5 +1,8 @@
 import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+
 import '../constants/app_constants.dart';
 
 class AdService {
@@ -12,8 +15,8 @@ class AdService {
       await MobileAds.instance.initialize();
       _initialized = true;
       _loadInterstitialAd();
-    } catch (_) {
-      // Ads not configured
+    } catch (e) {
+      debugPrint('AdService: MobileAds init failed: $e');
     }
   }
 
@@ -41,8 +44,8 @@ class AdService {
     );
   }
 
-  void onLevelCompleted({required bool isPremium}) {
-    if (isPremium || !_initialized) return;
+  void onLevelCompleted() {
+    if (!_initialized) return;
     _levelsCompletedSinceAd++;
     if (_levelsCompletedSinceAd >= 3) {
       showInterstitial();
@@ -56,14 +59,18 @@ class AdService {
     _loadInterstitialAd();
   }
 
-  BannerAd? createBannerAd() {
+  BannerAd? createBannerAd({VoidCallback? onLoaded, VoidCallback? onFailed}) {
     if (!_initialized) return null;
     return BannerAd(
       adUnitId: _bannerAdId,
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
-        onAdFailedToLoad: (ad, error) => ad.dispose(),
+        onAdLoaded: (_) => onLoaded?.call(),
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          onFailed?.call();
+        },
       ),
     )..load();
   }

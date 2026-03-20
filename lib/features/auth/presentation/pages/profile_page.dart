@@ -1,14 +1,11 @@
-import 'dart:io';
+// ignore_for_file: unused_element_parameter
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../app/di.dart';
-import '../../../../core/services/games_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_card.dart';
-import '../../../../core/widgets/premium_badge.dart';
 import '../bloc/auth_bloc.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -129,52 +126,6 @@ class _ProfileContent extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 16),
-
-        // Game services section
-        GlassCard(
-          child: Column(
-            children: [
-              _ProfileOption(
-                icon: Platform.isIOS
-                    ? Icons.games_rounded
-                    : Icons.sports_esports_rounded,
-                label: Platform.isIOS ? 'Game Center' : 'Google Play Games',
-                trailing: user.isGamesServicesConnected
-                    ? const Text(
-                        'Connected',
-                        style: TextStyle(
-                          color: AppColors.success,
-                          fontSize: 13,
-                        ),
-                      )
-                    : const Text(
-                        'Connect',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 13,
-                        ),
-                      ),
-                onTap: () => _connectGamesServices(context),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Other options
-        GlassCard(
-          child: Column(
-            children: [
-              _ProfileOption(
-                icon: Icons.workspace_premium_rounded,
-                label: 'Subscription',
-                trailing: const PremiumBadge(size: 18),
-                onTap: () => context.push('/paywall'),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -238,36 +189,6 @@ class _ProfileContent extends StatelessWidget {
       ),
     );
   }
-
-  void _connectGamesServices(BuildContext context) async {
-    final gamesService = sl<GamesService>();
-    final success = await gamesService.signIn();
-
-    if (!context.mounted) return;
-
-    if (success) {
-      context.read<AuthBloc>().add(const AuthCheckRequested());
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            Platform.isIOS
-                ? 'Connected to Game Center!'
-                : 'Connected to Google Play Games!',
-          ),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            Platform.isIOS
-                ? 'Could not connect to Game Center'
-                : 'Could not connect to Google Play Games',
-          ),
-        ),
-      );
-    }
-  }
 }
 
 class _ProfileOption extends StatelessWidget {
@@ -279,8 +200,8 @@ class _ProfileOption extends StatelessWidget {
   const _ProfileOption({
     required this.icon,
     required this.label,
-    this.trailing,
     this.onTap,
+    this.trailing,
   });
 
   @override

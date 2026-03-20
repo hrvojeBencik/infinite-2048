@@ -71,69 +71,66 @@ class AchievementsLocalDataSource {
   }
 
   static const _dailyTemplates = <_DailyTemplate>[
-    // --- Easy 4x4 ---
+    // --- Easy 4x4 (core daily pool – most common) ---
     _DailyTemplate(4, 128, null, null, false, 'Reach 128 on a 4x4 board'),
     _DailyTemplate(4, 256, null, null, false, 'Reach 256 on a 4x4 board'),
-    _DailyTemplate(4, 256, 60, null, false, 'Reach 256 in 60 moves'),
+    _DailyTemplate(4, 256, 80, null, false, 'Reach 256 in 80 moves'),
     _DailyTemplate(4, 512, null, null, false, 'Reach 512 on a 4x4 board'),
+    _DailyTemplate(4, 128, null, null, true, 'Reach 128 with no undos'),
+    _DailyTemplate(4, 128, 40, null, false, 'Speed run: 128 in 40 moves'),
+    _DailyTemplate(4, 512, 120, null, false, 'Reach 512 in 120 moves'),
+    _DailyTemplate(4, 256, null, 240, false, 'Reach 256 in 4 minutes'),
     _DailyTemplate(4, 256, null, null, true, 'Reach 256 with no undos'),
-    _DailyTemplate(4, 128, 30, null, false, 'Speed run: 128 in 30 moves'),
-    _DailyTemplate(4, 512, 80, null, false, 'Reach 512 in 80 moves'),
-    _DailyTemplate(4, 256, null, 180, false, 'Reach 256 in 3 minutes'),
-    _DailyTemplate(4, 512, null, null, true, 'Reach 512 with no undos'),
     _DailyTemplate(4, 1024, null, null, false, 'Reach 1024 on a 4x4 board'),
 
     // --- Medium 4x4 ---
-    _DailyTemplate(4, 1024, 100, null, false, 'Reach 1024 in 100 moves'),
-    _DailyTemplate(4, 1024, null, 300, false, 'Reach 1024 in 5 minutes'),
-    _DailyTemplate(4, 1024, null, null, true, 'Reach 1024 with no undos'),
+    _DailyTemplate(4, 1024, 150, null, false, 'Reach 1024 in 150 moves'),
+    _DailyTemplate(4, 1024, null, 420, false, 'Reach 1024 in 7 minutes'),
+    _DailyTemplate(4, 512, null, null, true, 'Reach 512 with no undos'),
     _DailyTemplate(4, 2048, null, null, false, 'Reach 2048 on a 4x4 board'),
-    _DailyTemplate(4, 2048, 200, null, false, 'Reach 2048 in 200 moves'),
-    _DailyTemplate(4, 512, 50, null, true, 'Reach 512 in 50 moves, no undos'),
-    _DailyTemplate(4, 128, 20, null, false, 'Tiny sprint: 128 in 20 moves'),
-    _DailyTemplate(4, 256, 40, null, true, 'Reach 256 in 40 moves, no undos'),
-    _DailyTemplate(4, 2048, null, 600, false, 'Reach 2048 in 10 minutes'),
-    _DailyTemplate(4, 2048, null, null, true, 'Reach 2048 with no undos'),
+    _DailyTemplate(4, 2048, 300, null, false, 'Reach 2048 in 300 moves'),
+    _DailyTemplate(4, 512, 80, null, false, 'Reach 512 in 80 moves'),
+    _DailyTemplate(4, 128, 30, null, false, 'Tiny sprint: 128 in 30 moves'),
+    _DailyTemplate(4, 256, 60, null, false, 'Reach 256 in 60 moves'),
+    _DailyTemplate(4, 2048, null, 900, false, 'Reach 2048 in 15 minutes'),
+    _DailyTemplate(4, 1024, null, null, true, 'Reach 1024 with no undos'),
 
     // --- Easy 5x5 ---
     _DailyTemplate(5, 256, null, null, false, 'Reach 256 on a 5x5 board'),
     _DailyTemplate(5, 512, null, null, false, 'Reach 512 on a 5x5 board'),
-    _DailyTemplate(5, 512, 60, null, false, 'Reach 512 in 60 moves (5x5)'),
+    _DailyTemplate(5, 512, 80, null, false, 'Reach 512 in 80 moves (5x5)'),
     _DailyTemplate(5, 1024, null, null, false, 'Reach 1024 on a 5x5 board'),
-    _DailyTemplate(5, 1024, 80, null, false, 'Reach 1024 in 80 moves (5x5)'),
-    _DailyTemplate(5, 256, null, 120, false, 'Reach 256 in 2 minutes (5x5)'),
-    _DailyTemplate(5, 512, null, null, true, 'Reach 512 with no undos (5x5)'),
+    _DailyTemplate(5, 1024, 120, null, false, 'Reach 1024 in 120 moves (5x5)'),
+    _DailyTemplate(5, 256, null, 180, false, 'Reach 256 in 3 minutes (5x5)'),
+    _DailyTemplate(5, 512, null, null, false, 'Reach 512 on a 5x5 board'),
     _DailyTemplate(5, 2048, null, null, false, 'Reach 2048 on a 5x5 board'),
-    _DailyTemplate(5, 2048, 120, null, false, 'Reach 2048 in 120 moves (5x5)'),
-    _DailyTemplate(5, 1024, null, null, true, 'Reach 1024, no undos (5x5)'),
+    _DailyTemplate(5, 2048, 200, null, false, 'Reach 2048 in 200 moves (5x5)'),
+    _DailyTemplate(5, 1024, null, null, false, 'Reach 1024 on a 5x5 board'),
 
-    // --- Hard 5x5 ---
+    // --- Stretch 5x5 (hardest dailies, but still achievable) ---
     _DailyTemplate(5, 2048, null, null, true, 'Reach 2048 with no undos (5x5)'),
-    _DailyTemplate(5, 4096, null, null, false, 'Reach 4096 on a 5x5 board'),
-    _DailyTemplate(5, 4096, 200, null, false, 'Reach 4096 in 200 moves (5x5)'),
-    _DailyTemplate(5, 2048, null, 480, false, 'Reach 2048 in 8 minutes (5x5)'),
-    _DailyTemplate(5, 4096, null, null, true, 'Reach 4096 with no undos (5x5)'),
+    _DailyTemplate(5, 2048, null, 600, false, 'Reach 2048 in 10 minutes (5x5)'),
 
     // --- 3x3 sprints ---
     _DailyTemplate(3, 64, null, null, false, 'Reach 64 on a tiny 3x3 board'),
     _DailyTemplate(3, 128, null, null, false, 'Reach 128 on a 3x3 board'),
-    _DailyTemplate(3, 64, 25, null, false, 'Reach 64 in 25 moves (3x3)'),
-    _DailyTemplate(3, 128, null, 120, false, 'Reach 128 in 2 minutes (3x3)'),
-    _DailyTemplate(3, 128, null, null, true, 'Reach 128, no undos (3x3)'),
+    _DailyTemplate(3, 64, 30, null, false, 'Reach 64 in 30 moves (3x3)'),
+    _DailyTemplate(3, 128, null, 180, false, 'Reach 128 in 3 minutes (3x3)'),
+    _DailyTemplate(3, 64, null, null, true, 'Reach 64, no undos (3x3)'),
     _DailyTemplate(3, 256, null, null, false, 'Reach 256 on a 3x3 board'),
-    _DailyTemplate(3, 64, 15, null, true, 'Micro challenge: 64 in 15 moves'),
+    _DailyTemplate(3, 64, 20, null, false, 'Micro challenge: 64 in 20 moves'),
 
     // --- 6x6 endurance ---
     _DailyTemplate(6, 512, null, null, false, 'Reach 512 on a big 6x6 board'),
     _DailyTemplate(6, 1024, null, null, false, 'Reach 1024 on a 6x6 board'),
     _DailyTemplate(6, 2048, null, null, false, 'Reach 2048 on a 6x6 board'),
-    _DailyTemplate(6, 1024, 100, null, false, 'Reach 1024 in 100 moves (6x6)'),
-    _DailyTemplate(6, 2048, null, 600, false, 'Reach 2048 in 10 min (6x6)'),
-    _DailyTemplate(6, 4096, null, null, false, 'Reach 4096 on a 6x6 board'),
+    _DailyTemplate(6, 1024, 150, null, false, 'Reach 1024 in 150 moves (6x6)'),
+    _DailyTemplate(6, 1024, null, 600, false, 'Reach 1024 in 10 min (6x6)'),
+    _DailyTemplate(6, 2048, null, null, false, 'Reach 2048 on a 6x6 board'),
 
     // --- Timed blitz ---
+    _DailyTemplate(4, 128, null, 90, false, 'Blitz: reach 128 in 90 seconds'),
     _DailyTemplate(4, 128, null, 60, false, 'Blitz: reach 128 in 1 minute'),
-    _DailyTemplate(4, 256, null, 90, true, 'Blitz: 256 in 90s, no undos'),
   ];
 
 
@@ -179,9 +176,9 @@ class AchievementsLocalDataSource {
     final sunday = monday.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
 
     final seed = monday.year * 10000 + monday.month * 100 + monday.day;
-    final boardSize = 5 + (seed % 2);
-    final target = [1024, 2048, 4096][seed % 3];
-    final moveLimit = seed % 2 == 0 ? 120 : null;
+    final boardSize = [4, 5, 5, 6][seed % 4]; // 4x4, 5x5 (2x weight), 6x6
+    final target = [512, 1024, 2048][seed % 3];
+    final moveLimit = seed % 3 == 0 ? 200 : null; // ~33% chance, generous limit
 
     final weekKey = _weeklyChallengeKey(monday);
     final completed = _isWeeklyChallengeCompletedSync(weekKey);
@@ -196,7 +193,7 @@ class AchievementsLocalDataSource {
       boardSize: boardSize,
       targetTileValue: target,
       moveLimit: moveLimit,
-      noUndos: seed % 7 == 0,
+      noUndos: false, // weekly should never block undos
       availableFrom: DateTime(monday.year, monday.month, monday.day),
       availableUntil: sunday,
       isCompleted: completed,
