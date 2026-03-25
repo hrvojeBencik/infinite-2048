@@ -32,11 +32,23 @@ The core 2048 gameplay loop must feel tight, responsive, and satisfying — merg
 
 ### Active
 
-(To be defined — awaiting new milestone goals)
+## Current Milestone: v1.2 Launch Ready
+
+**Goal:** Polish the entire app experience and prepare store listings for first public release on iOS and Android.
+
+**Target features:**
+- Animations & transitions — smooth tile merging, screen transitions, micro-interactions
+- Visual design & theme — refine colors, typography, tile visuals, overall aesthetic
+- Performance & jank — eliminate frame drops, optimize load times, fix memory issues
+- UX flow & usability — improve navigation, onboarding, and confusing screens
+- Store preparation — App Store + Google Play listings, screenshots, metadata, icons
 
 ### Out of Scope
 
-(To be defined based on next milestone)
+- New gameplay mechanics — v1.2 is polish only, no new tile types or game modes
+- Backend migration — Firebase/Supabase changes deferred to future milestone
+- Test coverage — acknowledged tech debt, but not blocking launch
+- Web or desktop targets — mobile only
 
 ## Context
 
@@ -83,4 +95,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after initialization*
+*Last updated: 2026-03-25 after milestone v1.2 started*
