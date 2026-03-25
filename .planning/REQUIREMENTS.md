@@ -70,41 +70,41 @@ Requirements for v1.2 Launch Ready milestone. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERF-01 | — | Pending |
-| PERF-02 | — | Pending |
-| PERF-03 | — | Pending |
-| PERF-04 | — | Pending |
-| PERF-05 | — | Pending |
-| PERF-06 | — | Pending |
-| PERF-07 | — | Pending |
-| ANIM-01 | — | Pending |
-| ANIM-02 | — | Pending |
-| ANIM-03 | — | Pending |
-| ANIM-04 | — | Pending |
-| ANIM-05 | — | Pending |
-| ANIM-06 | — | Pending |
-| ANIM-07 | — | Pending |
-| UX-01 | — | Pending |
-| UX-02 | — | Pending |
-| UX-03 | — | Pending |
-| UX-04 | — | Pending |
-| UX-05 | — | Pending |
-| STORE-01 | — | Pending |
-| STORE-02 | — | Pending |
-| STORE-03 | — | Pending |
-| STORE-04 | — | Pending |
-| STORE-05 | — | Pending |
-| STORE-06 | — | Pending |
-| STORE-07 | — | Pending |
-| STORE-08 | — | Pending |
-| STORE-09 | — | Pending |
-| STORE-10 | — | Pending |
+| PERF-01 | Phase 1 | Pending |
+| PERF-05 | Phase 1 | Pending |
+| PERF-06 | Phase 1 | Pending |
+| PERF-07 | Phase 1 | Pending |
+| PERF-02 | Phase 2 | Pending |
+| PERF-03 | Phase 2 | Pending |
+| PERF-04 | Phase 2 | Pending |
+| ANIM-01 | Phase 3 | Pending |
+| ANIM-02 | Phase 3 | Pending |
+| ANIM-03 | Phase 3 | Pending |
+| ANIM-04 | Phase 3 | Pending |
+| ANIM-05 | Phase 3 | Pending |
+| ANIM-06 | Phase 3 | Pending |
+| ANIM-07 | Phase 3 | Pending |
+| UX-01 | Phase 4 | Pending |
+| UX-02 | Phase 4 | Pending |
+| UX-03 | Phase 4 | Pending |
+| UX-04 | Phase 4 | Pending |
+| UX-05 | Phase 4 | Pending |
+| STORE-01 | Phase 5 | Pending |
+| STORE-02 | Phase 5 | Pending |
+| STORE-03 | Phase 5 | Pending |
+| STORE-04 | Phase 5 | Pending |
+| STORE-05 | Phase 5 | Pending |
+| STORE-06 | Phase 5 | Pending |
+| STORE-07 | Phase 5 | Pending |
+| STORE-08 | Phase 5 | Pending |
+| STORE-09 | Phase 5 | Pending |
+| STORE-10 | Phase 5 | Pending |
 
 **Coverage:**
-- v1.2 requirements: 24 total
-- Mapped to phases: 0
-- Unmapped: 24 (pending roadmap creation)
+- v1.2 requirements: 29 total
+- Mapped to phases: 29
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-25*
-*Last updated: 2026-03-25 after initial definition*
+*Last updated: 2026-03-25 — traceability mapped after roadmap creation*
