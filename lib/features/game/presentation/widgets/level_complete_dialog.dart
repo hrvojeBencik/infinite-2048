@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -30,18 +31,19 @@ class LevelCompleteDialog extends StatefulWidget {
 
 class _LevelCompleteDialogState extends State<LevelCompleteDialog>
     with TickerProviderStateMixin {
-  late AnimationController _confettiController;
+  late AnimationController _particleController;
   late AnimationController _scoreController;
   late AnimationController _glowController;
   late Animation<int> _scoreAnimation;
   late List<_ConfettiParticle> _particles;
   final _random = Random();
+  late ConfettiController _confettiController;
 
   @override
   void initState() {
     super.initState();
 
-    _confettiController = AnimationController(
+    _particleController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2500),
     );
@@ -65,19 +67,25 @@ class _LevelCompleteDialogState extends State<LevelCompleteDialog>
 
     _particles = List.generate(60, (_) => _ConfettiParticle.random(_random));
 
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
+
     Future.delayed(200.ms, () {
       if (mounted) {
-        _confettiController.forward();
+        _particleController.forward();
         _scoreController.forward();
+        _confettiController.play();
       }
     });
   }
 
   @override
   void dispose() {
-    _confettiController.dispose();
+    _particleController.dispose();
     _scoreController.dispose();
     _glowController.dispose();
+    _confettiController.dispose();
     super.dispose();
   }
 
@@ -89,14 +97,14 @@ class _LevelCompleteDialogState extends State<LevelCompleteDialog>
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // Confetti layer
+          // Custom particle layer
           AnimatedBuilder(
-            animation: _confettiController,
+            animation: _particleController,
             builder: (context, _) {
               return CustomPaint(
                 painter: _ConfettiPainter(
                   particles: _particles,
-                  progress: _confettiController.value,
+                  progress: _particleController.value,
                 ),
                 size: const Size(320, 460),
               );
@@ -329,6 +337,24 @@ class _LevelCompleteDialogState extends State<LevelCompleteDialog>
             ),
           ),
           ),
+          ),
+          // Confetti burst from top (ANIM-04)
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              numberOfParticles: 25,
+              gravity: 0.2,
+              colors: const [
+                AppColors.secondary,      // gold #FFD700
+                AppColors.primary,        // purple #6C63FF
+                AppColors.success,        // green #00E676
+                Color(0xFFFF6B6B),        // coral
+                Color(0xFF48DBFB),        // cyan
+              ],
+              shouldLoop: false,
+            ),
           ),
         ],
       ),
