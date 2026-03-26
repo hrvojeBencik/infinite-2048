@@ -227,6 +227,214 @@ class _GamePageState extends State<GamePage> {
     );
   }
 
+  // Helper methods to extract session and level from any GameState
+  GameSession? _extractSession(GameState state) {
+    if (state is GamePlaying) return state.session;
+    if (state is GameWon) return state.session;
+    if (state is GameLost) return state.session;
+    return null;
+  }
+
+  Level? _extractLevel(GameState state) {
+    if (state is GamePlaying) return state.level;
+    if (state is GameWon) return state.level;
+    if (state is GameLost) return state.level;
+    return null;
+  }
+
+  // Zone 1: Header — static per game session, no BlocBuilder needed
+  Widget _buildHeaderZone(Level level) {
+    return RepaintBoundary(
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+            onPressed: _handleBackPress,
+          ),
+          Expanded(
+            child: Text(
+              widget.isDailyChallenge ? 'Daily Challenge' : 'Level ${level.levelNumber}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.pause_rounded, color: AppColors.textPrimary),
+            onPressed: () => context.read<GameBloc>().add(const PauseGame()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Zone 2: Score — rebuilds only when score or moveCount changes
+  Widget _buildScoreZone() {
+    return RepaintBoundary(
+      child: BlocBuilder<GameBloc, GameState>(
+        buildWhen: (prev, curr) {
+          if (prev is! GamePlaying || curr is! GamePlaying) return true;
+          return prev.session.board.score != curr.session.board.score ||
+              prev.session.board.moveCount != curr.session.board.moveCount;
+        },
+        builder: (context, state) {
+          final session = _extractSession(state);
+          final level = _extractLevel(state);
+          if (session == null || level == null) return const SizedBox.shrink();
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ScoreDisplay(label: 'Score', value: session.board.score, highlight: true),
+              ScoreDisplay(label: 'Target', value: level.targetTileValue),
+              ScoreDisplay(label: 'Moves', value: session.board.moveCount),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // Move limit zone — rebuilds only when moveCount changes
+  Widget _buildMoveLimitZone(Level level) {
+    if (level.moveLimit == null) return const SizedBox.shrink();
+    return BlocBuilder<GameBloc, GameState>(
+      buildWhen: (prev, curr) {
+        if (prev is! GamePlaying || curr is! GamePlaying) return true;
+        return prev.session.board.moveCount != curr.session.board.moveCount;
+      },
+      builder: (context, state) {
+        final session = _extractSession(state);
+        if (session == null) return const SizedBox.shrink();
+        return Column(
+          children: [
+            const SizedBox(height: 8),
+            _MoveLimitIndicator(current: session.board.moveCount, max: level.moveLimit!),
+          ],
+        );
+      },
+    );
+  }
+
+  // Zone 3: Board — rebuilds only when board changes (every valid swipe)
+  Widget _buildBoardZone() {
+    return Expanded(
+      child: Center(
+        child: ScorePopupOverlay(
+          key: _scorePopupKey,
+          child: RepaintBoundary(
+            child: BlocBuilder<GameBloc, GameState>(
+              buildWhen: (prev, curr) {
+                if (prev is! GamePlaying || curr is! GamePlaying) return true;
+                return prev.session.board != curr.session.board;
+              },
+              builder: (context, state) {
+                final session = _extractSession(state);
+                if (session == null) return const SizedBox.shrink();
+                return Stack(
+                  children: [
+                    GameBoard(
+                      board: session.board,
+                      isHammerMode: _isHammerMode,
+                      onTileTap: _isHammerMode
+                          ? (tileId) {
+                              HapticService.instance.medium();
+                              context.read<GameBloc>().add(UseHammer(tileId));
+                              setState(() => _isHammerMode = false);
+                            }
+                          : null,
+                    ),
+                    ParticleEffect(key: _particleKey),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Zone 4: Powerups — rebuilds only when powerup counts change
+  Widget _buildPowerupZone() {
+    return RepaintBoundary(
+      child: BlocBuilder<GameBloc, GameState>(
+        buildWhen: (prev, curr) {
+          if (prev is! GamePlaying || curr is! GamePlaying) return true;
+          return prev.session.undosRemaining != curr.session.undosRemaining ||
+              prev.session.hammersRemaining != curr.session.hammersRemaining ||
+              prev.session.shufflesRemaining != curr.session.shufflesRemaining ||
+              prev.session.mergeBoostsRemaining != curr.session.mergeBoostsRemaining;
+        },
+        builder: (context, state) {
+          final session = _extractSession(state);
+          if (session == null) return const SizedBox.shrink();
+          return PowerUpBar(
+            session: session,
+            isHammerMode: _isHammerMode,
+            onUndo: () {
+              if (session.undosRemaining <= 0) {
+                _showWatchAdForUndo(context);
+                return;
+              }
+              HapticService.instance.light();
+              try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.undo); } catch (_) {}
+              context.read<GameBloc>().add(const UndoMove());
+            },
+            onHammer: session.hammersRemaining > 0
+                ? () {
+                    HapticService.instance.light();
+                    if (!_isHammerMode) {
+                      try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.hammer); } catch (_) {}
+                    }
+                    setState(() => _isHammerMode = !_isHammerMode);
+                  }
+                : null,
+            onShuffle: session.shufflesRemaining > 0
+                ? () {
+                    HapticService.instance.medium();
+                    try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.shuffle); } catch (_) {}
+                    context.read<GameBloc>().add(const UseShuffle());
+                  }
+                : null,
+            onMergeBoost: session.mergeBoostsRemaining > 0
+                ? () {
+                    HapticService.instance.medium();
+                    try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.mergeBoost); } catch (_) {}
+                    context.read<GameBloc>().add(const UseMergeBoost());
+                  }
+                : null,
+          );
+        },
+      ),
+    );
+  }
+
+  // Pause overlay zone — rebuilds only when pause status changes
+  Widget _buildPauseZone() {
+    return BlocBuilder<GameBloc, GameState>(
+      buildWhen: (prev, curr) {
+        if (prev is! GamePlaying || curr is! GamePlaying) return true;
+        return prev.session.status != curr.session.status;
+      },
+      builder: (context, state) {
+        final session = _extractSession(state);
+        if (session == null) return const SizedBox.shrink();
+        final isPaused = session.status == GameStatus.paused;
+        if (!isPaused) return const SizedBox.shrink();
+        return _PauseOverlay(
+          onBackPress: _handleBackPress,
+          onRestart: () {
+            try { sl<AnalyticsService>().logLevelRestarted(levelId: widget.level.id); } catch (_) {}
+            context.read<GameBloc>().add(_restartEvent);
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -235,7 +443,7 @@ class _GamePageState extends State<GamePage> {
         if (didPop) return;
         _handleBackPress();
       },
-      child: BlocConsumer<GameBloc, GameState>(
+      child: BlocListener<GameBloc, GameState>(
         listener: (context, state) {
           if (state is GamePlaying && state.session.board.moveCount == 0) {
             try {
@@ -258,202 +466,96 @@ class _GamePageState extends State<GamePage> {
             _showGameOver(context, state);
           }
         },
-        builder: (context, state) {
-          if (state is! GamePlaying && state is! GameWon && state is! GameLost) {
-            return const Scaffold(
+        child: BlocBuilder<GameBloc, GameState>(
+          buildWhen: (prev, curr) {
+            // Only rebuild scaffold when transitioning between state types
+            return prev.runtimeType != curr.runtimeType;
+          },
+          builder: (context, state) {
+            if (state is! GamePlaying && state is! GameWon && state is! GameLost) {
+              return const Scaffold(
+                backgroundColor: AppColors.background,
+                body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+              );
+            }
+
+            final level = _extractLevel(state)!;
+
+            return Scaffold(
               backgroundColor: AppColors.background,
-              body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-            );
-          }
+              body: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onPanEnd: (details) {
+                  // Read current pause state directly — safe one-shot read in callback
+                  final gameBlocState = context.read<GameBloc>().state;
+                  final isPaused = gameBlocState is GamePlaying &&
+                      gameBlocState.session.status == GameStatus.paused;
+                  if (isPaused) return;
 
-          final session = state is GamePlaying
-              ? state.session
-              : state is GameWon
-                  ? state.session
-                  : (state as GameLost).session;
-
-          final level = state is GamePlaying
-              ? state.level
-              : state is GameWon
-                  ? state.level
-                  : (state as GameLost).level;
-
-          final isPaused = session.status == GameStatus.paused;
-
-          return Scaffold(
-            backgroundColor: AppColors.background,
-            body: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onPanEnd: isPaused
-                  ? null
-                  : (details) {
-                      final velocity = details.velocity.pixelsPerSecond;
-                      if (velocity.distance < 100) return;
-                      final angle = math.atan2(velocity.dy, velocity.dx);
-                      if (angle.abs() <= math.pi / 4) {
-                        _handleSwipe(MoveDirection.right);
-                      } else if (angle.abs() >= 3 * math.pi / 4) {
-                        _handleSwipe(MoveDirection.left);
-                      } else if (angle > 0) {
-                        _handleSwipe(MoveDirection.down);
-                      } else {
-                        _handleSwipe(MoveDirection.up);
-                      }
-                    },
-              child: Container(
-                decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
-                child: SafeArea(
-                  child: ScreenShake(
-                    key: _screenShakeKey,
-                    child: ComboOverlay(
-                      key: _comboKey,
-                      child: Stack(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Column(
-                              children: [
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.arrow_back_rounded,
-                                          color: AppColors.textPrimary),
-                                      onPressed: _handleBackPress,
-                                    ),
-                                    Expanded(
-                                      child: Text(
-                                        widget.isDailyChallenge
-                                            ? 'Daily Challenge'
-                                            : 'Level ${level.levelNumber}',
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.pause_rounded,
-                                          color: AppColors.textPrimary),
-                                      onPressed: () =>
-                                          context.read<GameBloc>().add(const PauseGame()),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    ScoreDisplay(
-                                        label: 'Score',
-                                        value: session.board.score,
-                                        highlight: true),
-                                    ScoreDisplay(
-                                        label: 'Target', value: level.targetTileValue),
-                                    ScoreDisplay(
-                                        label: 'Moves', value: session.board.moveCount),
-                                  ],
-                                ),
-                                if (level.moveLimit != null) ...[
+                  final velocity = details.velocity.pixelsPerSecond;
+                  if (velocity.distance < 100) return;
+                  final angle = math.atan2(velocity.dy, velocity.dx);
+                  if (angle.abs() <= math.pi / 4) {
+                    _handleSwipe(MoveDirection.right);
+                  } else if (angle.abs() >= 3 * math.pi / 4) {
+                    _handleSwipe(MoveDirection.left);
+                  } else if (angle > 0) {
+                    _handleSwipe(MoveDirection.down);
+                  } else {
+                    _handleSwipe(MoveDirection.up);
+                  }
+                },
+                child: Container(
+                  decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+                  child: SafeArea(
+                    child: ScreenShake(
+                      key: _screenShakeKey,
+                      child: ComboOverlay(
+                        key: _comboKey,
+                        child: Stack(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Column(
+                                children: [
                                   const SizedBox(height: 8),
-                                  _MoveLimitIndicator(
-                                    current: session.board.moveCount,
-                                    max: level.moveLimit!,
-                                  ),
+                                  // Zone 1: Header (static per game session)
+                                  _buildHeaderZone(level),
+                                  const SizedBox(height: 12),
+                                  // Zone 2: Score row
+                                  _buildScoreZone(),
+                                  // Move limit indicator (conditional)
+                                  _buildMoveLimitZone(level),
+                                  const SizedBox(height: 16),
+                                  // Zone 3: Game board
+                                  _buildBoardZone(),
+                                  const SizedBox(height: 16),
+                                  // Zone 4: Power-up bar
+                                  _buildPowerupZone(),
+                                  const SizedBox(height: 16),
                                 ],
-                                const SizedBox(height: 16),
-                                Expanded(
-                                  child: Center(
-                                    child: ScorePopupOverlay(
-                                      key: _scorePopupKey,
-                                      child: Stack(
-                                        children: [
-                                          GameBoard(
-                                            board: session.board,
-                                            isHammerMode: _isHammerMode,
-                                            onTileTap: _isHammerMode
-                                                ? (tileId) {
-                                                    HapticService.instance.medium();
-                                                    context
-                                                        .read<GameBloc>()
-                                                        .add(UseHammer(tileId));
-                                                    setState(
-                                                        () => _isHammerMode = false);
-                                                  }
-                                                : null,
-                                          ),
-                                          ParticleEffect(key: _particleKey),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                PowerUpBar(
-                                  session: session,
-                                  isHammerMode: _isHammerMode,
-                                  onUndo: () {
-                                    if (session.undosRemaining <= 0) {
-                                      _showWatchAdForUndo(context);
-                                      return;
-                                    }
-                                    HapticService.instance.light();
-                                    try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.undo); } catch (_) {}
-                                    context.read<GameBloc>().add(const UndoMove());
-                                  },
-                                  onHammer: session.hammersRemaining > 0
-                                      ? () {
-                                          HapticService.instance.light();
-                                          if (!_isHammerMode) {
-                                            try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.hammer); } catch (_) {}
-                                          }
-                                          setState(() => _isHammerMode = !_isHammerMode);
-                                        }
-                                      : null,
-                                  onShuffle: session.shufflesRemaining > 0
-                                      ? () {
-                                          HapticService.instance.medium();
-                                          try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.shuffle); } catch (_) {}
-                                          context.read<GameBloc>().add(const UseShuffle());
-                                        }
-                                      : null,
-                                  onMergeBoost: session.mergeBoostsRemaining > 0
-                                      ? () {
-                                          HapticService.instance.medium();
-                                          try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.mergeBoost); } catch (_) {}
-                                          context.read<GameBloc>().add(const UseMergeBoost());
-                                        }
-                                      : null,
-                                ),
-                                const SizedBox(height: 16),
-                              ],
-                            ),
-                          ),
-                          if (isPaused) _PauseOverlay(
-                            onBackPress: _handleBackPress,
-                            onRestart: () {
-                              try { sl<AnalyticsService>().logLevelRestarted(levelId: widget.level.id); } catch (_) {}
-                              context.read<GameBloc>().add(_restartEvent);
-                            },
-                          ),
-                          if (_showTutorial)
-                            Positioned.fill(
-                              child: TutorialOverlay(
-                                levelNumber: widget.level.levelNumber,
-                                onComplete: _onTutorialComplete,
                               ),
                             ),
-                        ],
+                            // Pause overlay zone
+                            _buildPauseZone(),
+                            // Tutorial overlay (driven by local state)
+                            if (_showTutorial)
+                              Positioned.fill(
+                                child: TutorialOverlay(
+                                  levelNumber: widget.level.levelNumber,
+                                  onComplete: _onTutorialComplete,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
