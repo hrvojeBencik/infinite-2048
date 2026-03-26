@@ -36,6 +36,9 @@ The core 2048 gameplay loop must feel tight, responsive, and satisfying — merg
 - PERF-07: Automated regression check in dev page — Validated in Phase 1
 - PERF-05: SoundService audit (haptic-only, no AudioPlayer risk) — Validated in Phase 1
 - PERF-01: Performance baseline via code analysis (device profiling deferred to post-Phase 2) — Validated in Phase 1
+- PERF-02: TileThemes reactive refactor via ProgressionBloc (eliminated 4,800 regex ops/sec) — Validated in Phase 2
+- PERF-03: RepaintBoundary isolation (4 zones on GamePage) — Validated in Phase 2
+- PERF-04: BLoC buildWhen guards (5 targeted BlocBuilders on GamePage) — Validated in Phase 2
 
 ## Current Milestone: v1.2 Launch Ready
 
@@ -101,4 +104,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after Phase 1 (Performance Audit) complete*
+*Last updated: 2026-03-26 after Phase 2 (Architectural Foundations) complete*
