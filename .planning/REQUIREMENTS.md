@@ -29,10 +29,10 @@ Requirements for v1.2 Launch Ready milestone. Each maps to roadmap phases.
 
 ### UX Flow & Usability
 
-- [ ] **UX-01**: User can skip onboarding tutorial
-- [ ] **UX-02**: Ad frequency capped via remote config (default: every 3 levels)
-- [ ] **UX-03**: Review prompt appears after level completion (respects OS limits)
-- [ ] **UX-04**: Daily challenge card visible on home screen
+- [x] **UX-01**: User can skip onboarding tutorial
+- [x] **UX-02**: Ad frequency capped via remote config (default: every 3 levels)
+- [x] **UX-03**: Review prompt appears after level completion (respects OS limits)
+- [x] **UX-04**: Daily challenge card visible on home screen
 - [ ] **UX-05**: User can share score as image from game over / level complete screen
 
 ### Store Preparation
@@ -84,10 +84,10 @@ Requirements for v1.2 Launch Ready milestone. Each maps to roadmap phases.
 | ANIM-05 | Phase 3 | Complete |
 | ANIM-06 | Phase 3 | Complete |
 | ANIM-07 | Phase 3 | Complete |
-| UX-01 | Phase 4 | Pending |
-| UX-02 | Phase 4 | Pending |
-| UX-03 | Phase 4 | Pending |
-| UX-04 | Phase 4 | Pending |
+| UX-01 | Phase 4 | Complete |
+| UX-02 | Phase 4 | Complete |
+| UX-03 | Phase 4 | Complete |
+| UX-04 | Phase 4 | Complete |
 | UX-05 | Phase 4 | Pending |
 | STORE-01 | Phase 5 | Pending |
 | STORE-02 | Phase 5 | Pending |

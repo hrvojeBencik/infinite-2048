@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 4 plans verified
-last_updated: "2026-03-26T21:04:05.186Z"
+status: Ready to execute
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-26T21:15:47.680Z"
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** The core 2048 gameplay loop must feel tight, responsive, and satisfying
-**Current focus:** Phase 03 — animations-and-visual-polish
+**Current focus:** Phase 04 — ux-flow-and-usability
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
+Phase: 04 (ux-flow-and-usability) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Plan: Not started
 | Phase 02-architectural-foundations P02 | 7 | 2 tasks | 3 files |
 | Phase 03-animations-and-visual-polish P01 | 160 | 3 tasks | 14 files |
 | Phase 03-animations-and-visual-polish P02 | 31529163 | 2 tasks | 2 files |
+| Phase 04-ux-flow-and-usability P01 | 18 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Recent decisions affecting current work:
 - [Phase 03-animations-and-visual-polish]: XpBar uses explicit AnimationController+Tween to avoid flash-to-zero on rebuild (AnimatedContainer would reset on widget rebuild)
 - [Phase 03-animations-and-visual-polish]: Swipe blocking as _boardAnimating flag in UI layer (not BLoC) — keeps animation state out of business logic
 - [Phase 03-animations-and-visual-polish]: ConfettiController lifecycle managed inside LevelCompleteDialog StatefulWidget — renamed AnimationController to _particleController to prevent type collision
+- [Phase 04-ux-flow-and-usability]: AdService resolves RemoteConfigService via sl<>() directly (not constructor injection) — both are lazy singletons, consistent with existing patterns
+- [Phase 04-ux-flow-and-usability]: Daily challenge loading placeholder uses fixed 80px height in AnimatedSize — avoids home screen reflow when data arrives
+- [Phase 04-ux-flow-and-usability]: Skip Tutorial falls back to onComplete if no onSkip provided — backward-compatible with existing TutorialOverlay call sites
 
 ### Pending Todos
 
@@ -87,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T21:04:05.183Z
-Stopped at: Phase 4 plans verified
-Resume file: .planning/phases/04-ux-flow-and-usability/04-01-PLAN.md
+Last session: 2026-03-26T21:15:47.677Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None

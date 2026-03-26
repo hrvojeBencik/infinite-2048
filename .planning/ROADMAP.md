@@ -79,9 +79,9 @@ Plans:
   3. After completing a level, the app prompts the user to leave a review (respects OS frequency limits)
   4. An ad-free premium user never sees an interstitial; free users see ads at most every 3 levels by default
   5. User can share their score as an image using the native share sheet from the game over or level complete screen
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 04-01-PLAN.md — Skip tutorial button, daily challenge card reposition, ad frequency cap, review prompt verification
+- [x] 04-01-PLAN.md — Skip tutorial button, daily challenge card reposition, ad frequency cap, review prompt verification
 - [ ] 04-02-PLAN.md — Score sharing with ShareScoreCard widget and share_plus integration
 
 ### Phase 5: Store Preparation
@@ -107,5 +107,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Performance Audit | 2/2 | Complete   | 2026-03-26 |
 | 2. Architectural Foundations | 1/3 | In Progress|  |
 | 3. Animations and Visual Polish | 1/2 | In Progress|  |
-| 4. UX Flow and Usability | 0/2 | Not started | - |
+| 4. UX Flow and Usability | 1/2 | In Progress|  |
 | 5. Store Preparation | 0/? | Not started | - |
