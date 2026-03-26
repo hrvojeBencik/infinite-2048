@@ -48,6 +48,7 @@ class _GamePageState extends State<GamePage> {
   bool _isHammerMode = false;
   bool _introChecked = false;
   bool _showTutorial = false;
+  bool _boardAnimating = false;
 
   RestartLevel get _restartEvent => RestartLevel(
         undosAvailable: GameConstants.undosPerLevel,
@@ -138,6 +139,14 @@ class _GamePageState extends State<GamePage> {
       sl<HapticService>().bomb();
     } else if (state.lastMergeCount > 0) {
       sl<HapticService>().merge();
+    }
+
+    // Block swipes during merge animation (ANIM-01)
+    if (state.lastMergeCount > 0 || state.hadBombExplosion) {
+      _boardAnimating = true;
+      Future.delayed(const Duration(milliseconds: 420), () {
+        if (mounted) _boardAnimating = false;
+      });
     }
 
     if (state.lastMergeCount > 0 || state.hadBombExplosion) {
@@ -491,7 +500,7 @@ class _GamePageState extends State<GamePage> {
                   final gameBlocState = context.read<GameBloc>().state;
                   final isPaused = gameBlocState is GamePlaying &&
                       gameBlocState.session.status == GameStatus.paused;
-                  if (isPaused) return;
+                  if (isPaused || _boardAnimating) return;
 
                   final velocity = details.velocity.pixelsPerSecond;
                   if (velocity.distance < 100) return;
@@ -661,10 +670,19 @@ class _GamePageState extends State<GamePage> {
 
   void _showLevelComplete(BuildContext context, GameWon state) {
     sl<AdService>().onLevelCompleted();
-    showDialog(
+    showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => LevelCompleteDialog(
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 350),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+        return SlideTransition(
+          position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(curved),
+          child: child,
+        );
+      },
+      pageBuilder: (context, animation, secondaryAnimation) => LevelCompleteDialog(
         score: state.session.board.score,
         stars: state.stars,
         levelNumber: state.level.levelNumber,
@@ -698,10 +716,19 @@ class _GamePageState extends State<GamePage> {
 
     final hasHistory = state.session.moveHistory.isNotEmpty;
 
-    showDialog(
+    showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => GameOverDialog(
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 350),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+        return SlideTransition(
+          position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(curved),
+          child: child,
+        );
+      },
+      pageBuilder: (context, animation, secondaryAnimation) => GameOverDialog(
         score: state.session.board.score,
         highestTile: state.session.board.highestTile,
         onWatchAdToContinue: hasHistory
