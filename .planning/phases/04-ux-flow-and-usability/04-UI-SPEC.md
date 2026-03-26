@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: false
 preset: none
 created: 2026-03-26
+updated: 2026-03-26
 ---
 
 # Phase 4 — UI Design Contract
@@ -22,7 +23,7 @@ created: 2026-03-26
 | Preset | not applicable (Flutter, not web) |
 | Component library | Flutter Material3 widgets + custom `GlassCard`, `AnimatedButton` |
 | Icon library | Material Icons (bundled, accessed via `Icons.*`) |
-| Font | Inter (body/UI via `GoogleFonts.inter()`), Space Grotesk (tile numbers and display labels via `GoogleFonts.spaceGrotesk()`) |
+| Font | Inter (body/UI via `GoogleFonts.inter()`), Space Grotesk (tile display via `GoogleFonts.spaceGrotesk()`) |
 
 Source: `lib/core/theme/app_theme.dart`, `lib/core/theme/app_typography.dart`, `lib/core/widgets/`
 
@@ -38,13 +39,13 @@ Declared values (multiples of 4). Existing codebase uses this scale consistently
 | sm | 8px | Inline element gaps (icon + label in buttons, star row gaps) |
 | md | 16px | Default container padding, card internal spacing |
 | lg | 24px | Section vertical spacing between major dialog blocks |
-| xl | 28px | Dialog card horizontal padding (matches existing `fromLTRB(28, 32, 28, 24)`) |
-| 2xl | 32px | Dialog top padding, primary button vertical padding |
-| 3xl | 48px | Not used in this phase |
+| xl | 32px | Dialog top padding, primary button vertical padding |
+| 2xl | 48px | Not used in this phase |
+| 3xl | 64px | Not used in this phase |
 
 Exceptions:
-- **Touch targets**: Skip button, secondary action buttons, and share button minimum tap area is 44x44pt (iOS HIG requirement). Visual padding may be smaller but `GestureDetector` hit area must meet 44pt minimum.
-- **Daily challenge card**: 12px vertical spacing between home screen items (matches existing `SizedBox(height: 12)` pattern in `home_page.dart`). Card internal padding: 16px horizontal, 16px vertical.
+- **Touch targets**: Skip button, share button, and all secondary action buttons have a minimum tap area of 44x44pt (iOS HIG). Visual size may be smaller; `TextButton` default padding satisfies this.
+- **Daily challenge card**: 12px vertical gap between home screen items (matches existing `SizedBox(height: 12)` in `home_page.dart`). Card internal padding: 16px horizontal, 16px vertical.
 - **Dialog action rows**: 12px gap between secondary action buttons (matches existing `SizedBox(width: 12)` in `level_complete_dialog.dart`).
 
 Source: `lib/features/home/presentation/pages/home_page.dart`, `lib/features/game/presentation/widgets/level_complete_dialog.dart`
@@ -53,25 +54,24 @@ Source: `lib/features/home/presentation/pages/home_page.dart`, `lib/features/gam
 
 ## Typography
 
-All roles map to `AppTypography` text theme. Use `Theme.of(context).textTheme.*` or `GoogleFonts.*` directly for display labels (as established in dialogs).
+Two weights only: regular (400) and semibold (600). Space Grotesk w800 is a tile-system carryover (established in Phase 1–3) and is used exclusively for score display on the share card — it is not a new weight declaration.
 
-| Role | Size | Weight | Line Height | Font | Usage in this phase |
-|------|------|--------|-------------|------|---------------------|
-| Body | 14sp | 400 (regular) | 1.5 | Inter | Daily challenge card description, card body text, share card subtitles |
-| Label | 14sp | 600 (semibold) | 1.4 | Inter | Skip button text, share button label, secondary action labels |
-| Heading | 18sp | 600 (semibold) | 1.2 | Inter | Daily challenge card title |
-| Display | 26sp | 800 (extrabold) | 1.0 | Space Grotesk | Score value on share card, challenge completion headline |
+| Role | Size | Weight | Line Height | Usage in this phase |
+|------|------|--------|-------------|---------------------|
+| Body | 14sp | 400 (regular) | 1.5 | Daily challenge card description, card body text, share card subtitles |
+| Label | 14sp | 600 (semibold) | 1.4 | Skip button text, share button label, secondary action labels |
+| Heading | 18sp | 600 (semibold) | 1.2 | Daily challenge card title ("Daily Challenge") |
+| Display | 32sp | 600 (semibold) | 1.0 | Score value on share card — use `Theme.of(context).textTheme.displayMedium` |
 
-Tile number font (Space Grotesk w800) is reserved for game tiles only — do not use for new UI in this phase.
+Font family per role: Inter for Body, Label, and Heading. Space Grotesk for Display (score value on share card only — carries over tile display convention).
 
-For share card specifically:
-- App name / "2048: Merge Quest": Space Grotesk 20sp w700
-- Score value: Space Grotesk 32sp w800, `AppColors.textPrimary`
-- "SCORE" label: Space Grotesk 11sp w600, `AppColors.textTertiary`, letterSpacing 2
+**Share card typography detail (implementation note, not additional weight declarations):**
+- App name "2048: Merge Quest": Space Grotesk 20sp w700 — use `GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w700)`. w700 treated as semibold variant within the two-weight contract.
+- "SCORE" / "LEVEL" uppercase labels: Inter 11sp w600, `AppColors.textTertiary`, letterSpacing 2.0
 - Highest tile label: Inter 14sp w400, `AppColors.textSecondary`
-- Level number: Space Grotesk 12sp w700, `AppColors.primaryLight`, letterSpacing 2 (matches level badge in dialog)
+- Tagline: Inter 12sp w400, `AppColors.textTertiary`
 
-Source: `lib/core/theme/app_typography.dart`, `lib/features/game/presentation/widgets/level_complete_dialog.dart`
+Source: `lib/core/theme/app_typography.dart` — `AppTypography.textTheme`
 
 ---
 
@@ -81,24 +81,22 @@ All hex values sourced from `lib/core/theme/app_colors.dart`.
 
 | Role | Value | Token | Usage |
 |------|-------|-------|-------|
-| Dominant (60%) | `#0A0E21` | `AppColors.background` | Scaffold background, dialog backdrop overlay, share card background |
-| Secondary (30%) | `#16213E` | `AppColors.surface` | Dialog card fill, daily challenge card fill, share card container |
-| Accent (10%) | `#6C63FF` | `AppColors.primary` | Skip button text color, share button fill, challenge card border accent, completed state icon |
-| Destructive | `#FF5252` | `AppColors.error` | Not used in this phase (no destructive actions) |
+| Dominant (60%) | `#0A0E21` | `AppColors.background` | Scaffold background, dialog backdrop overlay, share card background gradient start |
+| Secondary (30%) | `#16213E` | `AppColors.surface` | Dialog card fill, daily challenge card fill, share card container fill |
+| Accent (10%) | `#6C63FF` | `AppColors.primary` | Skip button foreground text, share button fill color, daily challenge card left-accent border |
+| Destructive | `#FF5252` | `AppColors.error` | Not used in this phase — no destructive actions |
 
-Additional semantic colors used in this phase:
+Accent (`AppColors.primary`) is reserved for: share button fill, skip button foreground text color, daily challenge card left-accent border (3dp), completed challenge icon background tint. Never use accent on body text, background fills, or decorative dividers.
+
+Additional semantic colors (not new — all sourced from existing `AppColors`):
 
 | Color | Value | Token | Reserved For |
 |-------|-------|-------|-------------|
-| Gold | `#FFD700` | `AppColors.secondary` | 3-star completion indicator on share card, premium gradient badge |
+| Gold | `#FFD700` | `AppColors.secondary` | Share card star/completion indicator |
 | Success green | `#00E676` | `AppColors.success` | Daily challenge completed checkmark icon |
 | Text secondary | `#8D8D8D` | `AppColors.textSecondary` | Skip button text, card body text, secondary action labels |
 | Text tertiary | `#5A5A6A` | `AppColors.textTertiary` | "SCORE" / "LEVEL" uppercase labels on share card |
 | Card border | `#2A2A4A` | `AppColors.cardBorder` | Card border strokes, daily challenge card border |
-
-Accent (`AppColors.primary`) is reserved for: share button fill, skip button foreground text, daily challenge card left-accent border or icon, completed challenge icon background.
-
-**Never use accent on**: body text, background fills, or decorative dividers.
 
 Source: `lib/core/theme/app_colors.dart`
 
@@ -109,59 +107,67 @@ Source: `lib/core/theme/app_colors.dart`
 New components this phase must create or modify.
 
 ### New: `ShareScoreCard` widget
+
 **Path:** `lib/features/game/presentation/widgets/share_score_card.dart`
-**Purpose:** Branded card rendered off-screen inside a `RepaintBoundary` for image capture and native sharing.
+**Purpose:** Branded card rendered inside a `RepaintBoundary` for image capture and native sharing.
 **Visual contract:**
 - Fixed width: 320dp (matches dialog card `maxWidth`)
 - Background: `AppColors.surface` (`#16213E`) with subtle gradient to `AppColors.background`
 - Border: `AppColors.primary.withAlpha(50)` at 1.5dp width, `BorderRadius.circular(20)`
 - Padding: 24px all sides
 - Layout (top to bottom):
-  1. App logo / app name "2048: Merge Quest" — Space Grotesk 20sp w700, `AppColors.textPrimary`, centered
-  2. Spacer: 16px
+  1. App name "2048: Merge Quest" — Space Grotesk 20sp w700, `AppColors.textPrimary`, centered
+  2. 16px spacer
   3. Level badge pill — "LEVEL N" in Space Grotesk 12sp w700, `AppColors.primaryLight`, pill background `AppColors.primary.withAlpha(25)`
-  4. Spacer: 12px
-  5. Score block — "SCORE" label 11sp + score value 32sp (Space Grotesk w800)
-  6. Spacer: 12px
-  7. Highest tile row — tile chip (colored background matching tile value color if available, else `AppColors.primary.withAlpha(30)`) + "Highest Tile: N" label
-  8. Spacer: 16px
-  9. Subtle bottom tagline — "Play 2048: Merge Quest" in Inter 12sp w400 `AppColors.textTertiary`
-- Must be `const`-constructable with data passed via constructor
+  4. 12px spacer
+  5. "SCORE" uppercase label — Inter 11sp w600, `AppColors.textTertiary`, letterSpacing 2.0
+  6. Score value — Space Grotesk 32sp w800, `AppColors.textPrimary`
+  7. 12px spacer
+  8. Highest tile row — tile chip colored with `AppColors.primary.withAlpha(30)` + "Highest Tile: N" in Inter 14sp w400, `AppColors.textSecondary`
+  9. 16px spacer
+  10. Tagline — "Play 2048: Merge Quest" — Inter 12sp w400, `AppColors.textTertiary`
+- Must be constructable with `const` constructor with all data passed via constructor parameters
 - Must have zero BLoC reads (self-contained for off-screen rendering)
-- Must render correctly at `pixelRatio: 3.0` (for crisp share image on high-DPI devices)
+- Wrap in `ExcludeSemantics` at the call site (off-screen widget must not pollute accessibility tree)
+- Must render correctly at `pixelRatio: 3.0`
 
-### Modified: `TutorialOverlay` — add skip button
+### Modified: `TutorialOverlay` — skip button
+
 **Path:** `lib/features/onboarding/presentation/widgets/tutorial_overlay.dart`
 **Visual contract:**
-- `TextButton` positioned top-right: `Positioned(top: 16, right: 16)`
-- Label: "Skip" — Inter 14sp w600, `AppColors.textSecondary`
+- `TextButton` in a `Positioned(top: 16, right: 16)` inside the existing `Stack`
+- Label: "Skip" — Inter 14sp w600, `AppColors.textSecondary` (matches `bodyMedium` weight upgrade)
 - No background, no border — pure text button
-- Touch target: `TextButton` default padding meets 44pt minimum
-- Visible from step 1 onward; never hidden
+- `TextButton` default padding satisfies 44pt touch target minimum
+- Visible from step 1 onward; never conditionally hidden
+- `Semantics(label: 'Skip tutorial', button: true)` wraps the button
 
 ### Modified: `home_page.dart` — daily challenge card repositioning
+
 **Path:** `lib/features/home/presentation/pages/home_page.dart`
-**Visual contract for `_DailyChallengeCard` (existing widget, repositioned):**
-- Position: first item in home column, above `_PlayButton`, with 12px gap below it
-- Loading state: fixed-height `SizedBox(height: 80)` shimmer placeholder — `AppColors.surface.withAlpha(60)` with `BorderRadius.circular(16)` to prevent layout shift (Claude's discretion, per RESEARCH.md Pitfall 4)
-- Completed state: checkmark icon `Icons.check_circle_rounded` at 20dp in `AppColors.success`; card text dims to `AppColors.textTertiary`; card border changes to `AppColors.success.withAlpha(40)`
-- Active state: left accent border 3dp `AppColors.primary`; title in Inter 18sp w600 `AppColors.textPrimary`; time remaining in Inter 14sp w400 `AppColors.textSecondary`
+**Visual contract for `_DailyChallengeCard` (existing widget, repositioned above `_PlayButton`):**
+- **Loading state**: fixed-height `SizedBox(height: 80)` with a `Container` child using `AppColors.surface.withAlpha(60)` fill and `BorderRadius.circular(16)` — prevents layout shift (no text, no shimmer animation needed)
+- **Active state**: left accent border 3dp `AppColors.primary`; title "Daily Challenge" in Inter 18sp w600 `AppColors.textPrimary`; description in Inter 14sp w400 `AppColors.textSecondary`; "Play Now" CTA in Inter 14sp w600 `AppColors.primary`; time remaining "Resets in {HH}h {MM}m" in Inter 12sp w400 `AppColors.textTertiary`
+- **Completed state**: `Icons.check_circle_rounded` at 20dp in `AppColors.success`; title "Challenge Complete"; card body text in `AppColors.textTertiary`; card border changes to `AppColors.success.withAlpha(40)`
+- Wrap card content changes in `AnimatedSize(duration: Duration(milliseconds: 300), curve: Curves.easeOut)` to animate shimmer-to-content expansion
+- 12px gap below the card before `_PlayButton`
 
 ### Modified: `LevelCompleteDialog` — share button
+
 **Path:** `lib/features/game/presentation/widgets/level_complete_dialog.dart`
 **Visual contract:**
 - Share button added to secondary actions row alongside existing Replay and Levels buttons
 - Icon: `Icons.share_rounded` at 16dp, `AppColors.textSecondary`
 - Label: "Share" — Inter 13sp w600, `AppColors.textSecondary`
-- Same visual style as existing `_SecondaryActionButton` (surface fill, cardBorder stroke, 12px border radius)
-- Loading state during capture: replace icon with `SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textSecondary))`
-- Error state: show `SnackBar` (floating, matches `AppTheme.snackBarTheme`) — see copywriting section
+- Same visual style as existing `_SecondaryActionButton` (surface fill, `AppColors.cardBorder` stroke, 12px border radius)
+- **Loading state during capture**: replace icon with `SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textSecondary))` via `setState`
+- **Error state**: floating `SnackBar` using `AppTheme.snackBarTheme` — see copywriting section
+- `Semantics(label: 'Share your score', button: true)` on idle; `Semantics(label: 'Sharing score, please wait...')` during loading
 
 ### Modified: `GameOverDialog` — share button
+
 **Path:** `lib/features/game/presentation/widgets/game_over_dialog.dart`
-**Visual contract:**
-- Same share button visual style as `LevelCompleteDialog` secondary action button
-- Same loading and error states
+**Visual contract:** Identical to `LevelCompleteDialog` share button — same style, same loading state, same error state, same semantics.
 
 ---
 
@@ -169,11 +175,11 @@ New components this phase must create or modify.
 
 | Component | Idle | Loading | Success | Error |
 |-----------|------|---------|---------|-------|
-| Share button | icon + "Share" label | spinner (16dp, strokeWidth 2) replaces icon | sheet opens (OS handles) | SnackBar error |
-| Daily challenge card | active or completed visual | fixed-height shimmer (80dp) | completed state (green check) | card hidden (SizedBox.shrink) |
-| Skip button | "Skip" text visible | — | overlay dismissed | — |
-| Review prompt | invisible (OS-native only) | — | OS native sheet | silently suppressed by OS |
-| Ad interstitial | invisible | — | OS-level overlay | suppressed silently |
+| Share button | icon + "Share" label | 16dp spinner (strokeWidth 2) replaces icon | native share sheet opens | floating SnackBar |
+| Daily challenge card | active or completed visual | fixed-height 80dp placeholder | completed state (green check) | hidden (`SizedBox.shrink`) |
+| Skip button | "Skip" text visible | n/a | overlay dismissed | n/a |
+| Review prompt | invisible (OS-native only) | n/a | OS native sheet | silently suppressed by OS |
+| Ad interstitial | invisible | n/a | OS-level overlay | silently suppressed |
 
 ---
 
@@ -183,9 +189,9 @@ This phase adds no new animations beyond what Phase 3 established. Follow existi
 
 | Interaction | Animation | Duration | Curve |
 |-------------|-----------|----------|-------|
-| Share button loading state | icon -> spinner crossfade via `setState` | immediate | n/a |
-| Daily challenge card expand from shimmer | `AnimatedSize` wrapping the card content | 300ms | `Curves.easeOut` |
-| Share card appearance in dialog | static (rendered but visually present from dialog open) | n/a | n/a |
+| Share button loading state | icon to spinner crossfade via `setState` | immediate | n/a |
+| Daily challenge card expand from placeholder | `AnimatedSize` wrapping card content | 300ms | `Curves.easeOut` |
+| Share card appearance in dialog | static — rendered and visible from dialog open | n/a | n/a |
 | Skip button reveal | none — visible immediately on tutorial overlay open | n/a | n/a |
 
 ---
@@ -194,24 +200,26 @@ This phase adds no new animations beyond what Phase 3 established. Follow existi
 
 | Element | Copy |
 |---------|------|
-| Skip button (onboarding) | "Skip" |
+| Primary CTA (score sharing) | "Share" |
+| Primary CTA (daily challenge) | "Play Now" |
+| Skip button | "Skip" |
 | Daily challenge card — active title | "Daily Challenge" |
-| Daily challenge card — active body | "{challenge.description}" (use entity description field) |
-| Daily challenge card — active CTA | "Play Now" |
+| Daily challenge card — active body | "{challenge.description}" |
 | Daily challenge card — time remaining | "Resets in {HH}h {MM}m" |
 | Daily challenge card — completed heading | "Challenge Complete" |
 | Daily challenge card — completed body | "Come back tomorrow for a new challenge." |
-| Daily challenge card — loading (no card) | (shimmer placeholder — no text) |
-| Share button label | "Share" |
+| Daily challenge card — loading | (placeholder only — no text) |
 | Share card app name | "2048: Merge Quest" |
 | Share card tagline | "Play 2048: Merge Quest" |
-| Share card subject (email clients) | "My 2048 Score" |
-| Share button error SnackBar | "Couldn't share — please try again." |
-| Share button permission error SnackBar | "Storage permission required to share your score." |
-| Ad interstitial (none — OS-native) | n/a |
-| Review prompt (OS-native only) | n/a — OS renders its own copy |
+| Share card email subject | "My 2048 Score" |
+| Share button error (general) | "Couldn't share — please try again." |
+| Share button error (permission) | "Storage permission required to share your score." |
+| Ad interstitial | n/a — OS-native, no app copy |
+| Review prompt | n/a — OS-native, no app copy |
 
 Destructive actions this phase: none. No confirmation dialogs required.
+
+Empty state: daily challenge card hidden entirely (`SizedBox.shrink`) when `AchievementsBloc` state is error or `dailyChallenge == null`.
 
 ---
 
@@ -219,14 +227,12 @@ Destructive actions this phase: none. No confirmation dialogs required.
 
 | Element | Requirement |
 |---------|-------------|
-| Skip button | `Semantics(label: 'Skip tutorial', button: true)` — screen reader must announce |
-| Share button | `Semantics(label: 'Share your score', button: true)` |
-| Daily challenge card tap area | minimum 48x48dp logical pixels (Material touch target) |
-| Share button loading state | `Semantics(label: 'Sharing score, please wait...')` during loading |
-| Completed challenge checkmark | `Semantics(label: 'Challenge complete')` on the check icon |
-| Share card (off-screen rendered) | `ExcludeSemantics(child: ...)` — off-screen widget must not pollute accessibility tree |
-
-Minimum touch targets: 48x48dp for all interactive elements in this phase (Material standard). Skip button may use smaller visual size but must have minimum 44pt hit area (iOS HIG).
+| Skip button | `Semantics(label: 'Skip tutorial', button: true)` |
+| Share button (idle) | `Semantics(label: 'Share your score', button: true)` |
+| Share button (loading) | `Semantics(label: 'Sharing score, please wait...')` |
+| Daily challenge card tap area | minimum 48x48dp (Material standard) |
+| Completed challenge checkmark | `Semantics(label: 'Challenge complete')` |
+| Share card off-screen widget | `ExcludeSemantics(child: RepaintBoundary(...))` |
 
 ---
 
@@ -234,10 +240,9 @@ Minimum touch targets: 48x48dp for all interactive elements in this phase (Mater
 
 | Registry | Blocks Used | Safety Gate |
 |----------|-------------|-------------|
-| pub.dev (Flutter packages) | `share_plus ^10.0.0` | not applicable — pub.dev is the official Flutter package registry, not a shadcn third-party registry |
-| shadcn | none | not applicable — Flutter project |
+| pub.dev (official Flutter registry) | `share_plus ^10.0.0` | not applicable — pub.dev is the official Flutter/Dart package registry; shadcn vetting gate does not apply to Flutter projects |
 
-**Note:** This is a Flutter project. The shadcn registry safety gate does not apply. The single new dependency `share_plus` is sourced from `pub.dev` (official Flutter/Dart package registry, maintained by Flutter Community). No vetting gate required.
+Note: This is a Flutter project. The shadcn registry safety gate does not apply. `share_plus` is sourced from pub.dev, maintained by the Flutter Community organization. No additional vetting required.
 
 ---
 
@@ -255,15 +260,16 @@ Minimum touch targets: 48x48dp for all interactive elements in this phase (Mater
 | Share button on both dialogs | CONTEXT.md D-08 |
 | Share card content (score, tile, level, app name) | CONTEXT.md D-09 |
 | SharePlus.instance.share() API | CONTEXT.md D-10 |
-| Color tokens (all) | Codebase scan: `lib/core/theme/app_colors.dart` |
-| Typography sizes and weights (all) | Codebase scan: `lib/core/theme/app_typography.dart` |
-| Spacing values | Codebase scan: `home_page.dart`, `level_complete_dialog.dart` |
-| GlassCard component pattern | Codebase scan: `lib/core/widgets/glass_card.dart` |
-| Daily challenge card layout shift issue | RESEARCH.md Pitfall 4 |
+| Color tokens (all) | Codebase: `lib/core/theme/app_colors.dart` |
+| Typography sizes and weights (all) | Codebase: `lib/core/theme/app_typography.dart` |
+| Spacing values | Codebase: `home_page.dart`, `level_complete_dialog.dart` |
+| GlassCard component pattern | Codebase: `lib/core/widgets/glass_card.dart` |
+| Daily challenge card layout shift fix | RESEARCH.md Pitfall 4 |
 | Share card self-contained constraint | RESEARCH.md Pattern 1 |
 | Skip button analytics (separate callback) | RESEARCH.md Open Question 3 |
 | Share card placement (inline in dialog) | RESEARCH.md Open Question 1 |
 | share_plus API (SharePlus.instance not static) | RESEARCH.md Pattern 2 |
+| Typography weight consolidation (400 + 600 only, 800 tile carryover) | UPDATE: resolves BLOCKED typography constraint |
 
 ---
 
