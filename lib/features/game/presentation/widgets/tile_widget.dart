@@ -1,9 +1,12 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/tile_themes.dart';
 import '../../domain/entities/tile.dart';
 import '../../domain/entities/special_tile_type.dart';
+import '../../../progression/presentation/bloc/progression_bloc.dart';
+import '../../../progression/domain/entities/tile_theme.dart' as domain_theme;
 import 'package:google_fonts/google_fonts.dart';
 
 class TileWidget extends StatefulWidget {
@@ -120,6 +123,11 @@ class _TileWidgetState extends State<TileWidget>
 
   @override
   Widget build(BuildContext context) {
+    final tileTheme = context.select<ProgressionBloc, domain_theme.TileTheme>((bloc) {
+      final s = bloc.state;
+      return s is ProgressionLoaded ? s.activeTileTheme : domain_theme.TileThemes.classic;
+    });
+
     final tileSize = widget.cellSize - widget.spacing;
 
     Widget tileContent = AnimatedBuilder(
@@ -139,7 +147,7 @@ class _TileWidgetState extends State<TileWidget>
           opacity: opacity.clamp(0.0, 1.0),
           child: Transform.scale(
             scale: scale.clamp(0.0, 2.0),
-            child: _buildTile(tileSize),
+            child: _buildTile(tileSize, tileTheme),
           ),
         );
       },
@@ -152,19 +160,20 @@ class _TileWidgetState extends State<TileWidget>
     return tileContent;
   }
 
-  Widget _buildTile(double tileSize) {
+  Widget _buildTile(double tileSize, domain_theme.TileTheme theme) {
     return AnimatedBuilder(
       animation: _glowController,
       builder: (context, child) {
         final glowIntensity = _glowAnimation.value;
-        final tileColor = _getTileMainColor();
+        final tileColor = _getTileMainColor(theme);
+        final decoration = _tileDecoration(tileSize, theme);
 
         return Container(
           width: tileSize,
           height: tileSize,
-          decoration: _tileDecoration(tileSize).copyWith(
+          decoration: decoration.copyWith(
             boxShadow: [
-              ..._tileDecoration(tileSize).boxShadow ?? [],
+              ...decoration.boxShadow ?? [],
               if (glowIntensity > 0)
                 BoxShadow(
                   color: tileColor.withAlpha((120 * glowIntensity).toInt()),
@@ -173,39 +182,38 @@ class _TileWidgetState extends State<TileWidget>
                 ),
             ],
           ),
-          child: child,
+          child: Stack(
+            children: [
+              if (widget.tile.specialType == SpecialTileType.bomb)
+                _bombBackground(tileSize),
+              if (widget.tile.specialType == SpecialTileType.multiplier)
+                _multiplierBackground(tileSize),
+              if (widget.tile.specialType == SpecialTileType.wildcard)
+                _wildcardBackground(tileSize),
+              if (widget.tile.specialType == SpecialTileType.blocker)
+                _blockerContent(tileSize)
+              else
+                _valueContent(tileSize, theme),
+              if (widget.tile.specialType == SpecialTileType.bomb)
+                _bombBadge(tileSize),
+              if (widget.tile.specialType == SpecialTileType.multiplier)
+                _multiplierBadge(tileSize),
+              if (widget.tile.specialType == SpecialTileType.wildcard)
+                _wildcardBadge(tileSize),
+              if (widget.tile.isFrozen) _frozenOverlay(tileSize),
+              if (widget.isHammerMode) _hammerOverlay(tileSize),
+            ],
+          ),
         );
       },
-      child: Stack(
-        children: [
-          if (widget.tile.specialType == SpecialTileType.bomb)
-            _bombBackground(tileSize),
-          if (widget.tile.specialType == SpecialTileType.multiplier)
-            _multiplierBackground(tileSize),
-          if (widget.tile.specialType == SpecialTileType.wildcard)
-            _wildcardBackground(tileSize),
-          if (widget.tile.specialType == SpecialTileType.blocker)
-            _blockerContent(tileSize)
-          else
-            _valueContent(tileSize),
-          if (widget.tile.specialType == SpecialTileType.bomb)
-            _bombBadge(tileSize),
-          if (widget.tile.specialType == SpecialTileType.multiplier)
-            _multiplierBadge(tileSize),
-          if (widget.tile.specialType == SpecialTileType.wildcard)
-            _wildcardBadge(tileSize),
-          if (widget.tile.isFrozen) _frozenOverlay(tileSize),
-          if (widget.isHammerMode) _hammerOverlay(tileSize),
-        ],
-      ),
     );
   }
 
-  Color _getTileMainColor() {
+  Color _getTileMainColor(domain_theme.TileTheme theme) {
     if (widget.tile.specialType == SpecialTileType.bomb) return const Color(0xFFFF4444);
     if (widget.tile.specialType == SpecialTileType.multiplier) return const Color(0xFFFFD700);
     if (widget.tile.specialType == SpecialTileType.wildcard) return const Color(0xFF6C63FF);
-    return TileThemes.tileColor(widget.tile.value);
+    return theme.colorForValue(widget.tile.value);
   }
 
   // Dynamic shadow elevation based on tile value
@@ -219,7 +227,7 @@ class _TileWidgetState extends State<TileWidget>
     return 14;
   }
 
-  BoxDecoration _tileDecoration(double tileSize) {
+  BoxDecoration _tileDecoration(double tileSize, domain_theme.TileTheme theme) {
     final radius = BorderRadius.circular(tileSize * 0.14);
     final elevation = _tileElevation();
 
@@ -303,7 +311,7 @@ class _TileWidgetState extends State<TileWidget>
       );
     }
 
-    final baseColor = TileThemes.tileColor(widget.tile.value);
+    final baseColor = theme.colorForValue(widget.tile.value);
 
     return BoxDecoration(
       gradient: LinearGradient(
@@ -335,7 +343,7 @@ class _TileWidgetState extends State<TileWidget>
     );
   }
 
-  Widget _valueContent(double tileSize) {
+  Widget _valueContent(double tileSize, domain_theme.TileTheme theme) {
     Color textColor;
     if (widget.tile.specialType == SpecialTileType.bomb ||
         widget.tile.specialType == SpecialTileType.wildcard) {
@@ -343,7 +351,7 @@ class _TileWidgetState extends State<TileWidget>
     } else if (widget.tile.specialType == SpecialTileType.multiplier) {
       textColor = const Color(0xFF3D2600);
     } else {
-      textColor = TileThemes.tileTextColor(widget.tile.value);
+      textColor = theme.textColorForValue(widget.tile.value);
     }
 
     return Center(
