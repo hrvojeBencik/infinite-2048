@@ -1,16 +1,23 @@
+import 'dart:io';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/animated_button.dart';
+import 'share_score_card.dart';
 
 class LevelCompleteDialog extends StatefulWidget {
   final int score;
   final int stars;
   final int levelNumber;
+  final int highestTile;
   final VoidCallback onNextLevel;
   final VoidCallback onBackToLevels;
   final VoidCallback onReplay;
@@ -20,6 +27,7 @@ class LevelCompleteDialog extends StatefulWidget {
     required this.score,
     required this.stars,
     required this.levelNumber,
+    required this.highestTile,
     required this.onNextLevel,
     required this.onBackToLevels,
     required this.onReplay,
@@ -38,6 +46,8 @@ class _LevelCompleteDialogState extends State<LevelCompleteDialog>
   late List<_ConfettiParticle> _particles;
   final _random = Random();
   late ConfettiController _confettiController;
+  bool _isSharing = false;
+  final GlobalKey _shareCardKey = GlobalKey();
 
   @override
   void initState() {
@@ -87,6 +97,38 @@ class _LevelCompleteDialogState extends State<LevelCompleteDialog>
     _glowController.dispose();
     _confettiController.dispose();
     super.dispose();
+  }
+
+  Future<void> _shareScore() async {
+    if (_isSharing) return;
+    setState(() => _isSharing = true);
+    try {
+      await Future.delayed(Duration.zero); // ensure painted
+      final boundary = _shareCardKey.currentContext!
+          .findRenderObject()! as RenderRepaintBoundary;
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      final pngBytes = byteData!.buffer.asUint8List();
+
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/merge_quest_score.png');
+      await file.writeAsBytes(pngBytes);
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          subject: 'My 2048 Score',
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Couldn't share — please try again.")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSharing = false);
+    }
   }
 
   @override
@@ -331,12 +373,72 @@ class _LevelCompleteDialogState extends State<LevelCompleteDialog>
                       label: 'Levels',
                       onTap: widget.onBackToLevels,
                     ),
+                    const SizedBox(width: 12),
+                    Semantics(
+                      label: _isSharing
+                          ? 'Sharing score, please wait...'
+                          : 'Share your score',
+                      button: !_isSharing,
+                      child: GestureDetector(
+                        onTap: _isSharing ? null : _shareScore,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface.withAlpha(180),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: AppColors.cardBorder.withAlpha(80)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_isSharing)
+                                const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                )
+                              else
+                                const Icon(Icons.share_rounded,
+                                    size: 16, color: AppColors.textSecondary),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'Share Score',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ).animate(delay: 1000.ms).fadeIn(duration: 400.ms),
               ],
             ),
           ),
           ),
+          ),
+          // Off-screen ShareScoreCard for RepaintBoundary image capture
+          Positioned(
+            left: -1000,
+            child: ExcludeSemantics(
+              child: RepaintBoundary(
+                key: _shareCardKey,
+                child: ShareScoreCard(
+                  score: widget.score,
+                  highestTile: widget.highestTile,
+                  levelNumber: widget.levelNumber,
+                ),
+              ),
+            ),
           ),
           // Confetti burst from top (ANIM-04)
           Align(

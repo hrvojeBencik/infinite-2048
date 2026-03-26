@@ -688,6 +688,7 @@ class _GamePageState extends State<GamePage> {
         score: state.session.board.score,
         stars: state.stars,
         levelNumber: state.level.levelNumber,
+        highestTile: state.session.board.highestTile,
         onNextLevel: () {
           Navigator.of(context).pop();
           context.pop('next');
@@ -733,6 +734,7 @@ class _GamePageState extends State<GamePage> {
       pageBuilder: (context, animation, secondaryAnimation) => GameOverDialog(
         score: state.session.board.score,
         highestTile: state.session.board.highestTile,
+        levelNumber: state.level.levelNumber,
         onWatchAdToContinue: hasHistory
             ? () {
                 Navigator.of(context).pop();
