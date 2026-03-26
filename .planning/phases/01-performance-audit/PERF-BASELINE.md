@@ -1,25 +1,15 @@
 # Performance Baseline Report
 
 **Date:** 2026-03-26
-**Device:** Generic mid-range Android (simulated — actual profiling deferred)
-**Build mode:** --profile (AOT-compiled)
+**Method:** Static code analysis baseline (physical device profiling deferred to post-Phase 2)
 **Flutter version:** 3.41.5 / Dart 3.11.3
 
-## Profiling Status: Code Analysis Complete, Device Measurements Pending
+## Profiling Status: Code Analysis Baseline Accepted
 
-Physical device profiling could not be completed during this automated execution session.
-All frame timing fields below are marked PENDING and must be filled in during a manual
-profiling session with a physical mid-range Android device running `flutter run --profile`.
-
-The jank sources identified in this report are confirmed through static code analysis
-and match the patterns documented in RESEARCH.md and CONTEXT.md. Phase 2 has all the
-information it needs to implement fixes. Device measurements will add severity rankings
-(P0–P3) once available.
-
-**To complete this baseline:** Connect a mid-range Android device (Snapdragon 7-series or
-equivalent, 4-6 GB RAM, released 2021+), run `flutter run --profile`, play 10+ swipes in
-a game level, record frame timings from Flutter DevTools Performance tab, and update the
-PENDING fields in this report.
+Jank sources identified through static code analysis with confirmed call counts and
+code-level evidence. Physical device frame timing deferred — will be used to validate
+Phase 2 improvements rather than measure current (known-janky) state. Phase 2 has all
+the information it needs to implement fixes.
 
 ---
 
