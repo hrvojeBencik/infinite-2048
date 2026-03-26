@@ -19,10 +19,10 @@ Requirements for v1.2 Launch Ready milestone. Each maps to roadmap phases.
 
 ### Animations & Visual Polish
 
-- [ ] **ANIM-01**: Tile merge produces satisfying pop/scale animation with easing
-- [ ] **ANIM-02**: Screen transitions use consistent fade (lateral) and slide-up (modal) patterns
-- [ ] **ANIM-03**: Haptic feedback fires on tile merge events
-- [ ] **ANIM-04**: Confetti animation plays on level completion
+- [x] **ANIM-01**: Tile merge produces satisfying pop/scale animation with easing
+- [x] **ANIM-02**: Screen transitions use consistent fade (lateral) and slide-up (modal) patterns
+- [x] **ANIM-03**: Haptic feedback fires on tile merge events
+- [x] **ANIM-04**: Confetti animation plays on level completion
 - [x] **ANIM-05**: XP bar animates smoothly on XP gain
 - [x] **ANIM-06**: Particle effects polished with consistent visual style
 - [x] **ANIM-07**: Native splash screen displays during app startup
@@ -77,10 +77,10 @@ Requirements for v1.2 Launch Ready milestone. Each maps to roadmap phases.
 | PERF-02 | Phase 2 | Complete |
 | PERF-03 | Phase 2 | Complete |
 | PERF-04 | Phase 2 | Complete |
-| ANIM-01 | Phase 3 | Pending |
-| ANIM-02 | Phase 3 | Pending |
-| ANIM-03 | Phase 3 | Pending |
-| ANIM-04 | Phase 3 | Pending |
+| ANIM-01 | Phase 3 | Complete |
+| ANIM-02 | Phase 3 | Complete |
+| ANIM-03 | Phase 3 | Complete |
+| ANIM-04 | Phase 3 | Complete |
 | ANIM-05 | Phase 3 | Complete |
 | ANIM-06 | Phase 3 | Complete |
 | ANIM-07 | Phase 3 | Complete |
