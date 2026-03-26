@@ -1,15 +1,22 @@
+import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../../../../app/dev_flags.dart';
 import '../../../../app/di.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../../../achievements/domain/repositories/achievements_repository.dart';
 import '../../../achievements/presentation/bloc/achievements_bloc.dart';
+import '../../../game/domain/entities/move_direction.dart';
 import '../../../game/domain/entities/special_tile_type.dart';
+import '../../../game/presentation/bloc/game_bloc.dart';
 import '../../../levels/data/datasources/levels_local_datasource.dart';
 import '../../../levels/domain/entities/level.dart';
 import '../../../onboarding/data/datasources/onboarding_local_datasource.dart';
@@ -29,6 +36,11 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
   int _sandboxHammers = 10;
   int _sandboxShuffles = 10;
   final Map<SpecialTileType, double> _sandboxSpawnRates = {};
+
+  // Performance tools state
+  bool _showPerfOverlay = false;
+  bool _regressionRunning = false;
+  final List<FrameTiming> _frameTimings = [];
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +107,9 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      _sectionTitle('PERFORMANCE'),
+                      _buildPerformanceSection(),
+                      const SizedBox(height: 24),
                       _sectionTitle('QUICK LEVEL JUMP'),
                       _buildLevelJumpSection(),
                       const SizedBox(height: 24),
@@ -120,6 +135,254 @@ class _DevOptionsPageState extends State<DevOptionsPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPerformanceSection() {
+    return GlassCard(
+      child: Column(
+        children: [
+          SwitchListTile(
+            value: _showPerfOverlay,
+            onChanged: (val) {
+              setState(() => _showPerfOverlay = val);
+              perfOverlayNotifier?.value = val;
+            },
+            title: const Text(
+              'Frame Timing Overlay',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            subtitle: const Text(
+              'Shows GPU + UI thread frame budget bars',
+              style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
+            ),
+            activeThumbColor: AppColors.primary,
+            activeTrackColor: AppColors.primary.withAlpha(80),
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+          const Divider(color: AppColors.divider, height: 1),
+          _DevActionTile(
+            icon: Icons.speed_rounded,
+            iconColor: AppColors.primary,
+            title: 'Run Regression Check',
+            subtitle: _regressionRunning
+                ? 'Running scripted swipe sequence...'
+                : 'Scripted swipe sequence — reports frame budget pass/fail',
+            onTap: _regressionRunning ? () {} : _runRegressionCheck,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _runRegressionCheck() {
+    if (!kProfileMode && kDebugMode) {
+      _showSnack(
+        'WARNING: Not in --profile mode. Results are not representative. '
+        'Run with: flutter run --profile',
+      );
+    }
+
+    setState(() => _regressionRunning = true);
+
+    // Navigate to sandbox with default 4x4, no special tiles
+    context.push(
+      '/dev/sandbox',
+      extra: <String, dynamic>{
+        'boardSize': 4,
+        'target': 2048,
+        'undos': 99,
+        'hammers': 0,
+        'shuffles': 0,
+        'spawnRates': <SpecialTileType, double>{},
+      },
+    );
+
+    // Wait 1 second for shader warmup, then start capture + swipes
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      if (!mounted) return;
+      _startTimingsCapture();
+      _dispatchSwipeSequence();
+    });
+  }
+
+  void _startTimingsCapture() {
+    _frameTimings.clear();
+    SchedulerBinding.instance.addTimingsCallback(_captureFrameTiming);
+  }
+
+  void _captureFrameTiming(List<FrameTiming> timings) {
+    _frameTimings.addAll(timings);
+  }
+
+  void _dispatchSwipeSequence() {
+    const directions = [
+      MoveDirection.left,
+      MoveDirection.down,
+      MoveDirection.right,
+      MoveDirection.up,
+    ];
+
+    int swipeCount = 0;
+    const totalSwipes = 20;
+    const delayMs = 100;
+
+    void nextSwipe() {
+      if (!mounted || swipeCount >= totalSwipes) {
+        _stopAndReport();
+        return;
+      }
+
+      // Find the GameBloc from the current navigator context.
+      // The sandbox route creates a BlocProvider<GameBloc> at route level.
+      try {
+        final navigatorContext = Navigator.of(context).context;
+        final gameBloc = BlocProvider.of<GameBloc>(
+          navigatorContext,
+          listen: false,
+        );
+        gameBloc.add(SwipeMade(directions[swipeCount % directions.length]));
+      } catch (_) {
+        // GameBloc not in scope — navigated away or sandbox not ready
+      }
+
+      swipeCount++;
+      Future.delayed(const Duration(milliseconds: delayMs), nextSwipe);
+    }
+
+    nextSwipe();
+  }
+
+  void _stopAndReport() {
+    SchedulerBinding.instance.removeTimingsCallback(_captureFrameTiming);
+
+    if (!mounted) return;
+    setState(() => _regressionRunning = false);
+
+    if (_frameTimings.isEmpty) {
+      _showSnack('No frames captured. Did the game render?');
+      return;
+    }
+
+    final total = _frameTimings.length;
+    final over16ms = _frameTimings
+        .where((t) => t.totalSpan.inMicroseconds > 16000)
+        .length;
+    final worstUs = _frameTimings
+        .map((t) => t.totalSpan.inMicroseconds)
+        .reduce(math.max);
+    final avgUs = _frameTimings
+            .map((t) => t.totalSpan.inMicroseconds)
+            .reduce((a, b) => a + b) ~/
+        total;
+    final pass = total > 0 && over16ms / total < 0.05;
+
+    // Pop back to dev page before showing dialog
+    if (mounted && Navigator.of(context).canPop()) {
+      Navigator.of(context).popUntil(
+        (route) =>
+            route.settings.name == '/dev' || !Navigator.of(context).canPop(),
+      );
+    }
+
+    _showResultDialog(
+      pass: pass,
+      totalFrames: total,
+      overBudget: over16ms,
+      worstMs: worstUs ~/ 1000,
+      avgMs: avgUs ~/ 1000,
+    );
+  }
+
+  void _showResultDialog({
+    required bool pass,
+    required int totalFrames,
+    required int overBudget,
+    required int worstMs,
+    required int avgMs,
+  }) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              pass ? Icons.check_circle_rounded : Icons.error_rounded,
+              color: pass ? AppColors.success : AppColors.error,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              pass ? 'PASS' : 'FAIL',
+              style: TextStyle(
+                color: pass ? AppColors.success : AppColors.error,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _resultRow('Total frames', '$totalFrames'),
+            _resultRow(
+              'Over 16ms',
+              '$overBudget (${(overBudget / totalFrames * 100).toStringAsFixed(1)}%)',
+            ),
+            _resultRow('Worst frame', '${worstMs}ms'),
+            _resultRow('Avg frame', '${avgMs}ms'),
+            const SizedBox(height: 8),
+            const Text(
+              'Threshold: <5% frames over 16ms',
+              style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(
+              'OK',
+              style: TextStyle(color: AppColors.primary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _resultRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
       ),
     );
   }
