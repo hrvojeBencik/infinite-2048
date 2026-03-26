@@ -44,26 +44,25 @@ Declared values (multiples of 4):
 | 3xl | 64px | Page-level vertical spacing |
 
 Exceptions:
-- Button vertical padding: 14px (established in ElevatedButtonTheme — keep as-is, source: `app_theme.dart` line 45)
 - Touch targets for swipe gesture: 44px minimum height (GestureDetector zones, iOS HIG)
 - Swipe block timer: 420ms (400ms merge animation + 20ms buffer — not a spacing value, documented here for completeness)
 
-Source: `lib/core/theme/app_theme.dart` (button padding), CONTEXT.md D-01 (animation timing)
+Source: CONTEXT.md D-01 (animation timing)
 
 ---
 
 ## Typography
 
-This phase does not introduce new text roles. All text in affected widgets must use the established AppTypography scale. Four roles are relevant to Phase 3 UI surfaces:
+This phase does not introduce new text roles. All text in affected widgets must use the established AppTypography scale. The primary type scale for this phase uses 2 weights: 400 (body) and 700 (heading, label, display). Four roles are relevant to Phase 3 UI surfaces:
 
 | Role | Flutter TextTheme Slot | Font | Size | Weight | Line Height |
 |------|----------------------|------|------|--------|-------------|
 | Body | bodyLarge | Inter | 16sp | 400 | 1.5 |
-| Label / Button | labelLarge | Inter | 14sp | 600 | 1.2 |
-| Heading | headlineMedium | Inter | 18sp | 600 | 1.2 |
+| Label / Button | labelLarge | Inter | 14sp | 700 | 1.2 |
+| Heading | headlineMedium | Inter | 18sp | 700 | 1.2 |
 | Display / Score | displayMedium | Inter | 32sp | 700 | 1.2 |
 
-Tile numbers use Space Grotesk at weight 800 — size is dynamic per tile value (no change in this phase).
+Tile numbers use Space Grotesk at weight 800. Space Grotesk is a separate decorative typeface for numeric display only — it is outside the primary Inter scale above and does not count toward the weight budget. Tile number size is dynamic per tile value (no change in this phase).
 
 Source: `lib/core/theme/app_typography.dart` (full scale pre-existing)
 
@@ -238,6 +237,8 @@ Changes are confined to:
 No new directories. No changes to `lib/app/router.dart` (lateral transitions are already correct per D-03). No changes to `lib/features/game/presentation/widgets/tile_widget.dart` (merge animation timing is locked and correct per D-01 — only swipe blocking in game_page.dart changes).
 
 Phase 2 RepaintBoundary zones must not be disturbed. All board-zone animations stay within the existing board RepaintBoundary. Dialog animations live in a separate Navigator route overlay and are unaffected.
+
+Pre-existing out-of-scope value: Button vertical padding is 14px as established in `ElevatedButtonTheme` (`app_theme.dart` line 45). This is a pre-existing value that this phase does not touch and is not part of the Phase 3 spacing contract.
 
 ---
 
