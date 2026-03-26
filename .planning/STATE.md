@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-03-26T09:37:25.753Z"
+status: Ready to execute
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-26T12:58:47.257Z"
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** The core 2048 gameplay loop must feel tight, responsive, and satisfying
-**Current focus:** Phase 02 — architectural-foundations
+**Current focus:** Phase 03 — animations-and-visual-polish
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
+Phase: 03 (animations-and-visual-polish) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Plan: Not started
 | Phase 02-architectural-foundations P01 | 3 | 2 tasks | 9 files |
 | Phase 02-architectural-foundations P03 | 523908 | 1 tasks | 1 files |
 | Phase 02-architectural-foundations P02 | 7 | 2 tasks | 3 files |
+| Phase 03-animations-and-visual-polish P01 | 160 | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,8 @@ Recent decisions affecting current work:
 - [Phase 02-architectural-foundations]: HapticService extracted as standalone DI-managed file, ProgressionBloc registered as global lazy singleton providing reactive TileTheme state from Hive
 - [Phase 02-architectural-foundations]: GamePage render isolation: BlocListener + 5 targeted BlocBuilders with buildWhen guards and 4 RepaintBoundary zones — score, board, powerup, pause zones rebuild independently
 - [Phase 02-architectural-foundations]: Used domain_theme alias to resolve TileThemes naming collision between core utility and domain entity
+- [Phase 03-animations-and-visual-polish]: confetti added as runtime dep (not dev) because Plan 02 uses it at runtime for merge celebration widget
+- [Phase 03-animations-and-visual-polish]: XpBar uses explicit AnimationController+Tween to avoid flash-to-zero on rebuild (AnimatedContainer would reset on widget rebuild)
 
 ### Pending Todos
 
@@ -81,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T09:37:25.750Z
-Stopped at: Phase 3 UI-SPEC approved
-Resume file: .planning/phases/03-animations-and-visual-polish/03-UI-SPEC.md
+Last session: 2026-03-26T12:58:47.252Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: None

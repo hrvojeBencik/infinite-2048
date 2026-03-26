@@ -64,9 +64,9 @@ Plans:
   3. Completing a level triggers a confetti burst celebration visible on screen
   4. The app cold-starts into a native splash screen instead of a white flash
   5. Haptic feedback fires on tile merge and is perceptible on physical devices
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 03-01-PLAN.md — Add dependencies, generate native splash, animate XP bar, polish particle palette
+- [x] 03-01-PLAN.md — Add dependencies, generate native splash, animate XP bar, polish particle palette
 - [ ] 03-02-PLAN.md — Wire swipe blocking, slide-up dialog transitions, haptic verification, confetti integration
 
 ### Phase 4: UX Flow and Usability
@@ -104,6 +104,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Performance Audit | 2/2 | Complete   | 2026-03-26 |
 | 2. Architectural Foundations | 1/3 | In Progress|  |
-| 3. Animations and Visual Polish | 0/2 | Not started | - |
+| 3. Animations and Visual Polish | 1/2 | In Progress|  |
 | 4. UX Flow and Usability | 0/? | Not started | - |
 | 5. Store Preparation | 0/? | Not started | - |
