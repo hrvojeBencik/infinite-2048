@@ -52,7 +52,7 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — Extract HapticService, create ProgressionBloc, wire DI and global BlocProvider
 - [ ] 02-02-PLAN.md — Refactor TileThemes to remove Hive/regex, update TileWidget and ThemeSelectionPage
-- [ ] 02-03-PLAN.md — Split GamePage BlocConsumer into targeted BlocBuilders with RepaintBoundary zones
+- [x] 02-03-PLAN.md — Split GamePage BlocConsumer into targeted BlocBuilders with RepaintBoundary zones
 
 ### Phase 3: Animations and Visual Polish
 **Goal**: Every core interaction in the game feels responsive and satisfying with consistent visual feedback
