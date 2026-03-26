@@ -32,6 +32,11 @@ The core 2048 gameplay loop must feel tight, responsive, and satisfying — merg
 
 ### Active
 
+- PERF-06: Frame timing overlay in dev page — Validated in Phase 1
+- PERF-07: Automated regression check in dev page — Validated in Phase 1
+- PERF-05: SoundService audit (haptic-only, no AudioPlayer risk) — Validated in Phase 1
+- PERF-01: Performance baseline via code analysis (device profiling deferred to post-Phase 2) — Validated in Phase 1
+
 ## Current Milestone: v1.2 Launch Ready
 
 **Goal:** Polish the entire app experience and prepare store listings for first public release on iOS and Android.
@@ -76,6 +81,7 @@ The core 2048 gameplay loop must feel tight, responsive, and satisfying — merg
 | Feature-based Clean Architecture | Scalable organization as features grow | ✓ Good |
 | Hive for local storage | Fast, lightweight, no SQL overhead for game state | ✓ Good |
 | No tests yet | Shipped fast to validate concept; tech debt to address | ⚠️ Revisit |
+| Code analysis baseline over device profiling | Jank sources confirmed statically (TileThemes 4,800 regex/sec, zero RepaintBoundary). Device profiling deferred to validate Phase 2 fixes. | ✓ Pragmatic |
 
 ## Evolution
 
@@ -95,4 +101,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after milestone v1.2 started*
+*Last updated: 2026-03-26 after Phase 1 (Performance Audit) complete*
