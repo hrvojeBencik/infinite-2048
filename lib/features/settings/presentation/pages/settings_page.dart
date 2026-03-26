@@ -5,9 +5,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/di.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/services/analytics_service.dart';
-import '../../../../core/services/sound_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_card.dart';
 
@@ -25,7 +25,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    _hapticsEnabled = HapticService.instance.isEnabled;
+    _hapticsEnabled = sl<HapticService>().isEnabled;
     _loadVersion();
   }
 
@@ -97,7 +97,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 value: _hapticsEnabled,
                                 onChanged: (v) {
                                   setState(() => _hapticsEnabled = v);
-                                  HapticService.instance.setEnabled(v);
+                                  sl<HapticService>().setEnabled(v);
                                   try { sl<AnalyticsService>().logSettingChanged(setting: 'haptics', value: v.toString()); } catch (_) {}
                                 },
                                 activeTrackColor: AppColors.primary,
