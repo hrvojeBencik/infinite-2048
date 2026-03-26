@@ -669,7 +669,9 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _showLevelComplete(BuildContext context, GameWon state) {
-    sl<AdService>().onLevelCompleted();
+    final authState = context.read<AuthBloc>().state;
+    final isPremium = authState is AuthAuthenticated && authState.user.isPremium;
+    sl<AdService>().onLevelCompleted(isPremium: isPremium);
     showGeneralDialog(
       context: context,
       barrierDismissible: false,

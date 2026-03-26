@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import '../../app/di.dart';
 import '../constants/app_constants.dart';
+import 'remote_config_service.dart';
 
 class AdService {
   static bool _initialized = false;
@@ -44,10 +46,11 @@ class AdService {
     );
   }
 
-  void onLevelCompleted() {
-    if (!_initialized) return;
+  void onLevelCompleted({required bool isPremium}) {
+    if (!_initialized || isPremium) return;
     _levelsCompletedSinceAd++;
-    if (_levelsCompletedSinceAd >= 3) {
+    final threshold = sl<RemoteConfigService>().adFrequencyLevelCount;
+    if (_levelsCompletedSinceAd >= threshold) {
       showInterstitial();
       _levelsCompletedSinceAd = 0;
     }
