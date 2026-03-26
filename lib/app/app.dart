@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../core/theme/app_theme.dart';
+import 'dev_flags.dart';
 import 'di.dart';
 import 'router.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
@@ -25,6 +27,20 @@ class InfiniteApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark,
         routerConfig: appRouter,
+        builder: (context, child) {
+          if (kReleaseMode || perfOverlayNotifier == null) return child!;
+          return ValueListenableBuilder<bool>(
+            valueListenable: perfOverlayNotifier!,
+            builder: (context2, show, child2) => show
+                ? Stack(
+                    children: [
+                      child!,
+                      PerformanceOverlay.allEnabled(),
+                    ],
+                  )
+                : child!,
+          );
+        },
       ),
     );
   }
