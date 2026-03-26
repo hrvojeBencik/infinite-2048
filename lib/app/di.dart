@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 
 import '../core/services/ad_service.dart';
 import '../core/services/analytics_service.dart';
+import '../core/services/haptic_service.dart';
 import '../core/services/mechanic_intro_service.dart';
 import '../core/services/rate_app_service.dart';
 import '../core/services/remote_config_service.dart';
@@ -27,6 +28,7 @@ import '../features/levels/domain/repositories/levels_repository.dart';
 import '../features/levels/presentation/bloc/levels_bloc.dart';
 import '../features/onboarding/data/datasources/onboarding_local_datasource.dart';
 import '../features/progression/data/datasources/progression_local_datasource.dart';
+import '../features/progression/presentation/bloc/progression_bloc.dart';
 import '../features/statistics/data/datasources/statistics_local_datasource.dart';
 
 final sl = GetIt.instance;
@@ -35,6 +37,7 @@ Future<void> initDependencies() async {
   // Services
   sl.registerLazySingleton<AdService>(() => AdService());
   sl.registerLazySingleton<AnalyticsService>(() => AnalyticsService());
+  sl.registerLazySingleton<HapticService>(() => HapticService());
   sl.registerLazySingleton<MechanicIntroService>(() => MechanicIntroService());
   sl.registerLazySingleton<SoundService>(() => SoundService());
   sl.registerLazySingleton<RateAppService>(() => RateAppService());
@@ -102,5 +105,9 @@ Future<void> initDependencies() async {
 
   sl.registerFactory<LeaderboardBloc>(
     () => LeaderboardBloc(dataSource: sl<LeaderboardRemoteDataSource>()),
+  );
+
+  sl.registerLazySingleton<ProgressionBloc>(
+    () => ProgressionBloc(dataSource: sl<ProgressionLocalDataSource>()),
   );
 }

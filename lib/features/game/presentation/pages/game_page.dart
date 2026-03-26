@@ -12,6 +12,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../leaderboard/data/datasources/leaderboard_remote_datasource.dart';
 import '../../../leaderboard/domain/entities/leaderboard_entry.dart';
 import '../../../../core/services/rate_app_service.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../../../core/services/sound_service.dart';
 import '../../../statistics/data/datasources/statistics_local_datasource.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -61,7 +62,7 @@ class _GamePageState extends State<GamePage> {
   final _particleKey = GlobalKey<ParticleEffectState>();
 
   void _handleSwipe(MoveDirection direction) {
-    HapticService.instance.light();
+    sl<HapticService>().light();
     context.read<GameBloc>().add(SwipeMade(direction));
   }
 
@@ -128,15 +129,15 @@ class _GamePageState extends State<GamePage> {
 
     if (state.comboCount >= 2) {
       _comboKey.currentState?.showCombo(state.comboCount, state.lastScoreGained);
-      HapticService.instance.combo();
+      sl<HapticService>().combo();
     }
 
     if (state.hadBombExplosion) {
       _screenShakeKey.currentState?.shake();
       _particleKey.currentState?.explode();
-      HapticService.instance.bomb();
+      sl<HapticService>().bomb();
     } else if (state.lastMergeCount > 0) {
-      HapticService.instance.merge();
+      sl<HapticService>().merge();
     }
 
     if (state.lastMergeCount > 0 || state.hadBombExplosion) {
@@ -375,7 +376,7 @@ class _GamePageState extends State<GamePage> {
                                             isHammerMode: _isHammerMode,
                                             onTileTap: _isHammerMode
                                                 ? (tileId) {
-                                                    HapticService.instance.medium();
+                                                    sl<HapticService>().medium();
                                                     context
                                                         .read<GameBloc>()
                                                         .add(UseHammer(tileId));
@@ -399,13 +400,13 @@ class _GamePageState extends State<GamePage> {
                                       _showWatchAdForUndo(context);
                                       return;
                                     }
-                                    HapticService.instance.light();
+                                    sl<HapticService>().light();
                                     try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.undo); } catch (_) {}
                                     context.read<GameBloc>().add(const UndoMove());
                                   },
                                   onHammer: session.hammersRemaining > 0
                                       ? () {
-                                          HapticService.instance.light();
+                                          sl<HapticService>().light();
                                           if (!_isHammerMode) {
                                             try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.hammer); } catch (_) {}
                                           }
@@ -414,14 +415,14 @@ class _GamePageState extends State<GamePage> {
                                       : null,
                                   onShuffle: session.shufflesRemaining > 0
                                       ? () {
-                                          HapticService.instance.medium();
+                                          sl<HapticService>().medium();
                                           try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.shuffle); } catch (_) {}
                                           context.read<GameBloc>().add(const UseShuffle());
                                         }
                                       : null,
                                   onMergeBoost: session.mergeBoostsRemaining > 0
                                       ? () {
-                                          HapticService.instance.medium();
+                                          sl<HapticService>().medium();
                                           try { sl<AnalyticsService>().logPowerUpUsed(powerUp: AnalyticsPowerUp.mergeBoost); } catch (_) {}
                                           context.read<GameBloc>().add(const UseMergeBoost());
                                         }

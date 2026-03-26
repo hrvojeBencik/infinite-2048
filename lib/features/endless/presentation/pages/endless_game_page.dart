@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../app/di.dart';
 import '../../../../core/constants/game_constants.dart';
 import '../../../../core/services/analytics_service.dart';
-import '../../../../core/services/sound_service.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../leaderboard/data/datasources/leaderboard_remote_datasource.dart';
 import '../../../leaderboard/domain/entities/leaderboard_entry.dart';
@@ -36,7 +36,7 @@ class _EndlessGamePageState extends State<EndlessGamePage> {
   final _particleKey = GlobalKey<ParticleEffectState>();
 
   void _handleSwipe(MoveDirection direction) {
-    HapticService.instance.light();
+    sl<HapticService>().light();
     context.read<EndlessBloc>().add(EndlessSwipe(direction));
   }
 
@@ -53,15 +53,15 @@ class _EndlessGamePageState extends State<EndlessGamePage> {
     if (state.comboCount >= 2) {
       _comboKey.currentState
           ?.showCombo(state.comboCount, state.lastScoreGained);
-      HapticService.instance.combo();
+      sl<HapticService>().combo();
     }
 
     if (state.hadBombExplosion) {
       _screenShakeKey.currentState?.shake();
       _particleKey.currentState?.explode();
-      HapticService.instance.bomb();
+      sl<HapticService>().bomb();
     } else if (state.lastMergeCount > 0) {
-      HapticService.instance.merge();
+      sl<HapticService>().merge();
     }
   }
 
@@ -279,7 +279,7 @@ class _EndlessGamePageState extends State<EndlessGamePage> {
                                   onUndo: session.undosRemaining > 0 &&
                                           session.moveHistory.isNotEmpty
                                       ? () {
-                                          HapticService.instance.light();
+                                          sl<HapticService>().light();
                                           context
                                               .read<EndlessBloc>()
                                               .add(const EndlessUndo());

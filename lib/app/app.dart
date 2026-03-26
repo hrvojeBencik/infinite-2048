@@ -5,6 +5,7 @@ import 'di.dart';
 import 'router.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
 import '../features/achievements/presentation/bloc/achievements_bloc.dart';
+import '../features/progression/presentation/bloc/progression_bloc.dart';
 
 class InfiniteApp extends StatelessWidget {
   const InfiniteApp({super.key});
@@ -18,6 +19,9 @@ class InfiniteApp extends StatelessWidget {
         ),
         BlocProvider<AchievementsBloc>(
           create: (_) => sl<AchievementsBloc>()..add(const LoadAchievements()),
+        ),
+        BlocProvider<ProgressionBloc>(
+          create: (_) => sl<ProgressionBloc>()..add(const LoadProgression()),
         ),
       ],
       child: MaterialApp.router(
