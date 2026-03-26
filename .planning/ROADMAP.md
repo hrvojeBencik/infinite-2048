@@ -35,7 +35,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Developer can toggle a frame timing overlay from the DevTools page during a debug session
   4. SoundService has been audited and the AudioPlayer pooling risk is either confirmed resolved or flagged as a Phase 2 fix
   5. A dev tool is available to trigger a performance regression check (confirms no regression from baseline)
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 01-01-PLAN.md — Wire PerformanceOverlay toggle and regression check button into dev options page
+- [ ] 01-02-PLAN.md — Profile on physical device and write PERF-BASELINE.md report
 
 ### Phase 2: Architectural Foundations
 **Goal**: The widget tree is correctly structured so animations can be added without triggering cascading rebuilds
@@ -93,7 +96,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Performance Audit | 0/? | Not started | - |
+| 1. Performance Audit | 0/2 | Planning complete | - |
 | 2. Architectural Foundations | 0/? | Not started | - |
 | 3. Animations and Visual Polish | 0/? | Not started | - |
 | 4. UX Flow and Usability | 0/? | Not started | - |
