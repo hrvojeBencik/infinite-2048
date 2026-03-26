@@ -21,13 +21,13 @@ class ParticleEffectState extends State<ParticleEffect>
   final Random _random = Random();
 
   static const List<Color> _particleColors = [
-    Color(0xFFFF9800),
-    Color(0xFFFF5722),
-    Color(0xFFFFD700),
-    Color(0xFFFF5252),
-    Color(0xFFFFAB40),
-    Color(0xFFFFEB3B),
-    Color(0xFFFF7043),
+    Color(0xFF6C63FF),   // AppColors.primary (purple)
+    Color(0xFF8B83FF),   // AppColors.primaryLight
+    Color(0xFFFFD700),   // AppColors.secondary (gold)
+    Color(0xFFFF6B6B),   // coral (from confetti palette)
+    Color(0xFF48DBFB),   // cyan (from confetti palette)
+    Color(0xFFFFAB40),   // amber accent (warm contrast)
+    Color(0xFFFFFFFF),   // white spark
   ];
 
   @override
