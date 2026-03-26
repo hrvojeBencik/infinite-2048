@@ -75,21 +75,21 @@ class _HomePageState extends State<HomePage> {
                   ).animate().fadeIn(delay: 150.ms).slideY(begin: 0.1),
                 ],
                 const SizedBox(height: 20),
+                _DailyChallengeCard(
+                  onReturn: _refresh,
+                ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
+                const SizedBox(height: 12),
                 _PlayButton(
                   onReturn: _refresh,
-                ).animate().fadeIn(delay: 250.ms).slideY(begin: 0.2),
+                ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2),
                 const SizedBox(height: 12),
                 _EndlessModeButton(
                   onReturn: _refresh,
-                ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.2),
-                const SizedBox(height: 12),
-                _DailyChallengeCard(
-                  onReturn: _refresh,
-                ).animate().fadeIn(delay: 450.ms).slideY(begin: 0.2),
+                ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2),
                 const SizedBox(height: 12),
                 _WeeklyChallengeCard(
                   onReturn: _refresh,
-                ).animate().fadeIn(delay: 550.ms).slideY(begin: 0.2),
+                ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2),
                 const SizedBox(height: 20),
                 _QuickActions(
                   onReturn: _refresh,
@@ -270,90 +270,131 @@ class _DailyChallengeCard extends StatelessWidget {
   final VoidCallback? onReturn;
   const _DailyChallengeCard({this.onReturn});
 
+  static String _formatTimeRemaining(DateTime until) {
+    final remaining = until.difference(DateTime.now());
+    if (remaining.isNegative) return 'Expired';
+    final hours = remaining.inHours;
+    final minutes = remaining.inMinutes % 60;
+    return 'Resets in ${hours}h ${minutes}m';
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AchievementsBloc, AchievementsState>(
       builder: (context, state) {
         if (state is! AchievementsLoaded || state.dailyChallenge == null) {
-          return const SizedBox.shrink();
+          return AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+            child: SizedBox(
+              height: 80,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface.withAlpha(60),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          );
         }
         final challenge = state.dailyChallenge!;
         final isCompleted = challenge.isCompleted;
 
-        return GlassCard(
-          onTap: isCompleted
-              ? null
-              : () {
-                  try { sl<AnalyticsService>().logDailyChallengeStarted(); } catch (_) {}
-                  context.push('/challenge/daily').then((_) {
-                    onReturn?.call();
-                  });
-                },
-          borderColor: isCompleted
-              ? AppColors.success.withAlpha(40)
-              : AppColors.secondary.withAlpha(40),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient: isCompleted
-                      ? LinearGradient(
-                          colors: [
-                            AppColors.success,
-                            AppColors.success.withAlpha(180),
-                          ],
+        return AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+          child: GlassCard(
+            onTap: isCompleted
+                ? null
+                : () {
+                    try { sl<AnalyticsService>().logDailyChallengeStarted(); } catch (_) {}
+                    context.push('/challenge/daily').then((_) {
+                      onReturn?.call();
+                    });
+                  },
+            borderColor: isCompleted
+                ? AppColors.success.withAlpha(40)
+                : AppColors.secondary.withAlpha(40),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: isCompleted
+                        ? LinearGradient(
+                            colors: [
+                              AppColors.success,
+                              AppColors.success.withAlpha(180),
+                            ],
+                          )
+                        : AppColors.premiumGradient,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    isCompleted ? Icons.check_rounded : Icons.today_rounded,
+                    color: AppColors.background,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isCompleted ? 'Challenge Complete!' : 'Daily Challenge',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: isCompleted
+                              ? AppColors.success
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      if (isCompleted)
+                        const Text(
+                          'Come back tomorrow for a new challenge.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
                         )
-                      : AppColors.premiumGradient,
-                  borderRadius: BorderRadius.circular(12),
+                      else ...[
+                        Text(
+                          'Reach ${challenge.targetTileValue} on a ${challenge.boardSize}x${challenge.boardSize} board',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _formatTimeRemaining(challenge.availableUntil),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-                child: Icon(
-                  isCompleted ? Icons.check_rounded : Icons.today_rounded,
-                  color: AppColors.background,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isCompleted ? 'Challenge Complete!' : 'Daily Challenge',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: isCompleted
-                            ? AppColors.success
-                            : AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      isCompleted
-                          ? 'Come back tomorrow for a new challenge'
-                          : challenge.description,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (!isCompleted)
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.textTertiary,
-                )
-              else
-                const Icon(
-                  Icons.check_circle_rounded,
-                  color: AppColors.success,
-                  size: 28,
-                ),
-            ],
+                if (!isCompleted)
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textTertiary,
+                  )
+                else
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: AppColors.success,
+                    size: 28,
+                  ),
+              ],
+            ),
           ),
         );
       },

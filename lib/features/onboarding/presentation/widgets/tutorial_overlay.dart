@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../../../app/di.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_card.dart';
+import '../../../onboarding/data/datasources/onboarding_local_datasource.dart';
 
 class TutorialOverlay extends StatefulWidget {
   final int levelNumber;
   final VoidCallback onComplete;
   final VoidCallback? onDismissStep;
+  final VoidCallback? onSkip;
 
   const TutorialOverlay({
     super.key,
     required this.levelNumber,
     required this.onComplete,
     this.onDismissStep,
+    this.onSkip,
   });
 
   static const Map<int, List<_TutorialStep>> _stepsByLevel = {
@@ -84,6 +88,15 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
     }
   }
 
+  void _skipTutorial() {
+    sl<OnboardingLocalDataSource>().markTutorialCompleted();
+    if (widget.onSkip != null) {
+      widget.onSkip!();
+    } else {
+      widget.onComplete();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_hasSteps) {
@@ -133,6 +146,25 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
             .animate()
             .fadeIn(duration: 300.ms)
             .slideY(begin: 0.15, end: 0, duration: 350.ms, curve: Curves.easeOut),
+        Positioned(
+          top: 16,
+          right: 16,
+          child: Semantics(
+            label: 'Skip tutorial',
+            button: true,
+            child: TextButton(
+              onPressed: _skipTutorial,
+              child: const Text(
+                'Skip Tutorial',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
