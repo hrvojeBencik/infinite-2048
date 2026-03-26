@@ -48,9 +48,9 @@ Plans:
   1. Swiping on the game board does not trigger a repaint of the score display, header, or controls (verified via DevTools Repaint Rainbow)
   2. TileThemes no longer reads from Hive on every frame — tile theme is passed reactively via ProgressionBloc state
   3. High-frequency BLoC consumers have buildWhen guards and full widget-tree rebuilds on partial state changes are eliminated
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 Plans:
-- [ ] 02-01-PLAN.md — Extract HapticService, create ProgressionBloc, wire DI and global BlocProvider
+- [x] 02-01-PLAN.md — Extract HapticService, create ProgressionBloc, wire DI and global BlocProvider
 - [ ] 02-02-PLAN.md — Refactor TileThemes to remove Hive/regex, update TileWidget and ThemeSelectionPage
 - [ ] 02-03-PLAN.md — Split GamePage BlocConsumer into targeted BlocBuilders with RepaintBoundary zones
 
@@ -101,7 +101,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Performance Audit | 2/2 | Complete   | 2026-03-26 |
-| 2. Architectural Foundations | 0/3 | Not started | - |
+| 2. Architectural Foundations | 1/3 | In Progress|  |
 | 3. Animations and Visual Polish | 0/? | Not started | - |
 | 4. UX Flow and Usability | 0/? | Not started | - |
 | 5. Store Preparation | 0/? | Not started | - |
