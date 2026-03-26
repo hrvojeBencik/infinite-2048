@@ -47,6 +47,7 @@ class _GamePageState extends State<GamePage> {
   bool _isHammerMode = false;
   bool _introChecked = false;
   bool _showTutorial = false;
+  bool _boardAnimating = false;
 
   RestartLevel get _restartEvent => RestartLevel(
         undosAvailable: GameConstants.undosPerLevel,
@@ -121,6 +122,15 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _triggerJuiceEffects(GamePlaying state) {
+    if (state.lastMergeCount > 0 || state.hadBombExplosion) {
+      _boardAnimating = true;
+      Future.delayed(const Duration(milliseconds: 420), () {
+        if (mounted) {
+          setState(() => _boardAnimating = false);
+        }
+      });
+    }
+
     if (state.lastScoreGained > 0) {
       _scorePopupKey.currentState?.showPopup(state.lastScoreGained);
       sl<SoundService>().playMerge(state.lastScoreGained);
@@ -284,22 +294,21 @@ class _GamePageState extends State<GamePage> {
             backgroundColor: AppColors.background,
             body: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onPanEnd: isPaused
-                  ? null
-                  : (details) {
-                      final velocity = details.velocity.pixelsPerSecond;
-                      if (velocity.distance < 100) return;
-                      final angle = math.atan2(velocity.dy, velocity.dx);
-                      if (angle.abs() <= math.pi / 4) {
-                        _handleSwipe(MoveDirection.right);
-                      } else if (angle.abs() >= 3 * math.pi / 4) {
-                        _handleSwipe(MoveDirection.left);
-                      } else if (angle > 0) {
-                        _handleSwipe(MoveDirection.down);
-                      } else {
-                        _handleSwipe(MoveDirection.up);
-                      }
-                    },
+              onPanEnd: (details) {
+                if (isPaused || _boardAnimating) return;
+                final velocity = details.velocity.pixelsPerSecond;
+                if (velocity.distance < 100) return;
+                final angle = math.atan2(velocity.dy, velocity.dx);
+                if (angle.abs() <= math.pi / 4) {
+                  _handleSwipe(MoveDirection.right);
+                } else if (angle.abs() >= 3 * math.pi / 4) {
+                  _handleSwipe(MoveDirection.left);
+                } else if (angle > 0) {
+                  _handleSwipe(MoveDirection.down);
+                } else {
+                  _handleSwipe(MoveDirection.up);
+                }
+              },
               child: Container(
                 decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
                 child: SafeArea(
@@ -558,26 +567,44 @@ class _GamePageState extends State<GamePage> {
 
   void _showLevelComplete(BuildContext context, GameWon state) {
     sl<AdService>().onLevelCompleted();
-    showDialog(
+    showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => LevelCompleteDialog(
-        score: state.session.board.score,
-        stars: state.stars,
-        levelNumber: state.level.levelNumber,
-        onNextLevel: () {
-          Navigator.of(context).pop();
-          context.pop('next');
-        },
-        onBackToLevels: () {
-          Navigator.of(context).pop();
-          context.pop();
-        },
-        onReplay: () {
-          Navigator.of(context).pop();
-          context.read<GameBloc>().add(_restartEvent);
-        },
-      ),
+      barrierColor: Colors.black54,
+      barrierLabel: 'Level Complete',
+      transitionDuration: const Duration(milliseconds: 350),
+      routeSettings: const RouteSettings(name: '/level-complete'),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return LevelCompleteDialog(
+          score: state.session.board.score,
+          stars: state.stars,
+          levelNumber: state.level.levelNumber,
+          onNextLevel: () {
+            Navigator.of(context).pop();
+            context.pop('next');
+          },
+          onBackToLevels: () {
+            Navigator.of(context).pop();
+            context.pop();
+          },
+          onReplay: () {
+            Navigator.of(context).pop();
+            context.read<GameBloc>().add(_restartEvent);
+          },
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.0, 1.0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          )),
+          child: child,
+        );
+      },
     );
   }
 
@@ -595,40 +622,58 @@ class _GamePageState extends State<GamePage> {
 
     final hasHistory = state.session.moveHistory.isNotEmpty;
 
-    showDialog(
+    showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => GameOverDialog(
-        score: state.session.board.score,
-        highestTile: state.session.board.highestTile,
-        onWatchAdToContinue: hasHistory
-            ? () {
-                Navigator.of(context).pop();
-                sl<AdService>().loadRewardedAd(
-                  onRewarded: () {
-                    if (mounted) {
-                      try {
-                        sl<AnalyticsService>().logAdWatched(type: AnalyticsAdType.rewardedContinue);
-                        sl<AnalyticsService>().logContinueAfterLoss(source: 'ad', levelId: state.level.id);
-                      } catch (_) {}
-                      context
-                          .read<GameBloc>()
-                          .add(const ContinueAfterLoss());
-                    }
-                  },
-                );
-              }
-            : null,
-        onRetry: () {
-          Navigator.of(context).pop();
-          try { sl<AnalyticsService>().logLevelRestarted(levelId: state.level.id); } catch (_) {}
-          context.read<GameBloc>().add(_restartEvent);
-        },
-        onBackToLevels: () {
-          Navigator.of(context).pop();
-          context.pop();
-        },
-      ),
+      barrierColor: Colors.black54,
+      barrierLabel: 'Game Over',
+      transitionDuration: const Duration(milliseconds: 350),
+      routeSettings: const RouteSettings(name: '/game-over'),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return GameOverDialog(
+          score: state.session.board.score,
+          highestTile: state.session.board.highestTile,
+          onWatchAdToContinue: hasHistory
+              ? () {
+                  Navigator.of(context).pop();
+                  sl<AdService>().loadRewardedAd(
+                    onRewarded: () {
+                      if (mounted) {
+                        try {
+                          sl<AnalyticsService>().logAdWatched(type: AnalyticsAdType.rewardedContinue);
+                          sl<AnalyticsService>().logContinueAfterLoss(source: 'ad', levelId: state.level.id);
+                        } catch (_) {}
+                        context
+                            .read<GameBloc>()
+                            .add(const ContinueAfterLoss());
+                      }
+                    },
+                  );
+                }
+              : null,
+          onRetry: () {
+            Navigator.of(context).pop();
+            try { sl<AnalyticsService>().logLevelRestarted(levelId: state.level.id); } catch (_) {}
+            context.read<GameBloc>().add(_restartEvent);
+          },
+          onBackToLevels: () {
+            Navigator.of(context).pop();
+            context.pop();
+          },
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.0, 1.0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          )),
+          child: child,
+        );
+      },
     );
   }
 }
