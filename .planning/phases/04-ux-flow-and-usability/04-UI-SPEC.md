@@ -44,7 +44,7 @@ Declared values (multiples of 4). Existing codebase uses this scale consistently
 | 3xl | 64px | Not used in this phase |
 
 Exceptions:
-- **Touch targets**: Skip button, share button, and all secondary action buttons have a minimum tap area of 44x44pt (iOS HIG). Visual size may be smaller; `TextButton` default padding satisfies this.
+- **Touch targets**: Skip Tutorial button, Share Score button, and all secondary action buttons have a minimum tap area of 44x44pt (iOS HIG). Visual size may be smaller; `TextButton` default padding satisfies this.
 - **Daily challenge card**: 12px vertical gap between home screen items (matches existing `SizedBox(height: 12)` in `home_page.dart`). Card internal padding: 16px horizontal, 16px vertical.
 - **Dialog action rows**: 12px gap between secondary action buttons (matches existing `SizedBox(width: 12)` in `level_complete_dialog.dart`).
 
@@ -58,18 +58,18 @@ Two weights only: regular (400) and semibold (600). Space Grotesk w800 is a tile
 
 | Role | Size | Weight | Line Height | Usage in this phase |
 |------|------|--------|-------------|---------------------|
-| Body | 14sp | 400 (regular) | 1.5 | Daily challenge card description, card body text, share card subtitles |
-| Label | 14sp | 600 (semibold) | 1.4 | Skip button text, share button label, secondary action labels |
-| Heading | 18sp | 600 (semibold) | 1.2 | Daily challenge card title ("Daily Challenge") |
+| Body | 14sp | 400 (regular) | 1.5 | Daily challenge card description, card body text, share card subtitles, share card tagline, share card "SCORE"/"LEVEL" labels |
+| Label | 14sp | 600 (semibold) | 1.4 | Skip Tutorial button text, Share Score button label, secondary action labels, share card "SCORE"/"LEVEL" uppercase labels |
+| Heading | 18sp | 600 (semibold) | 1.2 | Daily challenge card title ("Daily Challenge"), share card app name |
 | Display | 32sp | 600 (semibold) | 1.0 | Score value on share card — use `Theme.of(context).textTheme.displayMedium` |
 
-Font family per role: Inter for Body, Label, and Heading. Space Grotesk for Display (score value on share card only — carries over tile display convention).
+Font family per role: Inter for Body, Label, and Heading. Space Grotesk for Display (score value on share card only — carries over tile display convention). Space Grotesk also for the Heading role on the share card app name (brand consistency).
 
-**Share card typography detail (implementation note, not additional weight declarations):**
-- App name "2048: Merge Quest": Space Grotesk 20sp w700 — use `GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w700)`. w700 treated as semibold variant within the two-weight contract.
-- "SCORE" / "LEVEL" uppercase labels: Inter 11sp w600, `AppColors.textTertiary`, letterSpacing 2.0
-- Highest tile label: Inter 14sp w400, `AppColors.textSecondary`
-- Tagline: Inter 12sp w400, `AppColors.textTertiary`
+**Share card typography detail (implementation note — no sizes outside the 4-role table above):**
+- App name "2048: Merge Quest": Space Grotesk 18sp w600 — maps to Heading role. Use `GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w600)`.
+- "SCORE" / "LEVEL" uppercase labels: Inter 14sp w600, `AppColors.textTertiary`, `letterSpacing: 2.0`. Maps to Label role; letterSpacing provides the visual differentiation from other Label instances.
+- Highest tile label: Inter 14sp w400, `AppColors.textSecondary`. Maps to Body role.
+- Tagline: Inter 14sp w400, `AppColors.textTertiary`. Maps to Body role.
 
 Source: `lib/core/theme/app_typography.dart` — `AppTypography.textTheme`
 
@@ -83,10 +83,10 @@ All hex values sourced from `lib/core/theme/app_colors.dart`.
 |------|-------|-------|-------|
 | Dominant (60%) | `#0A0E21` | `AppColors.background` | Scaffold background, dialog backdrop overlay, share card background gradient start |
 | Secondary (30%) | `#16213E` | `AppColors.surface` | Dialog card fill, daily challenge card fill, share card container fill |
-| Accent (10%) | `#6C63FF` | `AppColors.primary` | Skip button foreground text, share button fill color, daily challenge card left-accent border |
+| Accent (10%) | `#6C63FF` | `AppColors.primary` | Skip Tutorial button foreground text, Share Score button fill color, daily challenge card left-accent border |
 | Destructive | `#FF5252` | `AppColors.error` | Not used in this phase — no destructive actions |
 
-Accent (`AppColors.primary`) is reserved for: share button fill, skip button foreground text color, daily challenge card left-accent border (3dp), completed challenge icon background tint. Never use accent on body text, background fills, or decorative dividers.
+Accent (`AppColors.primary`) is reserved for: Share Score button fill, Skip Tutorial button foreground text color, daily challenge card left-accent border (3dp), completed challenge icon background tint. Never use accent on body text, background fills, or decorative dividers.
 
 Additional semantic colors (not new — all sourced from existing `AppColors`):
 
@@ -94,7 +94,7 @@ Additional semantic colors (not new — all sourced from existing `AppColors`):
 |-------|-------|-------|-------------|
 | Gold | `#FFD700` | `AppColors.secondary` | Share card star/completion indicator |
 | Success green | `#00E676` | `AppColors.success` | Daily challenge completed checkmark icon |
-| Text secondary | `#8D8D8D` | `AppColors.textSecondary` | Skip button text, card body text, secondary action labels |
+| Text secondary | `#8D8D8D` | `AppColors.textSecondary` | Skip Tutorial button text, card body text, secondary action labels |
 | Text tertiary | `#5A5A6A` | `AppColors.textTertiary` | "SCORE" / "LEVEL" uppercase labels on share card |
 | Card border | `#2A2A4A` | `AppColors.cardBorder` | Card border strokes, daily challenge card border |
 
@@ -116,16 +116,16 @@ New components this phase must create or modify.
 - Border: `AppColors.primary.withAlpha(50)` at 1.5dp width, `BorderRadius.circular(20)`
 - Padding: 24px all sides
 - Layout (top to bottom):
-  1. App name "2048: Merge Quest" — Space Grotesk 20sp w700, `AppColors.textPrimary`, centered
+  1. App name "2048: Merge Quest" — Space Grotesk 18sp w600 (Heading role), `AppColors.textPrimary`, centered
   2. 16px spacer
-  3. Level badge pill — "LEVEL N" in Space Grotesk 12sp w700, `AppColors.primaryLight`, pill background `AppColors.primary.withAlpha(25)`
+  3. Level badge pill — "LEVEL N" in Space Grotesk 14sp w600 (Label role), `AppColors.primaryLight`, pill background `AppColors.primary.withAlpha(25)`
   4. 12px spacer
-  5. "SCORE" uppercase label — Inter 11sp w600, `AppColors.textTertiary`, letterSpacing 2.0
-  6. Score value — Space Grotesk 32sp w800, `AppColors.textPrimary`
+  5. "SCORE" uppercase label — Inter 14sp w600 (Label role), `AppColors.textTertiary`, `letterSpacing: 2.0`
+  6. Score value — Space Grotesk 32sp w800 (Display role carryover), `AppColors.textPrimary`
   7. 12px spacer
-  8. Highest tile row — tile chip colored with `AppColors.primary.withAlpha(30)` + "Highest Tile: N" in Inter 14sp w400, `AppColors.textSecondary`
+  8. Highest tile row — tile chip colored with `AppColors.primary.withAlpha(30)` + "Highest Tile: N" in Inter 14sp w400 (Body role), `AppColors.textSecondary`
   9. 16px spacer
-  10. Tagline — "Play 2048: Merge Quest" — Inter 12sp w400, `AppColors.textTertiary`
+  10. Tagline — "Play 2048: Merge Quest" — Inter 14sp w400 (Body role), `AppColors.textTertiary`
 - Must be constructable with `const` constructor with all data passed via constructor parameters
 - Must have zero BLoC reads (self-contained for off-screen rendering)
 - Wrap in `ExcludeSemantics` at the call site (off-screen widget must not pollute accessibility tree)
@@ -136,7 +136,7 @@ New components this phase must create or modify.
 **Path:** `lib/features/onboarding/presentation/widgets/tutorial_overlay.dart`
 **Visual contract:**
 - `TextButton` in a `Positioned(top: 16, right: 16)` inside the existing `Stack`
-- Label: "Skip" — Inter 14sp w600, `AppColors.textSecondary` (matches `bodyMedium` weight upgrade)
+- Label: "Skip Tutorial" — Inter 14sp w600 (Label role), `AppColors.textSecondary` (matches `bodyMedium` weight upgrade)
 - No background, no border — pure text button
 - `TextButton` default padding satisfies 44pt touch target minimum
 - Visible from step 1 onward; never conditionally hidden
@@ -147,7 +147,7 @@ New components this phase must create or modify.
 **Path:** `lib/features/home/presentation/pages/home_page.dart`
 **Visual contract for `_DailyChallengeCard` (existing widget, repositioned above `_PlayButton`):**
 - **Loading state**: fixed-height `SizedBox(height: 80)` with a `Container` child using `AppColors.surface.withAlpha(60)` fill and `BorderRadius.circular(16)` — prevents layout shift (no text, no shimmer animation needed)
-- **Active state**: left accent border 3dp `AppColors.primary`; title "Daily Challenge" in Inter 18sp w600 `AppColors.textPrimary`; description in Inter 14sp w400 `AppColors.textSecondary`; "Play Now" CTA in Inter 14sp w600 `AppColors.primary`; time remaining "Resets in {HH}h {MM}m" in Inter 12sp w400 `AppColors.textTertiary`
+- **Active state**: left accent border 3dp `AppColors.primary`; title "Daily Challenge" in Inter 18sp w600 (Heading role) `AppColors.textPrimary`; description in Inter 14sp w400 (Body role) `AppColors.textSecondary`; "Play Now" CTA in Inter 14sp w600 (Label role) `AppColors.primary`; time remaining "Resets in {HH}h {MM}m" in Inter 14sp w400 (Body role) `AppColors.textTertiary`
 - **Completed state**: `Icons.check_circle_rounded` at 20dp in `AppColors.success`; title "Challenge Complete"; card body text in `AppColors.textTertiary`; card border changes to `AppColors.success.withAlpha(40)`
 - Wrap card content changes in `AnimatedSize(duration: Duration(milliseconds: 300), curve: Curves.easeOut)` to animate shimmer-to-content expansion
 - 12px gap below the card before `_PlayButton`
@@ -156,9 +156,9 @@ New components this phase must create or modify.
 
 **Path:** `lib/features/game/presentation/widgets/level_complete_dialog.dart`
 **Visual contract:**
-- Share button added to secondary actions row alongside existing Replay and Levels buttons
+- Share Score button added to secondary actions row alongside existing Replay and Levels buttons
 - Icon: `Icons.share_rounded` at 16dp, `AppColors.textSecondary`
-- Label: "Share" — Inter 13sp w600, `AppColors.textSecondary`
+- Label: "Share Score" — Inter 14sp w600 (Label role), `AppColors.textSecondary`
 - Same visual style as existing `_SecondaryActionButton` (surface fill, `AppColors.cardBorder` stroke, 12px border radius)
 - **Loading state during capture**: replace icon with `SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.textSecondary))` via `setState`
 - **Error state**: floating `SnackBar` using `AppTheme.snackBarTheme` — see copywriting section
@@ -175,9 +175,9 @@ New components this phase must create or modify.
 
 | Component | Idle | Loading | Success | Error |
 |-----------|------|---------|---------|-------|
-| Share button | icon + "Share" label | 16dp spinner (strokeWidth 2) replaces icon | native share sheet opens | floating SnackBar |
+| Share Score button | icon + "Share Score" label | 16dp spinner (strokeWidth 2) replaces icon | native share sheet opens | floating SnackBar |
 | Daily challenge card | active or completed visual | fixed-height 80dp placeholder | completed state (green check) | hidden (`SizedBox.shrink`) |
-| Skip button | "Skip" text visible | n/a | overlay dismissed | n/a |
+| Skip Tutorial button | "Skip Tutorial" text visible | n/a | overlay dismissed | n/a |
 | Review prompt | invisible (OS-native only) | n/a | OS native sheet | silently suppressed by OS |
 | Ad interstitial | invisible | n/a | OS-level overlay | silently suppressed |
 
@@ -189,10 +189,10 @@ This phase adds no new animations beyond what Phase 3 established. Follow existi
 
 | Interaction | Animation | Duration | Curve |
 |-------------|-----------|----------|-------|
-| Share button loading state | icon to spinner crossfade via `setState` | immediate | n/a |
+| Share Score button loading state | icon to spinner crossfade via `setState` | immediate | n/a |
 | Daily challenge card expand from placeholder | `AnimatedSize` wrapping card content | 300ms | `Curves.easeOut` |
 | Share card appearance in dialog | static — rendered and visible from dialog open | n/a | n/a |
-| Skip button reveal | none — visible immediately on tutorial overlay open | n/a | n/a |
+| Skip Tutorial button reveal | none — visible immediately on tutorial overlay open | n/a | n/a |
 
 ---
 
@@ -200,9 +200,9 @@ This phase adds no new animations beyond what Phase 3 established. Follow existi
 
 | Element | Copy |
 |---------|------|
-| Primary CTA (score sharing) | "Share" |
+| Primary CTA (score sharing) | "Share Score" |
 | Primary CTA (daily challenge) | "Play Now" |
-| Skip button | "Skip" |
+| Skip button | "Skip Tutorial" |
 | Daily challenge card — active title | "Daily Challenge" |
 | Daily challenge card — active body | "{challenge.description}" |
 | Daily challenge card — time remaining | "Resets in {HH}h {MM}m" |
@@ -227,9 +227,9 @@ Empty state: daily challenge card hidden entirely (`SizedBox.shrink`) when `Achi
 
 | Element | Requirement |
 |---------|-------------|
-| Skip button | `Semantics(label: 'Skip tutorial', button: true)` |
-| Share button (idle) | `Semantics(label: 'Share your score', button: true)` |
-| Share button (loading) | `Semantics(label: 'Sharing score, please wait...')` |
+| Skip Tutorial button | `Semantics(label: 'Skip tutorial', button: true)` |
+| Share Score button (idle) | `Semantics(label: 'Share your score', button: true)` |
+| Share Score button (loading) | `Semantics(label: 'Sharing score, please wait...')` |
 | Daily challenge card tap area | minimum 48x48dp (Material standard) |
 | Completed challenge checkmark | `Semantics(label: 'Challenge complete')` |
 | Share card off-screen widget | `ExcludeSemantics(child: RepaintBoundary(...))` |
@@ -270,6 +270,8 @@ Note: This is a Flutter project. The shadcn registry safety gate does not apply.
 | Share card placement (inline in dialog) | RESEARCH.md Open Question 1 |
 | share_plus API (SharePlus.instance not static) | RESEARCH.md Pattern 2 |
 | Typography weight consolidation (400 + 600 only, 800 tile carryover) | UPDATE: resolves BLOCKED typography constraint |
+| Share card 20sp → 18sp (app name), 12sp → 14sp (tagline), 11sp → 14sp (labels) | REVISION: checker Dimension 4 fix — consolidates to declared 4-size scale |
+| "Share" → "Share Score", "Skip" → "Skip Tutorial" | REVISION: checker Dimension 1 fix — explicit-noun convention + accessibility label alignment |
 
 ---
 
