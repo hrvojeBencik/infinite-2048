@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 2: Architectural Foundations** - Fix the structural sources of jank: RepaintBoundary isolation, TileThemes reactive refactor, BLoC buildWhen guards, HapticService extraction
 - [ ] **Phase 3: Animations and Visual Polish** - Add tile merge animations, screen transitions, haptic feedback, confetti, XP bar animation, particle effects, and native splash on the stabilized architecture
 - [x] **Phase 4: UX Flow and Usability** - Surface daily challenges on home, add onboarding skip, cap ad frequency, add review prompt, enable score sharing, and verify paywall compliance (completed 2026-03-26)
-- [ ] **Phase 5: Store Preparation** - App icon, screenshots, metadata, privacy manifest, Data Safety form, fastlane pipeline, and closed testing gate (start Google Play closed test on day 1 of this phase)
+- [ ] **Phase 5: Store Preparation** - App icon, screenshots, metadata, privacy manifest, Data Safety form, paywall build, and closed testing gate (start Google Play closed test on day 1 of this phase)
 
 ## Phase Details
 
@@ -90,12 +90,17 @@ Plans:
 **Requirements**: STORE-01, STORE-02, STORE-03, STORE-04, STORE-05, STORE-06, STORE-07, STORE-08, STORE-09, STORE-10
 **Success Criteria** (what must be TRUE):
   1. App icon passes Apple review requirements (1024x1024, no alpha channel) and Android adaptive icon is configured
-  2. Screenshots for all required device sizes exist and are generated via the fastlane pipeline (not manually)
+  2. Screenshots for all required device sizes exist (captured manually — fastlane descoped per D-05)
   3. Both store listings have complete ASO-optimized metadata (title, subtitle/short description, keywords, full description, categories)
   4. Privacy policy URL is live, Google Play Data Safety form is submitted, and iOS PrivacyInfo.xcprivacy is configured
   5. Google Play closed testing track has been live with 12+ testers for 14 consecutive days before production submission
   6. RevenueCat paywall displays full annual price, trial terms, and cancel instructions without scrolling (Guideline 3.1.2 compliant)
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 05-01-PLAN.md — App icon config (adaptive + iOS alpha removal) and iOS PrivacyInfo.xcprivacy
+- [ ] 05-02-PLAN.md — Build RevenueCat paywall screen (Apple Guideline 3.1.2 compliant)
+- [ ] 05-03-PLAN.md — ASO-optimized store listing metadata and version bump
+- [ ] 05-04-PLAN.md — Screenshot guide, Data Safety guide, and human verification checkpoint
 
 ## Progress
 
@@ -108,4 +113,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Architectural Foundations | 1/3 | In Progress|  |
 | 3. Animations and Visual Polish | 1/2 | In Progress|  |
 | 4. UX Flow and Usability | 2/2 | Complete   | 2026-03-26 |
-| 5. Store Preparation | 0/? | Not started | - |
+| 5. Store Preparation | 0/4 | Not started | - |
