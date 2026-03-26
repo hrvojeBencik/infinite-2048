@@ -51,7 +51,7 @@ Plans:
 **Plans:** 1/3 plans executed
 Plans:
 - [x] 02-01-PLAN.md — Extract HapticService, create ProgressionBloc, wire DI and global BlocProvider
-- [ ] 02-02-PLAN.md — Refactor TileThemes to remove Hive/regex, update TileWidget and ThemeSelectionPage
+- [x] 02-02-PLAN.md — Refactor TileThemes to remove Hive/regex, update TileWidget and ThemeSelectionPage
 - [x] 02-03-PLAN.md — Split GamePage BlocConsumer into targeted BlocBuilders with RepaintBoundary zones
 
 ### Phase 3: Animations and Visual Polish
