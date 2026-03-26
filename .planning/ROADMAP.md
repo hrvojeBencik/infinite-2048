@@ -17,7 +17,7 @@ polishing a janky codebase means rebuilding polish once the jank is fixed.
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Performance Audit** - Profile the app in --profile mode, establish a 60fps baseline, wire dev frame-timing tools, and audit SoundService for memory leaks
+- [x] **Phase 1: Performance Audit** - Profile the app in --profile mode, establish a 60fps baseline, wire dev frame-timing tools, and audit SoundService for memory leaks (completed 2026-03-26)
 - [ ] **Phase 2: Architectural Foundations** - Fix the structural sources of jank: RepaintBoundary isolation, TileThemes reactive refactor, BLoC buildWhen guards, HapticService extraction
 - [ ] **Phase 3: Animations and Visual Polish** - Add tile merge animations, screen transitions, haptic feedback, confetti, XP bar animation, particle effects, and native splash on the stabilized architecture
 - [ ] **Phase 4: UX Flow and Usability** - Surface daily challenges on home, add onboarding skip, cap ad frequency, add review prompt, enable score sharing, and verify paywall compliance
@@ -35,10 +35,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Developer can toggle a frame timing overlay from the DevTools page during a debug session
   4. SoundService has been audited and the AudioPlayer pooling risk is either confirmed resolved or flagged as a Phase 2 fix
   5. A dev tool is available to trigger a performance regression check (confirms no regression from baseline)
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 01-01-PLAN.md — Wire PerformanceOverlay toggle and regression check button into dev options page
-- [ ] 01-02-PLAN.md — Profile on physical device and write PERF-BASELINE.md report
+- [x] 01-02-PLAN.md — Profile on physical device and write PERF-BASELINE.md report
 
 ### Phase 2: Architectural Foundations
 **Goal**: The widget tree is correctly structured so animations can be added without triggering cascading rebuilds
@@ -96,7 +96,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Performance Audit | 1/2 | In Progress|  |
+| 1. Performance Audit | 2/2 | Complete   | 2026-03-26 |
 | 2. Architectural Foundations | 0/? | Not started | - |
 | 3. Animations and Visual Polish | 0/? | Not started | - |
 | 4. UX Flow and Usability | 0/? | Not started | - |

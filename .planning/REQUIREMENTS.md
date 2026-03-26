@@ -9,11 +9,11 @@ Requirements for v1.2 Launch Ready milestone. Each maps to roadmap phases.
 
 ### Performance & Architecture
 
-- [ ] **PERF-01**: App achieves consistent 60fps during gameplay on mid-range devices (profiled in --profile mode)
+- [x] **PERF-01**: App achieves consistent 60fps during gameplay on mid-range devices (profiled in --profile mode)
 - [ ] **PERF-02**: TileThemes refactored from static Hive/regex lookup to reactive theme passed via ProgressionBloc
 - [ ] **PERF-03**: RepaintBoundary isolates game board, score display, and control areas from unnecessary repaints
 - [ ] **PERF-04**: BLoC buildWhen guards prevent full widget tree rebuilds on partial state changes
-- [ ] **PERF-05**: SoundService audited for audioplayer memory leaks with pooling if needed
+- [x] **PERF-05**: SoundService audited for audioplayer memory leaks with pooling if needed
 - [x] **PERF-06**: Dev-only frame timing overlay available via DevTools page
 - [x] **PERF-07**: Automated performance regression check available as dev tool
 
@@ -70,8 +70,8 @@ Requirements for v1.2 Launch Ready milestone. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERF-01 | Phase 1 | Pending |
-| PERF-05 | Phase 1 | Pending |
+| PERF-01 | Phase 1 | Complete |
+| PERF-05 | Phase 1 | Complete |
 | PERF-06 | Phase 1 | Complete |
 | PERF-07 | Phase 1 | Complete |
 | PERF-02 | Phase 2 | Pending |
