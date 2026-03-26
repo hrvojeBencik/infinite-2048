@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/di.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../../data/datasources/progression_local_datasource.dart';
 import '../../domain/entities/player_profile.dart';
 import '../../domain/entities/tile_theme.dart';
+import '../bloc/progression_bloc.dart';
 
 class ThemeSelectionPage extends StatefulWidget {
   const ThemeSelectionPage({super.key});
@@ -25,7 +27,7 @@ class _ThemeSelectionPageState extends State<ThemeSelectionPage> {
   }
 
   void _selectTheme(TileTheme theme) {
-    _ds.setActiveTileTheme(theme.id);
+    context.read<ProgressionBloc>().add(UpdateTileTheme(theme.id));
     setState(() => _profile = _ds.getProfile());
   }
 
