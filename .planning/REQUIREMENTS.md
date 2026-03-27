@@ -37,12 +37,12 @@ Requirements for v1.2 Launch Ready milestone. Each maps to roadmap phases.
 
 ### Store Preparation
 
-- [ ] **STORE-01**: App icon at 1024x1024 (no alpha for iOS), adaptive icon for Android
+- [x] **STORE-01**: App icon at 1024x1024 (no alpha for iOS), adaptive icon for Android
 - [ ] **STORE-02**: Store screenshots generated for all required device sizes (iPhone 6.9", 6.7", 6.5", iPad 13"; Android phone + tablet)
-- [ ] **STORE-03**: Privacy policy URL live and accessible
+- [x] **STORE-03**: Privacy policy URL live and accessible
 - [ ] **STORE-04**: App Store metadata complete (title, subtitle, keywords, description, categories)
 - [ ] **STORE-05**: Play Store metadata complete (title, short description, full description, categories)
-- [ ] **STORE-06**: iOS PrivacyInfo.xcprivacy manifest configured
+- [x] **STORE-06**: iOS PrivacyInfo.xcprivacy manifest configured
 - [ ] **STORE-07**: Google Play Data Safety form completed
 - [ ] **STORE-08**: Fastlane pipeline automates screenshot capture and framing
 - [ ] **STORE-09**: ASO-optimized store copy for both platforms
@@ -89,12 +89,12 @@ Requirements for v1.2 Launch Ready milestone. Each maps to roadmap phases.
 | UX-03 | Phase 4 | Complete |
 | UX-04 | Phase 4 | Complete |
 | UX-05 | Phase 4 | Complete |
-| STORE-01 | Phase 5 | Pending |
+| STORE-01 | Phase 5 | Complete |
 | STORE-02 | Phase 5 | Pending |
-| STORE-03 | Phase 5 | Pending |
+| STORE-03 | Phase 5 | Complete |
 | STORE-04 | Phase 5 | Pending |
 | STORE-05 | Phase 5 | Pending |
-| STORE-06 | Phase 5 | Pending |
+| STORE-06 | Phase 5 | Complete |
 | STORE-07 | Phase 5 | Pending |
 | STORE-08 | Phase 5 | Pending |
 | STORE-09 | Phase 5 | Pending |

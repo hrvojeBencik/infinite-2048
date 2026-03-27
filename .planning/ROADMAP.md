@@ -95,9 +95,9 @@ Plans:
   4. Privacy policy URL is live, Google Play Data Safety form is submitted, and iOS PrivacyInfo.xcprivacy is configured
   5. Google Play closed testing track has been live with 12+ testers for 14 consecutive days before production submission
   6. RevenueCat paywall displays full annual price, trial terms, and cancel instructions without scrolling (Guideline 3.1.2 compliant)
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 Plans:
-- [ ] 05-01-PLAN.md — App icon config (adaptive + iOS alpha removal) and iOS PrivacyInfo.xcprivacy
+- [x] 05-01-PLAN.md — App icon config (adaptive + iOS alpha removal) and iOS PrivacyInfo.xcprivacy
 - [ ] 05-02-PLAN.md — Build RevenueCat paywall screen (Apple Guideline 3.1.2 compliant)
 - [ ] 05-03-PLAN.md — ASO-optimized store listing metadata and version bump
 - [ ] 05-04-PLAN.md — Screenshot guide, Data Safety guide, and human verification checkpoint
@@ -113,4 +113,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Architectural Foundations | 1/3 | In Progress|  |
 | 3. Animations and Visual Polish | 1/2 | In Progress|  |
 | 4. UX Flow and Usability | 2/2 | Complete   | 2026-03-26 |
-| 5. Store Preparation | 0/4 | Not started | - |
+| 5. Store Preparation | 1/4 | In Progress|  |
