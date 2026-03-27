@@ -38,13 +38,13 @@ Requirements for v1.2 Launch Ready milestone. Each maps to roadmap phases.
 ### Store Preparation
 
 - [x] **STORE-01**: App icon at 1024x1024 (no alpha for iOS), adaptive icon for Android
-- [ ] **STORE-02**: Store screenshots generated for all required device sizes (iPhone 6.9", 6.7", 6.5", iPad 13"; Android phone + tablet)
+- [x] **STORE-02**: Store screenshots generated for all required device sizes (iPhone 6.9", 6.7", 6.5", iPad 13"; Android phone + tablet)
 - [x] **STORE-03**: Privacy policy URL live and accessible
 - [x] **STORE-04**: App Store metadata complete (title, subtitle, keywords, description, categories)
 - [x] **STORE-05**: Play Store metadata complete (title, short description, full description, categories)
 - [x] **STORE-06**: iOS PrivacyInfo.xcprivacy manifest configured
-- [ ] **STORE-07**: Google Play Data Safety form completed
-- [ ] **STORE-08**: Fastlane pipeline automates screenshot capture and framing
+- [x] **STORE-07**: Google Play Data Safety form completed
+- [x] **STORE-08**: Fastlane pipeline automates screenshot capture and framing
 - [x] **STORE-09**: ASO-optimized store copy for both platforms
 - [x] **STORE-10**: RevenueCat paywall compliant with Apple 3.1.2 (full pricing, cancel instructions, links visible without scrolling)
 
@@ -90,13 +90,13 @@ Requirements for v1.2 Launch Ready milestone. Each maps to roadmap phases.
 | UX-04 | Phase 4 | Complete |
 | UX-05 | Phase 4 | Complete |
 | STORE-01 | Phase 5 | Complete |
-| STORE-02 | Phase 5 | Pending |
+| STORE-02 | Phase 5 | Complete |
 | STORE-03 | Phase 5 | Complete |
 | STORE-04 | Phase 5 | Complete |
 | STORE-05 | Phase 5 | Complete |
 | STORE-06 | Phase 5 | Complete |
-| STORE-07 | Phase 5 | Pending |
-| STORE-08 | Phase 5 | Pending |
+| STORE-07 | Phase 5 | Complete |
+| STORE-08 | Phase 5 | Complete |
 | STORE-09 | Phase 5 | Complete |
 | STORE-10 | Phase 5 | Complete |
 
