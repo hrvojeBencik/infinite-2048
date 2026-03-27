@@ -46,7 +46,7 @@ Requirements for v1.2 Launch Ready milestone. Each maps to roadmap phases.
 - [ ] **STORE-07**: Google Play Data Safety form completed
 - [ ] **STORE-08**: Fastlane pipeline automates screenshot capture and framing
 - [ ] **STORE-09**: ASO-optimized store copy for both platforms
-- [ ] **STORE-10**: RevenueCat paywall compliant with Apple 3.1.2 (full pricing, cancel instructions, links visible without scrolling)
+- [x] **STORE-10**: RevenueCat paywall compliant with Apple 3.1.2 (full pricing, cancel instructions, links visible without scrolling)
 
 ## Future Requirements
 
@@ -98,7 +98,7 @@ Requirements for v1.2 Launch Ready milestone. Each maps to roadmap phases.
 | STORE-07 | Phase 5 | Pending |
 | STORE-08 | Phase 5 | Pending |
 | STORE-09 | Phase 5 | Pending |
-| STORE-10 | Phase 5 | Pending |
+| STORE-10 | Phase 5 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 29 total
