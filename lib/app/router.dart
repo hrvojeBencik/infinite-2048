@@ -28,6 +28,7 @@ import '../features/leaderboard/presentation/pages/leaderboard_page.dart';
 import '../features/leaderboard/domain/entities/leaderboard_entry.dart';
 import '../features/levels/data/datasources/levels_local_datasource.dart';
 import '../features/levels/domain/entities/level.dart';
+import '../features/subscription/presentation/pages/paywall_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -285,6 +286,13 @@ final GoRouter appRouter = GoRouter(
         state: state,
         child: const BugReportPage(),
       ),
+    ),
+    GoRoute(
+      path: '/paywall',
+      builder: (context, state) {
+        final source = state.extra as String?;
+        return PaywallPage(source: source);
+      },
     ),
     if (kDebugMode) ...[
       GoRoute(
