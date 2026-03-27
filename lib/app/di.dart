@@ -30,6 +30,8 @@ import '../features/onboarding/data/datasources/onboarding_local_datasource.dart
 import '../features/progression/data/datasources/progression_local_datasource.dart';
 import '../features/progression/presentation/bloc/progression_bloc.dart';
 import '../features/statistics/data/datasources/statistics_local_datasource.dart';
+import '../features/subscription/data/services/subscription_service.dart';
+import '../features/subscription/presentation/bloc/subscription_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -42,6 +44,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<SoundService>(() => SoundService());
   sl.registerLazySingleton<RateAppService>(() => RateAppService());
   sl.registerLazySingleton<RemoteConfigService>(() => RemoteConfigService());
+  sl.registerLazySingleton<SubscriptionService>(() => SubscriptionService());
 
   // Data sources
   sl.registerLazySingleton<GameLocalDataSource>(() => GameLocalDataSource());
@@ -109,5 +112,9 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton<ProgressionBloc>(
     () => ProgressionBloc(dataSource: sl<ProgressionLocalDataSource>()),
+  );
+
+  sl.registerLazySingleton<SubscriptionBloc>(
+    () => SubscriptionBloc(service: sl<SubscriptionService>()),
   );
 }

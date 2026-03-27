@@ -37,4 +37,9 @@ class AppConstants {
 
   static const Duration cloudSyncDebounce = Duration(seconds: 30);
   static const Duration staleDataThreshold = Duration(minutes: 5);
+
+  // RevenueCat API keys (public app-specific keys — safe to commit)
+  static const String revenueCatAppleApiKey = 'appl_PLACEHOLDER_REPLACE_ME';
+  static const String revenueCatGoogleApiKey = 'goog_PLACEHOLDER_REPLACE_ME';
+  static const String premiumEntitlementId = 'premium';
 }

@@ -8,6 +8,8 @@ import 'router.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
 import '../features/achievements/presentation/bloc/achievements_bloc.dart';
 import '../features/progression/presentation/bloc/progression_bloc.dart';
+import '../features/subscription/presentation/bloc/subscription_bloc.dart';
+import '../features/subscription/presentation/bloc/subscription_event.dart';
 
 class InfiniteApp extends StatelessWidget {
   const InfiniteApp({super.key});
@@ -24,6 +26,10 @@ class InfiniteApp extends StatelessWidget {
         ),
         BlocProvider<ProgressionBloc>(
           create: (_) => sl<ProgressionBloc>()..add(const LoadProgression()),
+        ),
+        BlocProvider<SubscriptionBloc>(
+          create: (_) =>
+              sl<SubscriptionBloc>()..add(const SubscriptionCheckRequested()),
         ),
       ],
       child: MaterialApp.router(
