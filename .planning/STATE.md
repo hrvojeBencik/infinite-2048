@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-03-27T07:31:03.477Z"
+stopped_at: Completed 05-03-PLAN.md
+last_updated: "2026-03-27T07:35:19.501Z"
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 ## Current Position
 
 Phase: 05 (store-preparation) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Plan: 3 of 4
 | Phase 04-ux-flow-and-usability P02 | 4 | 2 tasks | 5 files |
 | Phase 05-store-preparation P01 | 2 | 2 tasks | 10 files |
 | Phase 05-store-preparation P02 | 8 | 2 tasks | 10 files |
+| Phase 05-store-preparation P03 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,7 @@ Recent decisions affecting current work:
 - [Phase 05-store-preparation]: adaptive_icon_background uses #0A0E21 (AppColors.background) — consistent with splash screen and app theme
 - [Phase 05-store-preparation]: NSPrivacyTracking false in PrivacyInfo.xcprivacy — no ATT prompt, Firebase/AdMob SDKs bundle their own privacy manifests
 - [Phase 05-store-preparation]: Used PurchaseParams.package() named constructor (purchases_flutter 9.x) instead of deprecated purchasePackage(); free trial detected by introductoryPrice.price == 0
+- [Phase 05-store-preparation]: iOS subtitle trimmed to 'Puzzle with Levels & Zones' (26 chars) — spec had 31-char version exceeding App Store limit; Google Play description opens with keyword-dense line for Play Store indexing
 
 ### Pending Todos
 
@@ -99,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T07:31:03.474Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-03-27T07:35:19.498Z
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None
