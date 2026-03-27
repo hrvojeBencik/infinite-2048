@@ -39,6 +39,7 @@ The core 2048 gameplay loop must feel tight, responsive, and satisfying — merg
 - PERF-02: TileThemes reactive refactor via ProgressionBloc (eliminated 4,800 regex ops/sec) — Validated in Phase 2
 - PERF-03: RepaintBoundary isolation (4 zones on GamePage) — Validated in Phase 2
 - PERF-04: BLoC buildWhen guards (5 targeted BlocBuilders on GamePage) — Validated in Phase 2
+- STORE-01 through STORE-10: Store preparation — Validated in Phase 5 (STORE-08 fastlane descoped; 6 human verification items pending)
 
 ## Current Milestone: v1.2 Launch Ready
 
@@ -60,7 +61,7 @@ The core 2048 gameplay loop must feel tight, responsive, and satisfying — merg
 
 ## Context
 
-- **Current state:** The app is at v1.1.0 stable with recent bug fixes (commit 24f430c). The full game loop, monetization, and progression systems are implemented.
+- **Current state:** All 5 phases of v1.2 milestone complete. App version bumped to 1.0.0+2. Full subscription/paywall feature built, adaptive icons generated, privacy manifest configured, ASO store listings ready. 6 human verification items remain (API keys, screenshots, store uploads, closed testing).
 - **Architecture:** Clean Architecture with feature-based organization. BLoC for state management, GetIt for DI, go_router for navigation, Hive for local storage.
 - **Firebase is optional:** The app runs fully offline. Firebase-dependent features (auth, leaderboard, analytics, remote config) are conditionally registered in DI.
 - **Game engine:** Pure static class with no dependencies — handles board creation, tile spawning, move processing, merging, special tile logic, and bomb explosions.
@@ -104,4 +105,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after Phase 4 (UX Flow and Usability) complete*
+*Last updated: 2026-03-27 after Phase 5 (Store Preparation) complete — all v1.2 phases done*
