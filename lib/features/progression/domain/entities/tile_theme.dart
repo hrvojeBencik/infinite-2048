@@ -167,7 +167,6 @@ class TileThemes {
     textColorDark: Color(0xFFFFFFFF),
   );
 
-  // Premium-exclusive themes
   static const TileTheme diamond = TileTheme(
     id: 'diamond',
     name: 'Diamond',
@@ -244,9 +243,6 @@ class TileThemes {
     sunset,
     galaxy,
     monochrome,
-    diamond,
-    aurora,
-    obsidian,
   ];
 
   static TileTheme? byId(String id) {

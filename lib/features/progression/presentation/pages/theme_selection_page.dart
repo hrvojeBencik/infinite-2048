@@ -32,8 +32,6 @@ class _ThemeSelectionPageState extends State<ThemeSelectionPage> {
   }
 
   bool _isThemeUnlocked(TileTheme theme) {
-    // Previously premium themes are now available to everyone
-    if (theme.isPremium) return true;
     return _profile.unlockedTileThemeIds.contains(theme.id) ||
         _profile.level >= theme.requiredLevel;
   }
