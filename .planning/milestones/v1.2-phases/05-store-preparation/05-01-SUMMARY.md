@@ -118,6 +118,16 @@ None - no external service configuration required.
 - STORE-06 (iOS privacy manifest) satisfied: PrivacyInfo.xcprivacy in Runner target prevents ITMS-91053
 - Ready for Plan 02 (store metadata/screenshots) and Plan 03 (Android listing)
 
+## Self-Check: PASSED
+
+- pubspec.yaml: FOUND
+- ios/Runner/PrivacyInfo.xcprivacy: FOUND
+- android/app/src/main/res/drawable-hdpi/ic_launcher_foreground.png: FOUND
+- .planning/phases/05-store-preparation/05-01-SUMMARY.md: FOUND
+- Commit c5e1e54 (Task 1): FOUND
+- Commit 3adc20b (Task 2): FOUND
+- Commit c14a76d (metadata): FOUND
+
 ---
 *Phase: 05-store-preparation*
 *Completed: 2026-03-27*
