@@ -6,6 +6,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../app/di.dart';
+import '../../../../core/services/analytics_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/animated_button.dart';
 import 'share_score_card.dart';
@@ -13,7 +15,7 @@ import 'share_score_card.dart';
 class GameOverDialog extends StatefulWidget {
   final int score;
   final int highestTile;
-  final int levelNumber;
+  final String modeName;
   final VoidCallback onRetry;
   final VoidCallback onBackToLevels;
   final VoidCallback? onWatchAdToContinue;
@@ -25,7 +27,7 @@ class GameOverDialog extends StatefulWidget {
     required this.onRetry,
     required this.onBackToLevels,
     this.onWatchAdToContinue,
-    this.levelNumber = 0,
+    this.modeName = '',
   });
 
   @override
@@ -41,22 +43,27 @@ class _GameOverDialogState extends State<GameOverDialog> {
     setState(() => _isSharing = true);
     try {
       await Future.delayed(Duration.zero); // ensure painted
-      final boundary = _shareCardKey.currentContext!
-          .findRenderObject()! as RenderRepaintBoundary;
-      final image = await boundary.toImage(pixelRatio: 3.0);
+      final context = _shareCardKey.currentContext;
+      if (context == null) return;
+      // ignore: use_build_context_synchronously
+      final renderObject = context.findRenderObject() as RenderRepaintBoundary?;
+      if (renderObject == null) return;
+      final image = await renderObject.toImage(pixelRatio: 3.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      final pngBytes = byteData!.buffer.asUint8List();
+      image.dispose();
+      if (byteData == null) return;
+      final pngBytes = byteData.buffer.asUint8List();
 
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/merge_quest_score.png');
       await file.writeAsBytes(pngBytes);
 
       await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(file.path)],
-          subject: 'My 2048 Score',
-        ),
+        ShareParams(files: [XFile(file.path)], subject: 'My 2048 Score'),
       );
+      try {
+        sl<AnalyticsService>().logShareScore(source: 'game_over');
+      } catch (_) {}
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -110,11 +117,11 @@ class _GameOverDialogState extends State<GameOverDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
+                    _StatChip(label: 'Score', value: widget.score.toString()),
                     _StatChip(
-                        label: 'Score', value: widget.score.toString()),
-                    _StatChip(
-                        label: 'Best Tile',
-                        value: widget.highestTile.toString()),
+                      label: 'Best Tile',
+                      value: widget.highestTile.toString(),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -128,8 +135,11 @@ class _GameOverDialogState extends State<GameOverDialog> {
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.play_circle_outline_rounded,
-                              size: 20, color: Colors.white),
+                          Icon(
+                            Icons.play_circle_outline_rounded,
+                            size: 20,
+                            color: Colors.white,
+                          ),
                           SizedBox(width: 8),
                           Text(
                             'Watch Ad to Continue',
@@ -149,7 +159,11 @@ class _GameOverDialogState extends State<GameOverDialog> {
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.refresh_rounded, size: 20, color: Colors.white),
+                      Icon(
+                        Icons.refresh_rounded,
+                        size: 20,
+                        color: Colors.white,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'Try Again',
@@ -173,12 +187,15 @@ class _GameOverDialogState extends State<GameOverDialog> {
                     onTap: _isSharing ? null : _shareScore,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.surface.withAlpha(180),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: AppColors.cardBorder.withAlpha(80)),
+                          color: AppColors.cardBorder.withAlpha(80),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -193,8 +210,11 @@ class _GameOverDialogState extends State<GameOverDialog> {
                               ),
                             )
                           else
-                            const Icon(Icons.share_rounded,
-                                size: 16, color: AppColors.textSecondary),
+                            const Icon(
+                              Icons.share_rounded,
+                              size: 16,
+                              color: AppColors.textSecondary,
+                            ),
                           const SizedBox(width: 6),
                           const Text(
                             'Share Score',
@@ -227,7 +247,7 @@ class _GameOverDialogState extends State<GameOverDialog> {
               child: ShareScoreCard(
                 score: widget.score,
                 highestTile: widget.highestTile,
-                levelNumber: widget.levelNumber,
+                modeName: widget.modeName,
               ),
             ),
           ),

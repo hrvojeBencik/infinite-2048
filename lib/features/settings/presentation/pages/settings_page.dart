@@ -27,6 +27,7 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
     _hapticsEnabled = sl<HapticService>().isEnabled;
     _loadVersion();
+    try { sl<AnalyticsService>().logScreenView('settings'); } catch (_) {}
   }
 
   Future<void> _loadVersion() async {

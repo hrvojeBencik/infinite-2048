@@ -50,6 +50,12 @@ class _GamePageState extends State<GamePage> {
   bool _showTutorial = false;
   bool _boardAnimating = false;
 
+  String get _modeName {
+    if (widget.isDailyChallenge) return 'Daily Challenge';
+    if (widget.level.id == 'weekly_challenge') return 'Weekly Challenge';
+    return 'Level ${widget.level.levelNumber}';
+  }
+
   RestartLevel get _restartEvent => RestartLevel(
         undosAvailable: GameConstants.undosPerLevel,
         hammersAvailable: GameConstants.hammersPerLevel,
@@ -209,6 +215,13 @@ class _GamePageState extends State<GamePage> {
                       if (mounted) {
                         try { sl<AnalyticsService>().logAdWatched(type: AnalyticsAdType.rewardedUndo); } catch (_) {}
                         context.read<GameBloc>().add(const GrantExtraUndo());
+                      }
+                    },
+                    onFailed: () {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Ad not available. Please try again later.')),
+                        );
                       }
                     },
                   );
@@ -500,7 +513,7 @@ class _GamePageState extends State<GamePage> {
                   final gameBlocState = context.read<GameBloc>().state;
                   final isPaused = gameBlocState is GamePlaying &&
                       gameBlocState.session.status == GameStatus.paused;
-                  if (isPaused || _boardAnimating) return;
+                  if (isPaused || _boardAnimating || _showTutorial) return;
 
                   final velocity = details.velocity.pixelsPerSecond;
                   if (velocity.distance < 100) return;
@@ -587,15 +600,16 @@ class _GamePageState extends State<GamePage> {
     }
 
     try {
+      final gameBloc = context.read<GameBloc>();
       sl<StatisticsLocalDataSource>().recordLevelCompleted(
         score: state.session.board.score,
         stars: state.stars,
         highestTile: state.session.board.highestTile,
-        merges: state.session.board.score ~/ 4,
+        merges: gameBloc.totalMerges,
         moves: state.session.board.moveCount,
         undosUsed: GameConstants.undosPerLevel - state.session.undosRemaining,
-        bombExplosions: 0,
-        bestCombo: 0,
+        bombExplosions: gameBloc.totalBombExplosions,
+        bestCombo: gameBloc.bestCombo,
       );
     } catch (e) {
       debugPrint('Failed to record level stats: $e');
@@ -633,11 +647,11 @@ class _GamePageState extends State<GamePage> {
     }
   }
 
-  void _submitLeaderboardScore(
+  Future<void> _submitLeaderboardScore(
     BuildContext context, {
     required int score,
     required int highestTile,
-  }) {
+  }) async {
     try {
       final authState = context.read<AuthBloc>().state;
       if (authState is! AuthAuthenticated) return;
@@ -654,7 +668,7 @@ class _GamePageState extends State<GamePage> {
 
       // Submit to Firestore leaderboard
       if (sl.isRegistered<LeaderboardRemoteDataSource>()) {
-        sl<LeaderboardRemoteDataSource>().submitScore(
+        await sl<LeaderboardRemoteDataSource>().submitScore(
           uid: user.uid,
           displayName: user.username,
           photoUrl: user.photoUrl,
@@ -684,11 +698,12 @@ class _GamePageState extends State<GamePage> {
           child: child,
         );
       },
-      pageBuilder: (context, animation, secondaryAnimation) => LevelCompleteDialog(
+      pageBuilder: (_, animation, secondaryAnimation) => LevelCompleteDialog(
         score: state.session.board.score,
         stars: state.stars,
         levelNumber: state.level.levelNumber,
         highestTile: state.session.board.highestTile,
+        modeName: _modeName,
         onNextLevel: () {
           Navigator.of(context).pop();
           context.pop('next');
@@ -717,8 +732,6 @@ class _GamePageState extends State<GamePage> {
       debugPrint('Failed to log level failure: $e');
     }
 
-    final hasHistory = state.session.moveHistory.isNotEmpty;
-
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -731,12 +744,11 @@ class _GamePageState extends State<GamePage> {
           child: child,
         );
       },
-      pageBuilder: (context, animation, secondaryAnimation) => GameOverDialog(
+      pageBuilder: (_, animation, secondaryAnimation) => GameOverDialog(
         score: state.session.board.score,
         highestTile: state.session.board.highestTile,
-        levelNumber: state.level.levelNumber,
-        onWatchAdToContinue: hasHistory
-            ? () {
+        modeName: _modeName,
+        onWatchAdToContinue: () {
                 Navigator.of(context).pop();
                 sl<AdService>().loadRewardedAd(
                   onRewarded: () {
@@ -750,9 +762,15 @@ class _GamePageState extends State<GamePage> {
                           .add(const ContinueAfterLoss());
                     }
                   },
+                  onFailed: () {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Ad not available. Please try again later.')),
+                      );
+                    }
+                  },
                 );
-              }
-            : null,
+              },
         onRetry: () {
           Navigator.of(context).pop();
           try { sl<AnalyticsService>().logLevelRestarted(levelId: state.level.id); } catch (_) {}

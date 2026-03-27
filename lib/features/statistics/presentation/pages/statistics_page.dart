@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../app/di.dart';
+import '../../../../core/services/analytics_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../../data/datasources/statistics_local_datasource.dart';
@@ -24,6 +25,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
     super.initState();
     _dataSource = sl<StatisticsLocalDataSource>();
     _stats = _dataSource.getStats();
+    try { sl<AnalyticsService>().logScreenView('statistics'); } catch (_) {}
   }
 
   void _reload() {

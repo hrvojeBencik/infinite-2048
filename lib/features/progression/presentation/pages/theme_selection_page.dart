@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/di.dart';
+import '../../../../core/services/analytics_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../../data/datasources/progression_local_datasource.dart';
@@ -24,6 +25,7 @@ class _ThemeSelectionPageState extends State<ThemeSelectionPage> {
     super.initState();
     _ds = sl<ProgressionLocalDataSource>();
     _profile = _ds.getProfile();
+    try { sl<AnalyticsService>().logScreenView('themes'); } catch (_) {}
   }
 
   void _selectTheme(TileTheme theme) {

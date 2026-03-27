@@ -75,18 +75,22 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/zones',
-      pageBuilder: (context, state) => _buildTransitionPage(
-        state: state,
-        child: BlocProvider(
-          create: (_) => sl<LevelsBloc>()..add(const LoadZones()),
-          child: const ZoneSelectionPage(),
-        ),
-      ),
+      pageBuilder: (context, state) {
+        try { sl<AnalyticsService>().logScreenView('zones'); } catch (_) {}
+        return _buildTransitionPage(
+          state: state,
+          child: BlocProvider(
+            create: (_) => sl<LevelsBloc>()..add(const LoadZones()),
+            child: const ZoneSelectionPage(),
+          ),
+        );
+      },
     ),
     GoRoute(
       path: '/zones/:zoneId/levels',
       pageBuilder: (context, state) {
         final zoneId = state.pathParameters['zoneId']!;
+        try { sl<AnalyticsService>().logScreenView('level_selection'); } catch (_) {}
         return _buildTransitionPage(
           state: state,
           child: BlocProvider(
@@ -220,6 +224,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/endless',
       pageBuilder: (context, state) {
+        try { sl<AnalyticsService>().logScreenView('endless'); } catch (_) {}
         return _buildTransitionPage(
           state: state,
           child: BlocProvider(
@@ -242,6 +247,7 @@ final GoRouter appRouter = GoRouter(
         path: '/leaderboard',
         pageBuilder: (context, state) {
           final uid = state.extra as String?;
+          try { sl<AnalyticsService>().logScreenView('leaderboard'); } catch (_) {}
           return _buildTransitionPage(
             state: state,
             child: BlocProvider(
@@ -257,20 +263,26 @@ final GoRouter appRouter = GoRouter(
       ),
     GoRoute(
       path: '/achievements',
-      pageBuilder: (context, state) => _buildTransitionPage(
-        state: state,
-        child: BlocProvider(
-          create: (_) => sl<AchievementsBloc>()..add(const LoadAchievements()),
-          child: const AchievementsPage(),
-        ),
-      ),
+      pageBuilder: (context, state) {
+        try { sl<AnalyticsService>().logScreenView('achievements'); } catch (_) {}
+        return _buildTransitionPage(
+          state: state,
+          child: BlocProvider(
+            create: (_) => sl<AchievementsBloc>()..add(const LoadAchievements()),
+            child: const AchievementsPage(),
+          ),
+        );
+      },
     ),
     GoRoute(
       path: '/profile',
-      pageBuilder: (context, state) => _buildTransitionPage(
-        state: state,
-        child: const ProfilePage(),
-      ),
+      pageBuilder: (context, state) {
+        try { sl<AnalyticsService>().logScreenView('profile'); } catch (_) {}
+        return _buildTransitionPage(
+          state: state,
+          child: const ProfilePage(),
+        );
+      },
     ),
     GoRoute(
       path: '/settings',

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/tile_themes.dart';
+import '../../../../core/widgets/banner_ad_widget.dart';
 import '../../../../app/di.dart';
 import '../../../../core/services/analytics_service.dart';
 import '../../domain/entities/level.dart';
@@ -207,6 +208,7 @@ class LevelSelectionPage extends StatelessWidget {
                   },
                 ),
               ),
+              const BannerAdWidget(),
             ],
           ),
         ),

@@ -9,6 +9,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../app/di.dart';
+import '../../../../core/services/analytics_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/animated_button.dart';
 import 'share_score_card.dart';
@@ -18,6 +20,7 @@ class LevelCompleteDialog extends StatefulWidget {
   final int stars;
   final int levelNumber;
   final int highestTile;
+  final String modeName;
   final VoidCallback onNextLevel;
   final VoidCallback onBackToLevels;
   final VoidCallback onReplay;
@@ -31,6 +34,7 @@ class LevelCompleteDialog extends StatefulWidget {
     required this.onNextLevel,
     required this.onBackToLevels,
     required this.onReplay,
+    this.modeName = '',
   });
 
   @override
@@ -104,22 +108,27 @@ class _LevelCompleteDialogState extends State<LevelCompleteDialog>
     setState(() => _isSharing = true);
     try {
       await Future.delayed(Duration.zero); // ensure painted
-      final boundary = _shareCardKey.currentContext!
-          .findRenderObject()! as RenderRepaintBoundary;
-      final image = await boundary.toImage(pixelRatio: 3.0);
+      final context = _shareCardKey.currentContext;
+      if (context == null) return;
+      // ignore: use_build_context_synchronously
+      final renderObject = context.findRenderObject() as RenderRepaintBoundary?;
+      if (renderObject == null) return;
+      final image = await renderObject.toImage(pixelRatio: 3.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      final pngBytes = byteData!.buffer.asUint8List();
+      image.dispose();
+      if (byteData == null) return;
+      final pngBytes = byteData.buffer.asUint8List();
 
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/merge_quest_score.png');
       await file.writeAsBytes(pngBytes);
 
       await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(file.path)],
-          subject: 'My 2048 Score',
-        ),
+        ShareParams(files: [XFile(file.path)], subject: 'My 2048 Score'),
       );
+      try {
+        sl<AnalyticsService>().logShareScore(source: 'level_complete');
+      } catch (_) {}
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -156,8 +165,7 @@ class _LevelCompleteDialogState extends State<LevelCompleteDialog>
           AnimatedBuilder(
             animation: _glowController,
             builder: (context, _) {
-              final glowOpacity =
-                  0.15 + (_glowController.value * 0.15);
+              final glowOpacity = 0.15 + (_glowController.value * 0.15);
               return Container(
                 width: 300,
                 height: 420,
@@ -171,8 +179,9 @@ class _LevelCompleteDialogState extends State<LevelCompleteDialog>
                     ),
                     if (widget.stars == 3)
                       BoxShadow(
-                        color:
-                            AppColors.secondary.withValues(alpha: glowOpacity * 0.5),
+                        color: AppColors.secondary.withValues(
+                          alpha: glowOpacity * 0.5,
+                        ),
                         blurRadius: 80,
                         spreadRadius: 4,
                       ),
@@ -188,243 +197,257 @@ class _LevelCompleteDialogState extends State<LevelCompleteDialog>
               maxWidth: 320,
             ),
             child: Container(
-            padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppColors.surface,
-                  AppColors.surface.withValues(alpha: 0.95),
-                  AppColors.background.withValues(alpha: 0.98),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: widget.stars == 3
-                    ? AppColors.secondary.withAlpha(80)
-                    : AppColors.primary.withAlpha(50),
-                width: 1.5,
-              ),
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Level badge
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withAlpha(25),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color: AppColors.primary.withAlpha(40)),
-                  ),
-                  child: Text(
-                    'LEVEL ${widget.levelNumber}',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primaryLight,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                )
-                    .animate()
-                    .fadeIn(duration: 300.ms)
-                    .slideY(begin: -0.5),
-                const SizedBox(height: 14),
-                // Title with shimmer
-                ShaderMask(
-                  shaderCallback: (bounds) {
-                    return LinearGradient(
-                      colors: widget.stars == 3
-                          ? [
-                              AppColors.secondary,
-                              AppColors.secondaryLight,
-                              AppColors.secondary,
-                            ]
-                          : [
-                              AppColors.textPrimary,
-                              AppColors.primaryLight,
-                              AppColors.textPrimary,
-                            ],
-                    ).createShader(bounds);
-                  },
-                  child: Text(
-                    widget.stars == 3 ? 'PERFECT!' : 'COMPLETE!',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 3,
-                    ),
-                  ),
-                )
-                    .animate()
-                    .fadeIn(duration: 400.ms)
-                    .slideY(begin: -0.3),
-                const SizedBox(height: 24),
-                // Stars
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(3, (i) {
-                    final filled = i < widget.stars;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: _AnimatedStar(
-                        filled: filled,
-                        delay: 400 + i * 250,
-                        index: i,
-                      ),
-                    );
-                  }),
+              padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.surface,
+                    AppColors.surface.withValues(alpha: 0.95),
+                    AppColors.background.withValues(alpha: 0.98),
+                  ],
                 ),
-                const SizedBox(height: 24),
-                // Score section
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 14),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.primary.withAlpha(15),
-                        AppColors.primary.withAlpha(8),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                        color: AppColors.primary.withAlpha(30)),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'SCORE',
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: widget.stars == 3
+                      ? AppColors.secondary.withAlpha(80)
+                      : AppColors.primary.withAlpha(50),
+                  width: 1.5,
+                ),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Level badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withAlpha(25),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppColors.primary.withAlpha(40),
+                        ),
+                      ),
+                      child: Text(
+                        'LEVEL ${widget.levelNumber}',
                         style: GoogleFonts.spaceGrotesk(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textTertiary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryLight,
                           letterSpacing: 2,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      AnimatedBuilder(
-                        animation: _scoreAnimation,
-                        builder: (context, _) {
-                          return Text(
-                            '${_scoreAnimation.value}',
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ).animate(delay: 600.ms).fadeIn().scale(
-                      begin: const Offset(0.9, 0.9),
-                      duration: 400.ms,
-                      curve: Curves.easeOutBack,
-                    ),
-                const SizedBox(height: 28),
-                // Next Level button (primary action)
-                AnimatedButton(
-                  onPressed: widget.onNextLevel,
-                  gradient: widget.stars == 3
-                      ? AppColors.premiumGradient
-                      : AppColors.primaryGradient,
-                  borderRadius: 16,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 32, vertical: 16),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Next Level',
+                    ).animate().fadeIn(duration: 300.ms).slideY(begin: -0.5),
+                    const SizedBox(height: 14),
+                    // Title with shimmer
+                    ShaderMask(
+                      shaderCallback: (bounds) {
+                        return LinearGradient(
+                          colors: widget.stars == 3
+                              ? [
+                                  AppColors.secondary,
+                                  AppColors.secondaryLight,
+                                  AppColors.secondary,
+                                ]
+                              : [
+                                  AppColors.textPrimary,
+                                  AppColors.primaryLight,
+                                  AppColors.textPrimary,
+                                ],
+                        ).createShader(bounds);
+                      },
+                      child: Text(
+                        widget.stars == 3 ? 'PERFECT!' : 'COMPLETE!',
                         style: GoogleFonts.spaceGrotesk(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
                           color: Colors.white,
+                          letterSpacing: 3,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.arrow_forward_rounded,
-                          size: 20, color: Colors.white),
-                    ],
-                  ),
-                ).animate(delay: 800.ms).fadeIn().slideY(begin: 0.3),
-                const SizedBox(height: 16),
-                // Secondary actions row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _SecondaryActionButton(
-                      icon: Icons.replay_rounded,
-                      label: 'Replay',
-                      onTap: widget.onReplay,
-                    ),
-                    const SizedBox(width: 12),
-                    _SecondaryActionButton(
-                      icon: Icons.grid_view_rounded,
-                      label: 'Levels',
-                      onTap: widget.onBackToLevels,
-                    ),
-                    const SizedBox(width: 12),
-                    Semantics(
-                      label: _isSharing
-                          ? 'Sharing score, please wait...'
-                          : 'Share your score',
-                      button: !_isSharing,
-                      child: GestureDetector(
-                        onTap: _isSharing ? null : _shareScore,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface.withAlpha(180),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: AppColors.cardBorder.withAlpha(80)),
+                    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.3),
+                    const SizedBox(height: 24),
+                    // Stars
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(3, (i) {
+                        final filled = i < widget.stars;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: _AnimatedStar(
+                            filled: filled,
+                            delay: 400 + i * 250,
+                            index: i,
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 24),
+                    // Score section
+                    Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.primary.withAlpha(15),
+                                AppColors.primary.withAlpha(8),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppColors.primary.withAlpha(30),
+                            ),
+                          ),
+                          child: Column(
                             children: [
-                              if (_isSharing)
-                                const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                )
-                              else
-                                const Icon(Icons.share_rounded,
-                                    size: 16, color: AppColors.textSecondary),
-                              const SizedBox(width: 6),
-                              const Text(
-                                'Share Score',
-                                style: TextStyle(
-                                  fontSize: 13,
+                              Text(
+                                'SCORE',
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.textTertiary,
+                                  letterSpacing: 2,
                                 ),
+                              ),
+                              const SizedBox(height: 4),
+                              AnimatedBuilder(
+                                animation: _scoreAnimation,
+                                builder: (context, _) {
+                                  return Text(
+                                    '${_scoreAnimation.value}',
+                                    style: GoogleFonts.spaceGrotesk(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),
+                        )
+                        .animate(delay: 600.ms)
+                        .fadeIn()
+                        .scale(
+                          begin: const Offset(0.9, 0.9),
+                          duration: 400.ms,
+                          curve: Curves.easeOutBack,
                         ),
+                    const SizedBox(height: 28),
+                    // Next Level button (primary action)
+                    AnimatedButton(
+                      onPressed: widget.onNextLevel,
+                      gradient: widget.stars == 3
+                          ? AppColors.premiumGradient
+                          : AppColors.primaryGradient,
+                      borderRadius: 16,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
                       ),
-                    ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Next Level',
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ).animate(delay: 800.ms).fadeIn().slideY(begin: 0.3),
+                    const SizedBox(height: 16),
+                    // Secondary actions row
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 12,
+                      runSpacing: 10,
+                      children: [
+                        _SecondaryActionButton(
+                          icon: Icons.replay_rounded,
+                          label: 'Replay',
+                          onTap: widget.onReplay,
+                        ),
+                        _SecondaryActionButton(
+                          icon: Icons.grid_view_rounded,
+                          label: 'Levels',
+                          onTap: widget.onBackToLevels,
+                        ),
+                        Semantics(
+                          label: _isSharing
+                              ? 'Sharing score, please wait...'
+                              : 'Share your score',
+                          button: !_isSharing,
+                          child: GestureDetector(
+                            onTap: _isSharing ? null : _shareScore,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface.withAlpha(180),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.cardBorder.withAlpha(80),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (_isSharing)
+                                    const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    )
+                                  else
+                                    const Icon(
+                                      Icons.share_rounded,
+                                      size: 16,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  const SizedBox(width: 6),
+                                  const Text(
+                                    'Share',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ).animate(delay: 1000.ms).fadeIn(duration: 400.ms),
                   ],
-                ).animate(delay: 1000.ms).fadeIn(duration: 400.ms),
-              ],
+                ),
+              ),
             ),
-          ),
-          ),
           ),
           // Off-screen ShareScoreCard for RepaintBoundary image capture
           Positioned(
@@ -435,7 +458,7 @@ class _LevelCompleteDialogState extends State<LevelCompleteDialog>
                 child: ShareScoreCard(
                   score: widget.score,
                   highestTile: widget.highestTile,
-                  levelNumber: widget.levelNumber,
+                  modeName: widget.modeName,
                 ),
               ),
             ),
@@ -449,11 +472,11 @@ class _LevelCompleteDialogState extends State<LevelCompleteDialog>
               numberOfParticles: 25,
               gravity: 0.2,
               colors: const [
-                AppColors.secondary,      // gold #FFD700
-                AppColors.primary,        // purple #6C63FF
-                AppColors.success,        // green #00E676
-                Color(0xFFFF6B6B),        // coral
-                Color(0xFF48DBFB),        // cyan
+                AppColors.secondary, // gold #FFD700
+                AppColors.primary, // purple #6C63FF
+                AppColors.success, // green #00E676
+                Color(0xFFFF6B6B), // coral
+                Color(0xFF48DBFB), // cyan
               ],
               shouldLoop: false,
             ),
@@ -535,13 +558,16 @@ class _AnimatedStarState extends State<_AnimatedStar>
       duration: const Duration(milliseconds: 600),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
 
     _colorAnimation = ColorTween(
       begin: AppColors.textTertiary.withAlpha(60),
-      end: widget.filled ? AppColors.secondary : AppColors.textTertiary.withAlpha(60),
+      end: widget.filled
+          ? AppColors.secondary
+          : AppColors.textTertiary.withAlpha(60),
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     Future.delayed(Duration(milliseconds: widget.delay), () {
@@ -570,7 +596,8 @@ class _AnimatedStarState extends State<_AnimatedStar>
                     boxShadow: [
                       BoxShadow(
                         color: AppColors.secondary.withAlpha(
-                            (80 * _scaleAnimation.value).round()),
+                          (80 * _scaleAnimation.value).round(),
+                        ),
                         blurRadius: 16,
                         spreadRadius: 2,
                       ),
@@ -660,7 +687,10 @@ class _ConfettiPainter extends CustomPainter {
       canvas.rotate(p.rotation + p.rotationSpeed * t);
       canvas.drawRect(
         Rect.fromCenter(
-            center: Offset.zero, width: p.size, height: p.size * 0.6),
+          center: Offset.zero,
+          width: p.size,
+          height: p.size * 0.6,
+        ),
         paint,
       );
       canvas.restore();

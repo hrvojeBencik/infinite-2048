@@ -14,6 +14,13 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   final GameRepository repository;
   final ProgressionLocalDataSource? progressionDataSource;
   int _consecutiveMerges = 0;
+  int _totalBombExplosions = 0;
+  int _bestCombo = 0;
+  int _totalMerges = 0;
+
+  int get totalBombExplosions => _totalBombExplosions;
+  int get bestCombo => _bestCombo;
+  int get totalMerges => _totalMerges;
 
   GameBloc({required this.repository, this.progressionDataSource})
       : super(GameInitial()) {
@@ -32,7 +39,15 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<ContinueAfterLoss>(_onContinueAfterLoss);
   }
 
+  void _resetSessionCounters() {
+    _consecutiveMerges = 0;
+    _totalBombExplosions = 0;
+    _bestCombo = 0;
+    _totalMerges = 0;
+  }
+
   Future<void> _onStartGame(StartGame event, Emitter<GameState> emit) async {
+    _resetSessionCounters();
     final saved = await repository.loadGameSession(event.level.id);
     if (saved != null && saved.status == GameStatus.playing) {
       emit(GamePlaying(session: saved, level: event.level));
@@ -75,8 +90,15 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
     if (moveResult.mergeCount > 0) {
       _consecutiveMerges++;
+      _totalMerges += moveResult.mergeCount;
     } else {
       _consecutiveMerges = 0;
+    }
+    if (_consecutiveMerges > _bestCombo) {
+      _bestCombo = _consecutiveMerges;
+    }
+    if (moveResult.explodedTileIds.isNotEmpty) {
+      _totalBombExplosions += moveResult.explodedTileIds.length;
     }
 
     var newBoard = GameEngine.spawnTile(
@@ -99,21 +121,21 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     if (newBoard.highestTile >= currentState.level.targetTileValue) {
       final stars = _calculateStars(newBoard.score, currentState.level);
       newSession = newSession.copyWith(status: GameStatus.won);
+      emit(GameWon(session: newSession, level: currentState.level, stars: stars));
+      _awardXp(currentState.level, stars);
       await repository.saveLevelResult(
         levelId: currentState.level.id,
         score: newBoard.score,
         stars: stars,
       );
       await repository.clearGameSession(currentState.level.id);
-      _awardXp(currentState.level, stars);
-      emit(GameWon(session: newSession, level: currentState.level, stars: stars));
       return;
     }
 
     if (!GameEngine.hasValidMoves(newBoard)) {
       newSession = newSession.copyWith(status: GameStatus.lost);
-      await repository.clearGameSession(currentState.level.id);
       emit(GameLost(session: newSession, level: currentState.level));
+      await repository.clearGameSession(currentState.level.id);
       return;
     }
 
@@ -121,8 +143,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         newBoard.moveCount >= currentState.level.moveLimit!) {
       if (newBoard.highestTile < currentState.level.targetTileValue) {
         newSession = newSession.copyWith(status: GameStatus.lost);
-        await repository.clearGameSession(currentState.level.id);
         emit(GameLost(session: newSession, level: currentState.level));
+        await repository.clearGameSession(currentState.level.id);
         return;
       }
     }
@@ -138,7 +160,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     ));
   }
 
-  void _onUndoMove(UndoMove event, Emitter<GameState> emit) {
+  Future<void> _onUndoMove(UndoMove event, Emitter<GameState> emit) async {
     final currentState = state;
     if (currentState is! GamePlaying) return;
 
@@ -155,9 +177,10 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     );
 
     emit(GamePlaying(session: newSession, level: currentState.level));
+    await repository.saveGameSession(newSession);
   }
 
-  void _onUseHammer(UseHammer event, Emitter<GameState> emit) {
+  Future<void> _onUseHammer(UseHammer event, Emitter<GameState> emit) async {
     final currentState = state;
     if (currentState is! GamePlaying) return;
 
@@ -171,9 +194,10 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     );
 
     emit(GamePlaying(session: newSession, level: currentState.level));
+    await repository.saveGameSession(newSession);
   }
 
-  void _onUseShuffle(UseShuffle event, Emitter<GameState> emit) {
+  Future<void> _onUseShuffle(UseShuffle event, Emitter<GameState> emit) async {
     final currentState = state;
     if (currentState is! GamePlaying) return;
 
@@ -187,9 +211,10 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     );
 
     emit(GamePlaying(session: newSession, level: currentState.level));
+    await repository.saveGameSession(newSession);
   }
 
-  void _onUseMergeBoost(UseMergeBoost event, Emitter<GameState> emit) {
+  Future<void> _onUseMergeBoost(UseMergeBoost event, Emitter<GameState> emit) async {
     final currentState = state;
     if (currentState is! GamePlaying) return;
 
@@ -208,14 +233,14 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     if (result.board.highestTile >= currentState.level.targetTileValue) {
       final stars = _calculateStars(result.board.score, currentState.level);
       newSession = newSession.copyWith(status: GameStatus.won);
-      repository.saveLevelResult(
+      emit(GameWon(session: newSession, level: currentState.level, stars: stars));
+      _awardXp(currentState.level, stars);
+      await repository.saveLevelResult(
         levelId: currentState.level.id,
         score: result.board.score,
         stars: stars,
       );
-      repository.clearGameSession(currentState.level.id);
-      _awardXp(currentState.level, stars);
-      emit(GameWon(session: newSession, level: currentState.level, stars: stars));
+      await repository.clearGameSession(currentState.level.id);
       return;
     }
 
@@ -227,7 +252,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     ));
   }
 
-  void _onRestartLevel(RestartLevel event, Emitter<GameState> emit) {
+  Future<void> _onRestartLevel(RestartLevel event, Emitter<GameState> emit) async {
+    _resetSessionCounters();
     final currentState = state;
     Level? level;
     if (currentState is GamePlaying) level = currentState.level;
@@ -235,7 +261,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     if (currentState is GameLost) level = currentState.level;
     if (level == null) return;
 
-    repository.clearGameSession(level.id);
+    await repository.clearGameSession(level.id);
 
     final board = GameEngine.createBoard(
       level.boardSize,
@@ -254,12 +280,15 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     emit(GamePlaying(session: session, level: level));
   }
 
-  void _onPauseGame(PauseGame event, Emitter<GameState> emit) {
+  Future<void> _onPauseGame(PauseGame event, Emitter<GameState> emit) async {
     final currentState = state;
     if (currentState is! GamePlaying) return;
     if (currentState.session.status != GameStatus.playing) return;
     final newSession = currentState.session.copyWith(status: GameStatus.paused);
     emit(GamePlaying(session: newSession, level: currentState.level));
+    await repository.saveGameSession(
+      newSession.copyWith(status: GameStatus.playing),
+    );
   }
 
   void _onResumeFromPause(ResumeFromPause event, Emitter<GameState> emit) {
@@ -293,18 +322,15 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     final currentState = state;
     if (currentState is! GameLost) return;
 
-    // Undo the last move to give the player another chance
     final session = currentState.session;
-    if (session.moveHistory.isEmpty) return;
+    final board = session.board;
 
-    final previousBoard = session.moveHistory.last;
-    final newHistory =
-        session.moveHistory.sublist(0, session.moveHistory.length - 1);
+    // Remove the 3 lowest-value movable tiles to create space
+    final newBoard = GameEngine.removeLowestTiles(board, count: 3);
 
     final newSession = session.copyWith(
-      board: previousBoard,
+      board: newBoard,
       status: GameStatus.playing,
-      moveHistory: newHistory,
       undosRemaining: session.undosRemaining + 1,
     );
 

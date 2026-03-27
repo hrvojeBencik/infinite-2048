@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../app/di.dart';
+import '../../../../core/services/analytics_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../../../onboarding/data/datasources/onboarding_local_datasource.dart';
@@ -90,6 +91,7 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
 
   void _skipTutorial() {
     sl<OnboardingLocalDataSource>().markTutorialCompleted();
+    try { sl<AnalyticsService>().logTutorialSkipped(levelNumber: widget.levelNumber); } catch (_) {}
     if (widget.onSkip != null) {
       widget.onSkip!();
     } else {

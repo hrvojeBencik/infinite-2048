@@ -78,16 +78,31 @@ class AdService {
     )..load();
   }
 
-  void loadRewardedAd({required void Function() onRewarded}) {
-    if (!_initialized) return;
+  void loadRewardedAd({
+    required void Function() onRewarded,
+    void Function()? onFailed,
+  }) {
+    if (!_initialized) {
+      onFailed?.call();
+      return;
+    }
     RewardedAd.load(
       adUnitId: _rewardedAdId,
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) => ad.dispose(),
+            onAdFailedToShowFullScreenContent: (ad, error) {
+              ad.dispose();
+              onFailed?.call();
+            },
+          );
           ad.show(onUserEarnedReward: (_, _) => onRewarded());
         },
-        onAdFailedToLoad: (_) {},
+        onAdFailedToLoad: (_) {
+          onFailed?.call();
+        },
       ),
     );
   }

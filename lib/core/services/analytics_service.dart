@@ -45,7 +45,11 @@ abstract class AnalyticsEvents {
   // --- Engagement ---
   static const loginStreak = 'login_streak';
   static const tutorialCompleted = 'tutorial_completed';
+  static const tutorialSkipped = 'tutorial_skipped';
   static const continueAfterLoss = 'continue_after_loss';
+
+  // --- Sharing ---
+  static const shareScore = 'share_score';
 }
 
 /// Power-up type values for [AnalyticsEvents.powerUpUsed].
@@ -222,6 +226,9 @@ class AnalyticsService {
   Future<void> logTutorialCompleted({required int levelNumber}) =>
       _log(AnalyticsEvents.tutorialCompleted, {'level_number': levelNumber});
 
+  Future<void> logTutorialSkipped({required int levelNumber}) =>
+      _log(AnalyticsEvents.tutorialSkipped, {'level_number': levelNumber});
+
   // ---------------------------------------------------------------------------
   // Monetization
   // ---------------------------------------------------------------------------
@@ -265,6 +272,11 @@ class AnalyticsService {
 
   Future<void> logLoginStreakDay({required int streakDay}) =>
       _log(AnalyticsEvents.loginStreak, {'day': streakDay});
+
+  Future<void> logShareScore({required String source, String? levelId}) => _log(
+    AnalyticsEvents.shareScore,
+    {'source': source, 'level_id': ?levelId},
+  );
 
   Future<void> logContinueAfterLoss({
     required String source,

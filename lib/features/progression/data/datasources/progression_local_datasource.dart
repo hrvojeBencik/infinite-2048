@@ -71,19 +71,16 @@ class ProgressionLocalDataSource {
 
   Future<void> recordLogin() async {
     final profile = getProfile();
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final now = DateTime.now().toUtc();
+    final today = DateTime.utc(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
 
     int newStreak;
     if (profile.lastLoginDate == null) {
       newStreak = 1;
     } else {
-      final lastDate = DateTime(
-        profile.lastLoginDate!.year,
-        profile.lastLoginDate!.month,
-        profile.lastLoginDate!.day,
-      );
+      final last = profile.lastLoginDate!.toUtc();
+      final lastDate = DateTime.utc(last.year, last.month, last.day);
       if (lastDate == today) {
         newStreak = profile.loginStreak;
       } else if (lastDate == yesterday) {

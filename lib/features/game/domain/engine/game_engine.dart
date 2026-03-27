@@ -201,10 +201,12 @@ class GameEngine {
       }
     }
 
-    // Check if anything actually moved
+    // Check if anything actually moved (compare both identity and position)
     if (!changed) {
       for (int j = 0; j < size; j++) {
-        if (row[j]?.id != result[j]?.id) {
+        final original = row[j];
+        final placed = result[j];
+        if (original?.id != placed?.id || original?.row != placed?.row || original?.col != placed?.col) {
           changed = true;
           break;
         }
@@ -236,20 +238,22 @@ class GameEngine {
     bool isMultiplier = a.specialType == SpecialTileType.multiplier ||
         b.specialType == SpecialTileType.multiplier;
 
-    if (isBomb) {
-      final baseValue = a.specialType == SpecialTileType.bomb ? b.value : a.value;
-      newValue = (baseValue == 0 ? a.value + b.value : baseValue) * 2;
-    } else if (a.specialType == SpecialTileType.wildcard) {
+    if (a.specialType == SpecialTileType.wildcard) {
       newValue = b.value * 2;
     } else if (b.specialType == SpecialTileType.wildcard) {
       newValue = a.value * 2;
+    } else if (isBomb) {
+      final baseValue = a.specialType == SpecialTileType.bomb ? b.value : a.value;
+      newValue = (baseValue == 0 ? a.value + b.value : baseValue) * 2;
     } else if (isMultiplier) {
-      newValue = a.value * 4;
+      // Multiplier: normal merge (a+b=2x) then apply 2x multiplier bonus = 4x
+      final baseValue = a.value == b.value ? a.value * 2 : (a.value + b.value);
+      newValue = baseValue * 2;
     } else {
       newValue = a.value * 2;
     }
 
-    final scoreGained = isMultiplier ? newValue * 2 : newValue;
+    final scoreGained = newValue;
 
     final mergedTile = Tile(
       id: a.id,
@@ -306,10 +310,10 @@ class GameEngine {
 
     for (final tile in board.tiles) {
       if (!tile.canMerge) continue;
-      for (final dir in [(0, 1), (1, 0)]) {
+      for (final dir in [(0, 1), (0, -1), (1, 0), (-1, 0)]) {
         final nr = tile.row + dir.$1;
         final nc = tile.col + dir.$2;
-        if (nr >= size || nc >= size) continue;
+        if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
         final neighbor = board.tileAt(nr, nc);
         if (neighbor != null && _canMerge(tile, neighbor)) {
           return true;
@@ -332,8 +336,11 @@ class GameEngine {
     }
     available.shuffle(_random);
 
+    // Safety: if fewer positions than tiles, don't shuffle (avoids tile loss)
+    if (available.length < movableTiles.length) return board;
+
     final shuffled = <Tile>[];
-    for (int i = 0; i < movableTiles.length && i < available.length; i++) {
+    for (int i = 0; i < movableTiles.length; i++) {
       shuffled.add(movableTiles[i].copyWith(
         row: available[i].$1,
         col: available[i].$2,
@@ -394,11 +401,24 @@ class GameEngine {
     );
   }
 
+  /// Removes the [count] lowest-value movable tiles from the board.
+  /// Used when continuing after a game-over to create space for the player.
+  static Board removeLowestTiles(Board board, {int count = 3}) {
+    final movable = board.tiles.where((t) => t.canMove && t.value > 0).toList()
+      ..sort((a, b) => a.value.compareTo(b.value));
+
+    final toRemove = movable.take(count).map((t) => t.id).toSet();
+
+    return board.copyWith(
+      tiles: board.tiles.where((t) => !toRemove.contains(t.id)).toList(),
+    );
+  }
+
   // Grid transformation helpers
   static List<List<Tile?>> _tilesToGrid(List<Tile> tiles, int size) {
     final grid = List.generate(size, (_) => List<Tile?>.filled(size, null));
     for (final tile in tiles) {
-      if (tile.row < size && tile.col < size) {
+      if (tile.row >= 0 && tile.row < size && tile.col >= 0 && tile.col < size) {
         grid[tile.row][tile.col] = tile;
       }
     }
