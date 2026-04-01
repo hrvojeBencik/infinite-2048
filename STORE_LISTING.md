@@ -1,4 +1,4 @@
-# 2048: Merge Quest - App Store & Play Store Listing
+# Merge Quest - App Store & Play Store Listing
 
 ---
 
@@ -6,61 +6,57 @@
 
 ### App Name (30 chars max)
 ```
-2048: Merge Quest
+Merge Quest
 ```
-(17 characters)
+(11 characters)
 
 ### Subtitle (30 chars max)
 ```
-Puzzle Game with 50 Levels
+Zones, Special Tiles & Daily
 ```
-(26 characters)
+(28 characters)
 
 ### Keywords (100 chars max)
 ```
-puzzle,brain,merge,number,tile,offline,strategy,logic,daily challenge,endless,free,block,slider,fun
+merge quest,zone puzzle,bomb tile,ice tile,daily puzzle,number merge,tile quest,strategy,offline
 ```
-(99 characters)
+(97 characters)
 
 **Keyword rationale:**
-- "2048", "merge", "quest" already indexed from title — not repeated
-- "puzzle", "brain", "number", "tile" — core genre, high volume
-- "offline" — high-intent modifier, app fully supports it
-- "strategy", "logic" — adjacent genre capture
-- "daily challenge", "endless" — feature-driven search terms
-- "free" — highest-converting modifier
-- "block", "slider" — related puzzle search terms
-- "fun" — broad modifier, fills remaining space
+- "merge quest", "merge puzzle", "tile quest", "zone puzzle" — lead with unique brand and mechanics
+- "bomb tile", "ice tile", "special tiles" — highlight differentiators from generic 2048
+- "daily puzzle" — engagement feature
+- "number merge" — core mechanic variant
+- "strategy", "offline" — modifiers with high conversion intent
+- App name already indexes "Merge Quest" — no need to repeat
+- Focus on zone/mechanic differentiation over 2048 nostalgia
 
 ### Promotional Text (170 chars max)
 ```
-Free to play with no internet required! Conquer 50 levels across 5 zones, master 5 special tiles, unlock 9 themes, and climb the leaderboards. New daily challenges every day.
+5 Zones. 5 Special Tiles. 50 Hand-Crafted Levels. Master bomb explosions in Inferno, navigate frozen tiles in Glacier, and combine all mechanics in The Void. Includes Daily & Weekly Challenges — a fresh puzzle every day. Free to play, works offline.
 ```
-(175 chars — trimmed version below)
+(248 chars — trimmed version below)
 
 ```
-Free to play, no internet required! Conquer 50 levels across 5 zones, master 5 special tiles, unlock 9 themes, and climb the leaderboards. New daily challenge every day.
+5 Zones. 5 Special Tiles. 50 Levels. Master bomb explosions, ice mechanics & more across themed zones. Includes daily & weekly challenges. Free to play, works offline.
 ```
-(170 characters)
+(168 characters)
 
 ### Description (4000 chars max)
 
 ```
-Merge tiles. Conquer zones. Master explosive new mechanics that reinvent the classic 2048 puzzle.
+Welcome to Merge Quest — a number-merge puzzle reimagined with explosive mechanics, zone-based progression, and hand-crafted challenges.
 
-2048: Merge Quest takes the beloved number-merging gameplay and adds 50 hand-crafted levels, 5 themed zones with unique special tiles, daily and weekly challenges, endless mode, 30 achievements, and 9 unlockable tile themes — all playable offline.
+FIVE UNIQUE ZONES, FIVE SPECIAL TILES
+Each zone introduces a new tile mechanic that changes how you play:
+- Genesis: Master the fundamentals on boards from 3x3 to 4x4
+- Inferno: Bomb tiles explode on merge, triggering chain reactions
+- Glacier: Ice tiles freeze in place, blocking your path for turns
+- Nexus: Multiplier tiles boost your score, Wildcard tiles merge with anything
+- The Void: All mechanics combine in the ultimate challenge
 
-FIVE ZONES, FIVE UNIQUE MECHANICS
-Each zone introduces a game-changing tile type that transforms your strategy:
-
-- Genesis (Levels 1-10) — Master the fundamentals on boards from 3x3 to 5x5
-- Inferno (Levels 11-20) — Bomb tiles explode and trigger chain reactions
-- Glacier (Levels 21-30) — Ice tiles freeze in place for up to 3 turns
-- Nexus (Levels 31-40) — Multiplier tiles boost merge values, Wildcard tiles merge with anything
-- The Void (Levels 41-50) — All special tiles combine for the ultimate challenge
-
-50 LEVELS WITH 3-STAR RATINGS
-Every level has a unique board size (3x3 to 7x7), target tile, and difficulty curve. Earn up to 3 stars per level and unlock new zones as you progress. Can you earn all 150 stars?
+50 HAND-CRAFTED LEVELS
+Every level is intentionally designed with specific goals, board sizes, and difficulty. This isn't random — it's a carefully crafted puzzle journey.
 
 FOUR WAYS TO PLAY
 - Story Mode — 50 levels across 5 zones with progressive difficulty
@@ -92,7 +88,7 @@ Every mode, every level, every challenge — playable without an internet connec
 PREMIUM UPGRADE (OPTIONAL)
 Remove all ads, get unlimited undos, and access exclusive power-ups (Hammer, Shuffle, Merge Boost) plus 3 premium tile themes. The full game is completely playable without purchasing.
 
-Download 2048: Merge Quest and discover why the classic puzzle feels brand new.
+Download Merge Quest and discover a fresh take on number puzzles with explosive mechanics and hand-crafted zones.
 ```
 (2,394 characters)
 
@@ -128,40 +124,37 @@ Copyright 2026 Hrvoje Bencik
 
 ### App Name (30 chars max)
 ```
-2048: Merge Quest
+Merge Quest
 ```
-(17 characters)
+(11 characters)
 
 ### Short Description (80 chars max)
 ```
-Merge tiles in 50 levels, 5 zones, and endless mode. Play offline with no ads!
+5 zones, 5 special tiles, 50 hand-crafted levels. Master bomb explosions, ice mechanics, and more!
 ```
-(79 characters)
+(97 characters — trimmed version below)
 
-**Note:** "no ads" refers to the premium option. Alternative if preferred:
 ```
-Merge puzzle with 50 levels, 5 zones, daily challenges & endless mode. Free!
+5 zones, 5 special tiles, 50 levels. Master bombs, ice, and more! Offline.
 ```
-(77 characters)
+(74 characters)
 
 ### Full Description (4000 chars max)
 
 ```
-Merge tiles. Conquer zones. Master explosive new mechanics that reinvent the classic 2048 puzzle — <b>completely free and fully playable offline</b>.
+Welcome to Merge Quest — a number-merge puzzle reimagined with explosive mechanics, zone-based progression, and hand-crafted challenges. <b>Completely free and fully playable offline</b>.
 
-2048: Merge Quest takes the beloved number-merging gameplay and adds <b>50 hand-crafted levels, 5 themed zones with unique special tiles, daily and weekly challenges, endless mode, 30 achievements, and 9 unlockable tile themes</b>.
+<b>FIVE UNIQUE ZONES, FIVE SPECIAL TILES</b>
+Master a different mechanic in each zone:
 
-<b>★ FIVE ZONES, FIVE UNIQUE MECHANICS</b>
-Each zone introduces a game-changing tile type:
+→ <b>Genesis</b> (Levels 1-10) — Master the fundamentals on boards from 3x3 to 4x4
+→ <b>Inferno</b> (Levels 11-20) — Bomb tiles explode on merge, triggering chain reactions
+→ <b>Glacier</b> (Levels 21-30) — Ice tiles freeze in place, blocking your path for turns
+→ <b>Nexus</b> (Levels 31-40) — Multiplier tiles boost your score, Wildcard tiles merge with anything
+→ <b>The Void</b> (Levels 41-50) — All mechanics combine in the ultimate challenge
 
-→ <b>Genesis</b> (Levels 1-10) — Master the fundamentals on boards from 3x3 to 5x5
-→ <b>Inferno</b> (Levels 11-20) — Bomb tiles explode and trigger chain reactions
-→ <b>Glacier</b> (Levels 21-30) — Ice tiles freeze in place for up to 3 turns
-→ <b>Nexus</b> (Levels 31-40) — Multiplier tiles boost values, Wildcard tiles merge with anything
-→ <b>The Void</b> (Levels 41-50) — All special tiles combine for the ultimate challenge
-
-<b>★ 50 LEVELS WITH 3-STAR RATINGS</b>
-Every level has a unique board size (3x3 to 7x7), target tile, and difficulty curve. Earn up to 3 stars per level. Can you collect all 150 stars?
+<b>★ 50 HAND-CRAFTED LEVELS</b>
+Every level is intentionally designed with specific goals, board sizes, and difficulty. This isn't random — it's a carefully crafted puzzle journey. Earn up to 3 stars per level and unlock new zones as you progress. Can you collect all 150 stars?
 
 <b>★ FOUR WAYS TO PLAY</b>
 → <b>Story Mode</b> — 50 levels across 5 zones with progressive difficulty
@@ -193,7 +186,7 @@ Every mode, every level, every challenge — no internet required. Your progress
 <b>★ OPTIONAL PREMIUM</b>
 Remove ads, get unlimited undos, exclusive power-ups (Hammer, Shuffle, Merge Boost), and 3 premium tile themes. The full game is free to play without purchasing.
 
-If you love 2048, number puzzles, brain games, merge games, or tile sliding puzzles, 2048: Merge Quest adds the depth and variety you've been looking for. Download now and see how far you can merge!
+If you love merge puzzles, number games, brain challenges, or strategic tile games, Merge Quest adds the depth and variety you've been looking for. Download now and see how far you can merge!
 ```
 (2,720 characters)
 
@@ -210,43 +203,17 @@ If you love 2048, number puzzles, brain games, merge games, or tile sliding puzz
 
 ### Primary Keywords (High Volume, High Relevance)
 
-| Keyword | Placement | Rationale |
-|---------|-----------|-----------|
-| 2048 | App Name | Core game identity, massive search volume |
-| puzzle game | iOS Keywords + Play Description | Genre anchor term |
-| merge game | iOS Keywords + Play Description | Genre-specific, high volume |
-| brain game | iOS Keywords + Play Description | Adjacent category capture |
-| number game | iOS Keywords + Play Description | Describes core mechanic |
-
-### Secondary Keywords (Medium Volume, Feature-Driven)
-
-| Keyword | Placement | Rationale |
-|---------|-----------|-----------|
-| offline | iOS Keywords + iOS Subtitle context | Top-3 converting modifier for games |
-| free | iOS Keywords + Play Short Desc | Highest-converting modifier overall |
-| daily challenge | iOS Keywords + Play Description | Engagement feature, searched term |
-| endless mode | Play Description | Feature search term |
-| tile game | iOS Keywords | Related genre term |
-| strategy | iOS Keywords + Play Tags | Adjacent genre capture |
-| logic | iOS Keywords | Adjacent genre capture |
-
-### Long-Tail Keywords (Lower Volume, Low Competition)
-
-| Keyword | Placement | Rationale |
-|---------|-----------|-----------|
-| 2048 with levels | Play Description (natural) | Differentiator from classic 2048 |
-| 2048 offline | Indexed via Name + Keywords | High-intent combination |
-| merge puzzle offline | Play Description (natural) | Triple-intent combination |
-| number merge game | Play Description (natural) | Variant of core terms |
-| 2048 daily challenge | Play Description (natural) | Feature + brand combination |
-| tile sliding puzzle | Play Description | Related game mechanic |
+- **Primary:** merge quest, merge puzzle, tile quest, zone puzzle, special tiles
+- **Secondary:** bomb tile game, ice puzzle, daily puzzle, number merge, offline puzzle
+- **Long-Tail:** merge quest zones, puzzle with special tiles, daily number challenge, merge bomb puzzle
 
 ### Keyword Placement Strategy Summary
 
-1. **App Name** covers: "2048", "merge", "quest" — never repeated in iOS keywords
-2. **iOS Subtitle** covers: "puzzle", "game", "levels" — extends name indexing
-3. **iOS Keyword field** maximizes: high-volume genre terms + modifiers (offline, free, daily challenge) + adjacent categories (brain, strategy, logic, block, slider)
-4. **Play Store description** uses natural keyword density across all tiers, with HTML formatting for scannability. Key terms appear in headers and bullet points for maximum indexing weight
+1. **App Name** covers: "Merge Quest" — rebranded from 2048 for differentiation
+2. **iOS Keywords** emphasize unique mechanics: zone puzzle, bomb tile, ice tile, plus utility (offline) and engagement (daily puzzle)
+3. **iOS Subtitle** signals core differentiators: "Zones, Special Tiles & Daily"
+4. **Play Store Short Desc & Full Desc** naturally incorporate keywords while highlighting 5 zones and 5 special tile types — the key Apple rejection mitigation
+5. Focus throughout: zones and special tiles, not "2048" — differentiates from clones
 
 ---
 
