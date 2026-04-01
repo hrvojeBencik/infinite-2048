@@ -361,6 +361,7 @@ class _GamePageState extends State<GamePage> {
                     GameBoard(
                       board: session.board,
                       isHammerMode: _isHammerMode,
+                      zoneId: widget.level.zoneId,
                       onTileTap: _isHammerMode
                           ? (tileId) {
                               sl<HapticService>().medium();
