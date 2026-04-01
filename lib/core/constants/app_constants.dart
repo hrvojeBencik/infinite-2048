@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 class AppConstants {
   AppConstants._();
 
-  static const String appName = '2048: Merge Quest';
+  static const String appName = 'Merge Quest';
 
   static const String hiveGameStateBox = 'game_state';
   static const String hiveLevelProgressBox = 'level_progress';
