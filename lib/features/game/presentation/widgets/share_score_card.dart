@@ -53,7 +53,7 @@ class ShareScoreCard extends StatelessWidget {
                 colors: [AppColors.primaryLight, AppColors.secondary],
               ).createShader(bounds),
               child: Text(
-                '2048: Merge Quest',
+                'Merge Quest',
                 style: GoogleFonts.spaceGrotesk(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
