@@ -265,7 +265,7 @@ class _EndlessGamePageState extends State<EndlessGamePage> {
                                       key: _scorePopupKey,
                                       child: Stack(
                                         children: [
-                                          GameBoard(board: session.board),
+                                          GameBoard(board: session.board, zoneId: 'endless'),
                                           ParticleEffect(key: _particleKey),
                                         ],
                                       ),
