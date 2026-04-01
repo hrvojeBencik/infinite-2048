@@ -233,9 +233,20 @@ class _TileWidgetState extends State<TileWidget>
 
     if (widget.tile.specialType == SpecialTileType.blocker) {
       return BoxDecoration(
-        color: const Color(0xFF1A1A2E),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF1E1E38), Color(0xFF12122A)],
+        ),
         borderRadius: radius,
-        border: Border.all(color: const Color(0xFF333355), width: 2),
+        border: Border.all(color: const Color(0xFF444466), width: 2.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(80),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
       );
     }
 
@@ -292,18 +303,25 @@ class _TileWidgetState extends State<TileWidget>
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF9B93FF), Color(0xFF6C63FF), Color(0xFF4A42DB)],
+          colors: [
+            Color(0xFFB893FF),
+            Color(0xFF6C63FF),
+            Color(0xFF63B0FF),
+            Color(0xFF6C63FF),
+            Color(0xFFB893FF),
+          ],
+          stops: [0.0, 0.25, 0.5, 0.75, 1.0],
         ),
         borderRadius: radius,
-        border: Border.all(color: const Color(0xFFBDB6FF).withAlpha(150), width: 1.5),
+        border: Border.all(color: const Color(0xFFD4CFFF).withAlpha(180), width: 2),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withAlpha(100),
-            blurRadius: 12,
-            spreadRadius: 2,
+            color: AppColors.primary.withAlpha(120),
+            blurRadius: 14,
+            spreadRadius: 3,
           ),
           BoxShadow(
-            color: AppColors.primary.withAlpha(30),
+            color: const Color(0xFF63B0FF).withAlpha(40),
             blurRadius: 24,
             spreadRadius: 4,
           ),
@@ -318,21 +336,23 @@ class _TileWidgetState extends State<TileWidget>
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Color.lerp(baseColor, Colors.white, 0.08)!,
+          Color.lerp(baseColor, Colors.white, 0.15)!,
           baseColor,
-          Color.lerp(baseColor, Colors.black, 0.06)!,
+          Color.lerp(baseColor, Colors.black, 0.12)!,
         ],
       ),
       borderRadius: radius,
+      border: Border.all(
+        color: Color.lerp(baseColor, Colors.white, 0.2)!.withAlpha(40),
+        width: 0.5,
+      ),
       boxShadow: [
-        // Primary shadow (depth)
         BoxShadow(
           color: baseColor.withAlpha((40 + elevation * 5).clamp(0, 255).toInt()),
           blurRadius: elevation * 1.5,
           spreadRadius: elevation * 0.3,
           offset: Offset(0, elevation * 0.4),
         ),
-        // Ambient glow for high-value tiles
         if (widget.tile.value >= 64)
           BoxShadow(
             color: baseColor.withAlpha(30),
@@ -382,12 +402,26 @@ class _TileWidgetState extends State<TileWidget>
   }
 
   Widget _blockerContent(double tileSize) {
-    return Center(
-      child: Icon(
-        Icons.block_rounded,
-        size: tileSize * 0.45,
-        color: const Color(0xFF555577),
-      ),
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(tileSize * 0.14),
+            child: CustomPaint(
+              painter: _CrossHatchPainter(
+                color: const Color(0xFF333355),
+              ),
+            ),
+          ),
+        ),
+        Center(
+          child: Icon(
+            Icons.block_rounded,
+            size: tileSize * 0.45,
+            color: const Color(0xFF555577),
+          ),
+        ),
+      ],
     );
   }
 
@@ -479,15 +513,30 @@ class _TileWidgetState extends State<TileWidget>
     return Positioned.fill(
       child: ClipRRect(
         borderRadius: BorderRadius.circular(tileSize * 0.14),
-        child: Opacity(
-          opacity: 0.12,
-          child: Center(
-            child: Icon(
-              Icons.star_rounded,
-              size: tileSize * 0.7,
-              color: Colors.white,
+        child: Stack(
+          children: [
+            Center(
+              child: Text(
+                '?',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: tileSize * 0.65,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white.withAlpha(25),
+                ),
+              ),
             ),
-          ),
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(tileSize * 0.14),
+                  border: Border.all(
+                    color: Colors.white.withAlpha(50),
+                    width: 1,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -522,35 +571,52 @@ class _TileWidgetState extends State<TileWidget>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
+              Colors.cyan.withAlpha(90),
+              Colors.lightBlueAccent.withAlpha(70),
               Colors.cyan.withAlpha(80),
-              Colors.blue.withAlpha(60),
             ],
           ),
           borderRadius: BorderRadius.circular(tileSize * 0.14),
-          border: Border.all(color: Colors.cyan.withAlpha(180), width: 2),
+          border: Border.all(color: Colors.cyan.withAlpha(200), width: 2.5),
         ),
         child: Stack(
           children: [
-            Positioned(
-              top: tileSize * 0.08,
-              left: tileSize * 0.08,
-              child: Icon(Icons.ac_unit_rounded,
-                  size: tileSize * 0.18, color: Colors.cyan.withAlpha(200)),
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(tileSize * 0.14),
+                child: CustomPaint(
+                  painter: _IceCrackPainter(
+                    color: Colors.white.withAlpha(60),
+                  ),
+                ),
+              ),
             ),
             Positioned(
-              bottom: tileSize * 0.08,
-              right: tileSize * 0.08,
+              top: tileSize * 0.06,
+              left: tileSize * 0.06,
               child: Icon(Icons.ac_unit_rounded,
-                  size: tileSize * 0.14, color: Colors.cyan.withAlpha(150)),
+                  size: tileSize * 0.2, color: Colors.white.withAlpha(180)),
             ),
             Positioned(
-              top: tileSize * 0.08,
-              right: tileSize * 0.08,
+              bottom: tileSize * 0.06,
+              right: tileSize * 0.06,
+              child: Icon(Icons.ac_unit_rounded,
+                  size: tileSize * 0.14, color: Colors.white.withAlpha(120)),
+            ),
+            Positioned(
+              top: tileSize * 0.06,
+              right: tileSize * 0.06,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.cyan.withAlpha(180),
-                  borderRadius: BorderRadius.circular(4),
+                  color: const Color(0xFF006DB3),
+                  borderRadius: BorderRadius.circular(6),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.cyan.withAlpha(100),
+                      blurRadius: 4,
+                    ),
+                  ],
                 ),
                 child: Text(
                   '${widget.tile.frozenTurns}',
@@ -613,6 +679,67 @@ class _RadialPatternPainter extends CustomPainter {
       final dy = center.dy + maxRadius * 0.9 * math.sin(angle);
       canvas.drawLine(center, Offset(dx, dy), paint);
     }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _CrossHatchPainter extends CustomPainter {
+  final Color color;
+
+  _CrossHatchPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    const spacing = 8.0;
+    for (double i = -size.height; i < size.width + size.height; i += spacing) {
+      canvas.drawLine(Offset(i, 0), Offset(i + size.height, size.height), paint);
+    }
+    for (double i = -size.height; i < size.width + size.height; i += spacing) {
+      canvas.drawLine(Offset(i + size.height, 0), Offset(i, size.height), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _IceCrackPainter extends CustomPainter {
+  final Color color;
+
+  _IceCrackPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..strokeCap = StrokeCap.round;
+
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+
+    final path = Path()
+      ..moveTo(cx * 0.3, cy * 0.2)
+      ..lineTo(cx * 0.7, cy * 0.6)
+      ..lineTo(cx * 1.0, cy * 0.5)
+      ..moveTo(cx * 0.7, cy * 0.6)
+      ..lineTo(cx * 0.6, cy * 1.1)
+      ..lineTo(cx * 0.9, cy * 1.4)
+      ..moveTo(cx * 0.6, cy * 1.1)
+      ..lineTo(cx * 0.3, cy * 1.3)
+      ..moveTo(cx * 1.2, cy * 0.8)
+      ..lineTo(cx * 1.5, cy * 1.2)
+      ..lineTo(cx * 1.7, cy * 1.1);
+
+    canvas.drawPath(path, paint);
   }
 
   @override
