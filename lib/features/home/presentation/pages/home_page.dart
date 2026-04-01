@@ -12,6 +12,7 @@ import '../../../../core/widgets/banner_ad_widget.dart';
 import '../../../achievements/presentation/bloc/achievements_bloc.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../leaderboard/data/datasources/leaderboard_remote_datasource.dart';
+import '../../../levels/data/datasources/levels_local_datasource.dart';
 import '../../../progression/data/datasources/progression_local_datasource.dart';
 import '../../../progression/domain/entities/player_profile.dart';
 import '../../../progression/presentation/widgets/streak_calendar.dart';
@@ -31,6 +32,11 @@ class _HomePageState extends State<HomePage> {
     unlockedTileThemeIds: const ['classic'],
     loginStreak: 0,
   );
+  String _currentZoneName = 'Genesis';
+  String _currentZoneId = 'genesis';
+  int _currentLevel = 1;
+  int _zoneLevelCount = 10;
+  int _zoneCompletedLevels = 0;
 
   @override
   void initState() {
@@ -41,7 +47,33 @@ class _HomePageState extends State<HomePage> {
 
   void _loadProfile() {
     final ds = sl<ProgressionLocalDataSource>();
-    setState(() => _profile = ds.getProfile());
+    final levelsDs = sl<LevelsLocalDataSource>();
+    setState(() {
+      _profile = ds.getProfile();
+      _loadCurrentZone(levelsDs);
+    });
+  }
+
+  void _loadCurrentZone(LevelsLocalDataSource levelsDs) {
+    final zones = levelsDs.getZones();
+    for (final zone in zones) {
+      final levels = levelsDs.getLevelsForZone(zone.id);
+      final completed = levels.where((l) => l.isCompleted).length;
+      if (completed < levels.length) {
+        _currentZoneName = zone.name;
+        _currentZoneId = zone.id;
+        _zoneLevelCount = levels.length;
+        _zoneCompletedLevels = completed;
+        _currentLevel = completed + 1;
+        return;
+      }
+    }
+    final lastZone = zones.last;
+    _currentZoneName = lastZone.name;
+    _currentZoneId = lastZone.id;
+    _zoneLevelCount = 10;
+    _zoneCompletedLevels = 10;
+    _currentLevel = 50;
   }
 
   void _refresh() {
@@ -63,7 +95,13 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 16),
-                _Header(),
+                _Header(
+                  zoneName: _currentZoneName,
+                  zoneId: _currentZoneId,
+                  currentLevel: _currentLevel,
+                  zoneLevelCount: _zoneLevelCount,
+                  zoneCompletedLevels: _zoneCompletedLevels,
+                ),
                 const SizedBox(height: 16),
                 XpBar(
                   profile: _profile,
@@ -81,6 +119,8 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 12),
                 _PlayButton(
                   onReturn: _refresh,
+                  zoneName: _currentZoneName,
+                  zoneId: _currentZoneId,
                 ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2),
                 const SizedBox(height: 12),
                 _EndlessModeButton(
@@ -107,63 +147,154 @@ class _HomePageState extends State<HomePage> {
 }
 
 class _Header extends StatelessWidget {
+  final String zoneName;
+  final String zoneId;
+  final int currentLevel;
+  final int zoneLevelCount;
+  final int zoneCompletedLevels;
+
+  const _Header({
+    required this.zoneName,
+    required this.zoneId,
+    required this.currentLevel,
+    required this.zoneLevelCount,
+    required this.zoneCompletedLevels,
+  });
+
+  Color _zoneColor() {
+    switch (zoneId) {
+      case 'genesis': return AppColors.zoneGenesis;
+      case 'inferno': return AppColors.zoneInferno;
+      case 'glacier': return AppColors.zoneGlacier;
+      case 'nexus': return AppColors.zoneNexus;
+      case 'void': return AppColors.zoneVoid;
+      default: return AppColors.zoneEndless;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final zoneColor = _zoneColor();
+    final progress = zoneLevelCount > 0
+        ? zoneCompletedLevels / zoneLevelCount
+        : 0.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'MERGE QUEST',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textPrimary,
+                      height: 1.0,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'The Ultimate Number Puzzle',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, state) {
+                return GestureDetector(
+                  onTap: () => context.push('/profile'),
+                  child: CircleAvatar(
+                    radius: 22,
+                    backgroundColor: AppColors.primary,
+                    child: Text(
+                      state is AuthAuthenticated
+                          ? state.user.username[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(
+                Icons.settings_rounded,
+                color: AppColors.textSecondary,
+              ),
+              onPressed: () => context.push('/settings'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: zoneColor.withAlpha(15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: zoneColor.withAlpha(40), width: 1),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'MERGE QUEST',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
-                  letterSpacing: 4,
-                ),
+              Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: zoneColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Zone: $zoneName',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: zoneColor,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'Level $currentLevel',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
-              const Text(
-                '2048',
-                style: TextStyle(
-                  fontSize: 44,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary,
-                  height: 1.0,
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: zoneColor.withAlpha(30),
+                  valueColor: AlwaysStoppedAnimation<Color>(zoneColor),
+                  minHeight: 4,
                 ),
               ),
             ],
           ),
-        ),
-        BlocBuilder<AuthBloc, AuthState>(
-          builder: (context, state) {
-            return GestureDetector(
-              onTap: () => context.push('/profile'),
-              child: CircleAvatar(
-                radius: 22,
-                backgroundColor: AppColors.primary,
-                child: Text(
-                  state is AuthAuthenticated
-                      ? state.user.username[0].toUpperCase()
-                      : '?',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        const SizedBox(width: 8),
-        IconButton(
-          icon: const Icon(
-            Icons.settings_rounded,
-            color: AppColors.textSecondary,
-          ),
-          onPressed: () => context.push('/settings'),
         ),
       ],
     );
@@ -172,29 +303,60 @@ class _Header extends StatelessWidget {
 
 class _PlayButton extends StatelessWidget {
   final VoidCallback? onReturn;
-  const _PlayButton({this.onReturn});
+  final String zoneName;
+  final String zoneId;
+
+  const _PlayButton({this.onReturn, required this.zoneName, required this.zoneId});
+
+  Color _zoneColor() {
+    switch (zoneId) {
+      case 'genesis': return AppColors.zoneGenesis;
+      case 'inferno': return AppColors.zoneInferno;
+      case 'glacier': return AppColors.zoneGlacier;
+      case 'nexus': return AppColors.zoneNexus;
+      case 'void': return AppColors.zoneVoid;
+      default: return AppColors.zoneEndless;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final zoneColor = _zoneColor();
     return AnimatedButton(
       onPressed: () => context.push('/zones').then((_) => onReturn?.call()),
-      gradient: AppColors.primaryGradient,
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [zoneColor, zoneColor.withAlpha(180)],
+      ),
       borderRadius: 20,
       padding: const EdgeInsets.symmetric(vertical: 24),
-      child: const Center(
+      child: Center(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.play_arrow_rounded, size: 32, color: Colors.white),
-            SizedBox(width: 12),
-            Text(
-              'PLAY',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: 3,
-              ),
+            const Icon(Icons.play_arrow_rounded, size: 32, color: Colors.white),
+            const SizedBox(width: 12),
+            Column(
+              children: [
+                const Text(
+                  'CONTINUE QUEST',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: 2,
+                  ),
+                ),
+                Text(
+                  zoneName,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withAlpha(200),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -247,7 +409,7 @@ class _EndlessModeButton extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'Classic 2048 -- play until you get stuck',
+                  'No limits -- merge as far as you can',
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
